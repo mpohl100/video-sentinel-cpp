@@ -1,0 +1,5 @@
+1) introduce bounding rectangle for webcam app -> done
+2) use taskflow to parallelize the processing of rectangles (without zipping the rectangles) -> done
+3) implement zipping of the rectangles (a bit unknown how to at the moment)
+4) implement reverse parsing of slices to get the complete object guaranteed in two phases
+5) implement standard deviation of angles as a factor to the gradient number of a pixel (goal is to remove small rectangles in the source data)
