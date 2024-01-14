@@ -1,4 +1,6 @@
 
+include_directories( ${CMAKE_SOURCE_DIR}/src )
+
 find_package(OpenCV REQUIRED)
 
 set( DETECTION_SOURCES Detection.cpp Slices.cpp)
