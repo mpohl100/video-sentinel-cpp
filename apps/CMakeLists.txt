@@ -1,9 +1,10 @@
+include_directories(${CMAKE_SOURCE_DIR}/src)
 link_directories(${CMAKE_SOURCE_DIR}/src)
 
 find_package(clara REQUIRED)
+find_package(OpenCV REQUIRED)
 
-set( EXCEUTABLE_NAME main)
-
-add_executable(${EXCEUTABLE_NAME} main.cpp)
-target_link_libraries(${EXCEUTABLE_NAME} lib clara::clara)
-target_include_directories(${EXCEUTABLE_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/src)
+add_executable(webcam_app webcam_app.cpp)
+target_include_directories(webcam_app PUBLIC ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(webcam_app clara::clara detection webcam ${OpenCV_LIBS})
+target_include_directories(webcam_app PUBLIC ${CMAKE_SOURCE_DIR}/src)
