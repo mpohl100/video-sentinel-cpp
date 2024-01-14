@@ -1,7 +1,10 @@
 [requires]
 catch2/3.1.0
-range-v3/0.10.0
 clara/1.1.5
+opencv/4.5.5
+
+[options]
+opencv/*:with_v4l=True
 
 [generators]
 CMakeDeps

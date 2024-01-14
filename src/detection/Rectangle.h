@@ -1,6 +1,6 @@
 #pragma once
 
-#include "examples/bubbles/math2d.h"
+#include "math2d/math2d.h"
 
 namespace od{
 

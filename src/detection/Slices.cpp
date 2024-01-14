@@ -1,6 +1,6 @@
 #include "Slices.h"
 
-#include "examples/bubbles/math2d.h"
+#include "math2d/math2d.h"
 
 #include "Rectangle.h"
 

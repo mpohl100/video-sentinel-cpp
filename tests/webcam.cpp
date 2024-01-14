@@ -1,6 +1,6 @@
 #include <catch2/catch_all.hpp>
 
-#include "examples/webcam/webcam.h"
+#include "webcam/webcam.h"
 
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"

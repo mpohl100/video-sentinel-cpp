@@ -1,4 +1,4 @@
-#include "math2d.h"
+#include "math2d/math2d.h"
 
 #include <cmath>
 #include <string>

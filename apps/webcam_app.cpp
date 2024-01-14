@@ -1,5 +1,5 @@
-#include "examples/bubbles/detection/Detection.h"
-#include "examples/webcam/webcam.h"
+#include "detection/Detection.h"
+#include "webcam/webcam.h"
 #include "par/parallel.h"
 
 #include "opencv2/highgui/highgui.hpp"

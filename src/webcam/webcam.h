@@ -1,5 +1,5 @@
-#include "examples/bubbles/detection/Detection.h"
-#include "examples/bubbles/detection/Slices.h"
+#include "detection/Detection.h"
+#include "detection/Slices.h"
 
 #include "par/parallel.h"
 
