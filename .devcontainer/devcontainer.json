@@ -1,0 +1,26 @@
+{
+  "name": "Ubuntu C/C++ Dev Container for genetic algorithm",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "containerEnv": {
+    "EXECUTE_BIN_BASH": "0"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.git", // Include Git extension
+        "ms-vscode.cpptools",
+        "ms-vscode.cpptools-extension-pack",
+        "ms-vscode.cmake-tools",
+        "webfreak.debug",
+        "xaver.clang-format",
+        "GitHub.copilot" 
+      ],
+      "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash",
+        "git.path": "/usr/bin/git" // Set Git path (if necessary)
+      }
+    }
+  }
+}

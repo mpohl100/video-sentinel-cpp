@@ -1,0 +1,11 @@
+[requires]
+catch2/3.1.0
+range-v3/0.10.0
+clara/1.1.5
+
+[generators]
+CMakeDeps
+CMakeToolchain
+
+[layout]
+cmake_layout

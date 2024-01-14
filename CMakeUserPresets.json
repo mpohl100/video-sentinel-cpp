@@ -1,0 +1,10 @@
+{
+    "version": 4,
+    "vendor": {
+        "conan": {}
+    },
+    "include": [
+        "/workspaces/cpp-docker/build/conan_output/build/Release/generators/CMakePresets.json",
+        "/workspaces/cpp-docker/debug_build/conan_output/build/Debug/generators/CMakePresets.json"
+    ]
+}
