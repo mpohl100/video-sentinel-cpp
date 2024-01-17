@@ -53,4 +53,9 @@ FrameData process_frame_quadview(const cv::Mat &imgOriginal,
                                  par::Executor &executor, int rings,
                                  int gradient_threshold, int nb_splits = 2);
 
+FrameData process_frame_merged(const cv::Mat &imgOriginal,
+                                 const od::Rectangle &rectangle,
+                                 par::Executor &executor, int rings,
+                                 int gradient_threshold, int nb_pixels_per_tile = 100);
+
 } // namespace webcam
