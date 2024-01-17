@@ -8,7 +8,7 @@
 #include <mutex>
 #include <thread>
 
-#define DO_LOG 1
+#define DO_LOG 0
 
 namespace par {
 
@@ -24,7 +24,7 @@ public:
   virtual ~Task() = default;
   Task(Work *work) : _work{work} {}
 
-  void precede(const Task &task);
+  void precede(Task &task);
 
 private:
   Work *_work;
@@ -54,11 +54,11 @@ private:
   bool _finished = false;
 };
 
-inline void Task::precede(const Task &task) {
+inline void Task::precede(Task &task) {
 #if DO_LOG
   std::cout << "Task::precede()" << std::endl;
 #endif
-  _work->add_predecessor(task._work);
+  task._work->add_predecessor(_work);
 }
 
 class Calculation : public Work {
