@@ -196,8 +196,9 @@ FrameData process_frame_merged(const cv::Mat &imgOriginal,
   for (const auto& rect : rectangles){
     std::vector<size_t> touching_rectangles = deduce_touching_rectangles(expand_rectangle(rect, rings), rectangles);
     for (const auto& touching_rectangle : touching_rectangles){
-      gradient_tasks[i].precede(smoothing_tasks[touching_rectangle]);
+      smoothing_tasks[i].precede(gradient_tasks[touching_rectangle]);
     }
+    i++;
   }
 
   // kick off tasks
