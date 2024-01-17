@@ -2,6 +2,8 @@
 
 #include "math2d/math2d.h"
 
+#include <string>
+
 namespace od{
 
 struct Rectangle {
@@ -14,6 +16,16 @@ struct Rectangle {
   Rectangle(int xx, int yy, int w, int h) : x{xx}, y{yy}, width{w}, height{h} {}
 
   math2d::Rectangle to_math2d_rectangle() const;
+
+  bool contains(const Rectangle &other) const {
+    return x <= other.x && y <= other.y &&
+           x + width >= other.x + other.width &&
+           y + height >= other.y + other.height;
+  }
+
+  std::string to_string() const{
+    return "Rectangle{x: " + std::to_string(x) + "; y: " + std::to_string(y) + "; width: " + std::to_string(width) + "; height: " + std::to_string(height) + "}";
+  }
 
   int x = 0;
   int y = 0;
