@@ -73,7 +73,7 @@ TEST_CASE("Webcam", "[webcam]") {
 
     CHECK(frame_data.all_rectangles.rectangles.size() == 3335);
   }
-
+#if 1
   SECTION("WebcamProcessFrameManyTasks") {
     par::Executor executor(4);
     int rings = 1;
@@ -103,6 +103,7 @@ TEST_CASE("Webcam", "[webcam]") {
 
     CHECK(frame_data.all_rectangles.rectangles.size() == 3335);
   }
+#endif
 }
 
 } // namespace

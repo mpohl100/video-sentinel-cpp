@@ -15,7 +15,7 @@ cd "$BUILD_DIR"
 
 conan profile detect --force
 
-conan install .. --build="*" --output-folder=conan_output -pr:a="$(pwd)/../conan_profiles/gcc11_cpp20_debug.prof" --update -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True 
+conan install .. --build="missing" --output-folder=conan_output -pr:a="$(pwd)/../conan_profiles/gcc11_cpp20_debug.prof" --update -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True 
 
 cmake .. -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE="$(pwd)/conan_output/build/Debug/generators/conan_toolchain.cmake" -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="$(pwd)/conan_output/build/Debug/generators"
 
