@@ -21,6 +21,34 @@ public:
   virtual ~Work() = default;
 
   virtual void call() = 0;
+
+  void add_predecessor(Work *work) { _predecessors.push_back(work); }
+  bool can_be_started() const {
+    return std::all_off(_predecessors.begin(), _predecessors.end(),
+                        [](Work *work) { return work->is_finished(); });
+  }
+  bool is_finished() const { return _finished; }
+  void set_finished() { _finished = true; }
+
+private:
+  std::vector<Work *> _predecessors;
+  bool _finished = false;
+};
+
+class Task {
+public:
+  Task() = default;
+  Task(const Task &) = default;
+  Task(Task &&) = default;
+  Task &operator=(const Task &) = default;
+  Task &operator=(Task &&) = default;
+  virtual ~Task() = default;
+  Task(Work *work) : _work{work} {}
+
+  void precede(Task &task) { _work->add_predecessor(task._work); }
+
+private:
+  Work *_work;
 };
 
 class Calculation : public Work {
@@ -87,7 +115,7 @@ public:
     std::cout << "Executor::run()" << std::endl;
 #endif
     std::unique_lock<std::mutex> lock(*_mutex);
-    _scheduled_work.push_back(work);
+    _queued_work.push_back(work);
   }
 
   void wait_for(Work *work) {
@@ -98,7 +126,7 @@ public:
       bool do_break = false;
       {
 #if DO_LOG
-    std::cout << "Executor::wait_for() checking if finished" << std::endl;
+        std::cout << "Executor::wait_for() checking if finished" << std::endl;
 #endif
         std::unique_lock<std::mutex> lock(*_mutex);
         auto it = std::find(_finished_work.begin(), _finished_work.end(), work);
@@ -111,7 +139,7 @@ public:
         break;
       }
 #if DO_LOG
-    std::cout << "Executor::wait_for() sleep 1ms" << std::endl;
+      std::cout << "Executor::wait_for() sleep 1ms" << std::endl;
 #endif
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
@@ -153,6 +181,7 @@ private:
 #endif
         break;
       }
+      schedule_work();
       auto *work = pop_work();
       if (work == nullptr) {
 #if DO_LOG
@@ -166,17 +195,39 @@ private:
 #endif
         work->call();
 #if DO_LOG
-        std::cout << "Executor::execute_worker_thread() finished_work" << std::endl;
+        std::cout << "Executor::execute_worker_thread() finished_work"
+                  << std::endl;
 #endif
         std::unique_lock<std::mutex> lock(*_mutex);
         _started_work.erase(
             std::remove(_started_work.begin(), _started_work.end(), work),
             _started_work.end());
 #if DO_LOG
-        std::cout << "Executor::execute_worker_thread() removing finished work" << std::endl;
+        std::cout << "Executor::execute_worker_thread() removing finished work"
+                  << std::endl;
 #endif
         _finished_work.push_back(work);
       }
+    }
+  }
+
+  void schedule_work() {
+#if DO_LOG
+    std::cout << "Executor::schedule_work()" << std::endl;
+#endif
+    std::vector<size_t> to_remove;
+    size_t i = 0;
+    for (auto work : _queued_work) {
+      if (work->can_be_started()) {
+        std::unique_lock<std::mutex> lock(*_mutex);
+        _scheduled_work.insert(_scheduled_work.begin(), work);
+        to_remove.push_back(i);
+      }
+      i++:
+    }
+    std::unique_lock<std::mutex> lock(*_mutex);
+    for (auto index : to_remove) {
+      _queued_work.erase(_queued_work.begin() + index);
     }
   }
 
@@ -201,6 +252,7 @@ private:
 
   std::thread _main_thread;
   std::vector<std::thread> _worker_threads;
+  std::vector<Work *> _queued_work;
   std::vector<Work *> _scheduled_work;
   std::vector<Work *> _started_work;
   std::vector<Work *> _finished_work;
