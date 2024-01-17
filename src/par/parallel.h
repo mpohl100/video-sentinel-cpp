@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <chrono>
 #include <functional>
 #include <iostream>
@@ -11,29 +12,7 @@
 
 namespace par {
 
-class Work {
-public:
-  Work() = default;
-  Work(const Work &) = default;
-  Work(Work &&) = default;
-  Work &operator=(const Work &) = default;
-  Work &operator=(Work &&) = default;
-  virtual ~Work() = default;
-
-  virtual void call() = 0;
-
-  void add_predecessor(Work *work) { _predecessors.push_back(work); }
-  bool can_be_started() const {
-    return std::all_off(_predecessors.begin(), _predecessors.end(),
-                        [](Work *work) { return work->is_finished(); });
-  }
-  bool is_finished() const { return _finished; }
-  void set_finished() { _finished = true; }
-
-private:
-  std::vector<Work *> _predecessors;
-  bool _finished = false;
-};
+class Work;
 
 class Task {
 public:
@@ -45,11 +24,42 @@ public:
   virtual ~Task() = default;
   Task(Work *work) : _work{work} {}
 
-  void precede(Task &task) { _work->add_predecessor(task._work); }
+  void precede(Task &task);
 
 private:
   Work *_work;
 };
+
+class Work {
+public:
+  Work() = default;
+  Work(const Work &) = default;
+  Work(Work &&) = default;
+  Work &operator=(const Work &) = default;
+  Work &operator=(Work &&) = default;
+  virtual ~Work() = default;
+
+  virtual void call() = 0;
+  Task make_task() { return Task{this}; }
+  void add_predecessor(Work *work) { _predecessors.push_back(work); }
+  bool can_be_started() const {
+    return std::all_of(_predecessors.begin(), _predecessors.end(),
+                        [](Work *work) { return work->is_finished(); });
+  }
+  bool is_finished() const { return _finished; }
+  void set_finished() { _finished = true; }
+
+private:
+  std::vector<Work *> _predecessors;
+  bool _finished = false;
+};
+
+inline void Task::precede(Task &task) {
+#if DO_LOG
+  std::cout << "Task::precede()" << std::endl;
+#endif
+  _work->add_predecessor(task._work);
+}
 
 class Calculation : public Work {
 public:
@@ -223,7 +233,7 @@ private:
         _scheduled_work.insert(_scheduled_work.begin(), work);
         to_remove.push_back(i);
       }
-      i++:
+      i++;
     }
     std::unique_lock<std::mutex> lock(*_mutex);
     for (auto index : to_remove) {
