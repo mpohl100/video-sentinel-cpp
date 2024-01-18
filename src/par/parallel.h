@@ -13,6 +13,7 @@
 namespace par {
 
 class Work;
+class FlowImpl;
 
 class Task {
 public:
@@ -22,12 +23,12 @@ public:
   Task &operator=(const Task &) = default;
   Task &operator=(Task &&) = default;
   virtual ~Task() = default;
-  Task(Work *work) : _work{work} {}
+  Task(std::shared_ptr<Work> work) : _work{work} {}
 
   void precede(Task &task);
 
 private:
-  Work *_work;
+  std::shared_ptr<Work> _work;
 };
 
 class Work {
@@ -40,17 +41,19 @@ public:
   virtual ~Work() = default;
 
   virtual void call() = 0;
-  Task make_task() { return Task{this}; }
-  void add_predecessor(Work *work) { _predecessors.push_back(work); }
+  void add_predecessor(const std::shared_ptr<Work> &work) {
+    _predecessors.push_back(work);
+  }
   bool can_be_started() const {
-    return std::all_of(_predecessors.cbegin(), _predecessors.cend(),
-                        [](Work *work) { return work->is_finished(); });
+    return std::all_of(
+        _predecessors.cbegin(), _predecessors.cend(),
+        [](const std::shared_ptr<Work> &work) { return work->is_finished(); });
   }
   bool is_finished() const { return _finished; }
   void set_finished() { _finished = true; }
 
 private:
-  std::vector<Work *> _predecessors;
+  std::vector<std::shared_ptr<Work>> _predecessors;
   bool _finished = false;
 };
 
@@ -61,19 +64,19 @@ inline void Task::precede(Task &task) {
   task._work->add_predecessor(_work);
 }
 
-class Calculation : public Work {
+class CalculationImpl : public Work {
 public:
-  Calculation(std::function<void()> func) : Work{}, _func{func} {}
-  Calculation() = default;
-  Calculation(const Calculation &) = default;
-  Calculation(Calculation &&) = default;
-  Calculation &operator=(const Calculation &) = default;
-  Calculation &operator=(Calculation &&) = default;
-  virtual ~Calculation() = default;
+  CalculationImpl(std::function<void()> func) : Work{}, _func{func} {}
+  CalculationImpl() = default;
+  CalculationImpl(const CalculationImpl &) = default;
+  CalculationImpl(CalculationImpl &&) = default;
+  CalculationImpl &operator=(const CalculationImpl &) = default;
+  CalculationImpl &operator=(CalculationImpl &&) = default;
+  virtual ~CalculationImpl() = default;
 
   void call() override {
 #if DO_LOG
-    std::cout << "Calculation::call()" << std::endl;
+    std::cout << "CalculationImpl::call()" << std::endl;
 #endif
     _func();
   }
@@ -81,18 +84,47 @@ public:
   std::function<void()> _func;
 };
 
-class Flow : public Work {
+class Calculation {
 public:
-  Flow() : Work{}, _work{} {}
-  Flow(Flow &&) = default;
-  Flow &operator=(Flow &&) = default;
-  virtual ~Flow() = default;
+  Calculation(std::function<void()> func)
+      : _impl{std::make_shared<CalculationImpl>(func)} {}
+  Calculation() = default;
+  Calculation(const Calculation &) = default;
+  Calculation(Calculation &&) = default;
+  Calculation &operator=(const Calculation &) = default;
+  Calculation &operator=(Calculation &&) = default;
+  virtual ~Calculation() = default;
 
-  void add(std::unique_ptr<Work> work) { _work.push_back(std::move(work)); }
+  void call() {
+#if DO_LOG
+    std::cout << "Calculation::call()" << std::endl;
+#endif
+    _impl->call();
+  }
+
+  Task make_task() { return Task{_impl}; }
+
+private:
+  std::shared_ptr<CalculationImpl> get() const{ return _impl; }
+  std::shared_ptr<CalculationImpl> _impl;
+  friend class FlowImpl;
+};
+
+class FlowImpl : public Work {
+public:
+  FlowImpl() : Work{}, _work{} {}
+  FlowImpl(FlowImpl &&) = default;
+  FlowImpl &operator=(FlowImpl &&) = default;
+  virtual ~FlowImpl() = default;
+
+  void add(const Calculation& work) { _work.push_back(work.get()); }
+  void add(const std::shared_ptr<FlowImpl>& work) {
+    _work.push_back(work);
+  }
 
   void call() override {
 #if DO_LOG
-    std::cout << "Flow::call()" << std::endl;
+    std::cout << "FlowImpl::call()" << std::endl;
 #endif
     for (auto &work : _work) {
       work->call();
@@ -100,7 +132,24 @@ public:
   }
 
 private:
-  std::vector<std::unique_ptr<Work>> _work;
+  std::vector<std::shared_ptr<Work>> _work;
+};
+
+class Flow {
+public:
+  Flow() : _impl{std::make_shared<FlowImpl>()} {}
+  Flow(Flow &&) = default;
+  Flow &operator=(Flow &&) = default;
+  virtual ~Flow() = default;
+
+  void add(const Calculation &work) { _impl->add(work); }
+  void add(const Flow &work) {
+      _impl->add(work._impl);
+  }
+
+  Task make_task() { return Task{_impl}; }
+private:
+  std::shared_ptr<FlowImpl> _impl;
 };
 
 class Executor {
@@ -120,15 +169,15 @@ public:
     async_init(num_threads);
   }
 
-  void run(Work *work) {
+  void run(Task task) {
 #if DO_LOG
     std::cout << "Executor::run()" << std::endl;
 #endif
     std::unique_lock<std::mutex> lock(*_mutex);
-    _queued_work.push_back(work);
+    _queued_task.push_back(task);
   }
 
-  void wait_for(Work *work) {
+  void wait_for(Task work) {
 #if DO_LOG
     std::cout << "Executor::wait_for()" << std::endl;
 #endif
@@ -139,9 +188,9 @@ public:
         std::cout << "Executor::wait_for() checking if finished" << std::endl;
 #endif
         std::unique_lock<std::mutex> lock(*_mutex);
-        auto it = std::find(_finished_work.begin(), _finished_work.end(), work);
-        if (it != _finished_work.end()) {
-          _finished_work.erase(it);
+        auto it = std::find(_finished_tasks.begin(), _finished_tasks.end(), work);
+        if (it != _finished_tasks.end()) {
+          _finished_tasks.erase(it);
           do_break = true;
         }
       }
@@ -191,8 +240,8 @@ private:
 #endif
         break;
       }
-      schedule_work();
-      auto *work = pop_work();
+      schedule_task();
+      auto *work = pop_task();
       if (work == nullptr) {
 #if DO_LOG
         std::cout << "Executor::execute_worker_thread() sleep 1ms" << std::endl;
@@ -210,45 +259,45 @@ private:
                   << std::endl;
 #endif
         std::unique_lock<std::mutex> lock(*_mutex);
-        _started_work.erase(
-            std::remove(_started_work.begin(), _started_work.end(), work),
-            _started_work.end());
+        _started_tasks.erase(
+            std::remove(_started_tasks.begin(), _started_tasks.end(), work),
+            _started_tasks.end());
 #if DO_LOG
         std::cout << "Executor::execute_worker_thread() removing finished work"
                   << std::endl;
 #endif
-        _finished_work.push_back(work);
+        _finished_tasks.push_back(work);
       }
     }
   }
 
-  void schedule_work() {
+  void schedule_task() {
 #if DO_LOG
-    std::cout << "Executor::schedule_work() size: " << _queued_work.size() << std::endl;
+    std::cout << "Executor::schedule_task() size: " << _queued_tasks.size()
+              << std::endl;
 #endif
     std::unique_lock<std::mutex> lock(*_mutex);
-    auto queued_work_iterator = _queued_work.begin();
-    while(queued_work_iterator != _queued_work.end()) {
-      if ((*queued_work_iterator)->can_be_started()) {
-        _scheduled_work.insert(_scheduled_work.begin(), *queued_work_iterator);
-        queued_work_iterator = _queued_work.erase(queued_work_iterator);
-      }
-      else
-        queued_work_iterator++;
+    auto queued_tasks_iterator = _queued_tasks.begin();
+    while (queued_tasks_iterator != _queued_tasks.end()) {
+      if ((*queued_tasks_iterator)->can_be_started()) {
+        _scheduled_tasks.insert(_scheduled_tasks.begin(), *queued_tasks_iterator);
+        queued_tasks_iterator = _queued_tasks.erase(queued_tasks_iterator);
+      } else
+        queued_tasks_iterator++;
     }
   }
 
-  Work *pop_work() {
+  Task pop_task() {
 #if DO_LOG
-    std::cout << "Executor::pop_work()" << std::endl;
+    std::cout << "Executor::pop_task()" << std::endl;
 #endif
     std::unique_lock<std::mutex> lock(*_mutex);
-    if (_scheduled_work.empty()) {
+    if (_scheduled_tasks.empty()) {
       return nullptr;
     }
-    auto *work = _scheduled_work.back();
-    _scheduled_work.pop_back();
-    _started_work.push_back(work);
+    auto *work = _scheduled_tasks.back();
+    _scheduled_tasks.pop_back();
+    _started_tasks.push_back(work);
     return work;
   }
 
@@ -259,10 +308,10 @@ private:
 
   std::thread _main_thread;
   std::vector<std::thread> _worker_threads;
-  std::vector<Work *> _queued_work;
-  std::vector<Work *> _scheduled_work;
-  std::vector<Work *> _started_work;
-  std::vector<Work *> _finished_work;
+  std::vector<Task> _queued_tasks;
+  std::vector<Task> _scheduled_tasks;
+  std::vector<Task> _started_tasks;
+  std::vector<Task> _finished_tasks;
   bool _cancelled = false;
   std::shared_ptr<std::mutex> _mutex = std::make_shared<std::mutex>();
 };
