@@ -78,6 +78,7 @@ double Line::magnitude() const {
 }
 
 Rectangle::Rectangle(Point tl, Point br) : _lines() {
+  _lines.reserve(4);
   _lines.emplace_back(tl, Point(br.x, tl.y));
   _lines.emplace_back(Point(br.x, tl.y), br);
   _lines.emplace_back(br, Point(tl.x, br.y));

@@ -157,7 +157,7 @@ deduce_touching_rectangles(const od::Rectangle &rectangle,
   size_t i = 0;
   const auto target_rect = rectangle.to_math2d_rectangle();
   for (const auto &rect : rectangles) {
-    math2d::Rectangle current_math_rect = rect.to_math2d_rectangle();
+    const auto current_math_rect = rect.to_math2d_rectangle();
     if (current_math_rect.intersects(target_rect) || rectangle.contains(rect)) {
       touching_rectangles.emplace_back(i);
     }
