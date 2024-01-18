@@ -44,7 +44,7 @@ struct FrameData {
   FrameData(const cv::Mat &imgOriginal);
 };
 
-par::Flow process_frame(FrameData &frameData, const cv::Mat &imgOriginal,
+par::Task process_frame(FrameData &frameData, const cv::Mat &imgOriginal,
                         const od::Rectangle &rectangle, int rings,
                         int gradient_threshold);
 

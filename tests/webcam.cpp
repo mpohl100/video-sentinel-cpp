@@ -38,8 +38,8 @@ TEST_CASE("Webcam", "[webcam]") {
     auto frame_data = webcam::FrameData{imgOriginal};
     auto flow = webcam::process_frame(frame_data, imgOriginal, rectangle, rings,
                                       gradient_threshold);
-    executor.run(&flow);
-    executor.wait_for(&flow);
+    executor.run(flow);
+    executor.wait_for(flow);
 
     CHECK(frame_data.all_rectangles.rectangles.size() == 3335);
   }

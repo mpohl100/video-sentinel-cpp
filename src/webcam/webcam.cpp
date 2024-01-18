@@ -60,7 +60,7 @@ FrameData::FrameData(const cv::Mat &imgOriginal)
       smoothed_contours_mat{imgOriginal.clone()},
       smoothed_gradient_mat{imgOriginal.clone()}, all_rectangles{} {}
 
-par::Flow process_frame(FrameData &frame_data, const cv::Mat &imgOriginal,
+par::Task process_frame(FrameData &frame_data, const cv::Mat &imgOriginal,
                         const od::Rectangle &rectangle, int rings,
                         int gradient_threshold) {
   const auto create_flow = [&](const od::Rectangle &rectangle) {
@@ -96,7 +96,7 @@ par::Flow process_frame(FrameData &frame_data, const cv::Mat &imgOriginal,
     flow.add(par::Calculation{calcSmoothedContours});
     // auto calcSmoothedGradientTask = taskflow.emplace(calcSmoothedGradient);
     flow.add(par::Calculation{calcAllRectangles});
-    return flow;
+    return flow.make_task();
   };
 
   return create_flow(rectangle);
@@ -127,7 +127,7 @@ FrameData process_frame_quadview(const cv::Mat &imgOriginal,
                                  int gradient_threshold, int nb_splits) {
   auto frame_data = FrameData{imgOriginal};
   const auto rectangles = split_rectangle(rectangle, nb_splits);
-  std::vector<par::Flow> flows;
+  std::vector<par::Task> flows;
   for (const auto &rect : rectangles) {
     flows.emplace_back(process_frame(frame_data, imgOriginal, rect, rings,
                                      gradient_threshold));
@@ -135,10 +135,10 @@ FrameData process_frame_quadview(const cv::Mat &imgOriginal,
   std::cout << "kicking off all tasks" << std::endl;
   for (auto &flow : flows) {
     std::cout << "kicking off task" << std::endl;
-    executor.run(&flow);
+    executor.run(flow);
   }
   for (auto &flow : flows) {
-    executor.wait_for(&flow);
+    executor.wait_for(flow);
   }
   return frame_data;
 }
@@ -188,12 +188,8 @@ FrameData process_frame_merged(const cv::Mat &imgOriginal,
   auto frame_data = FrameData{imgOriginal};
   const auto rectangles =
       split_rectangle_into_parts(rectangle, nb_pixels_per_tile);
-  std::vector<par::Calculation> gradient_calculations;
-  gradient_calculations.reserve(rectangles.size());
   std::vector<par::Task> gradient_tasks;
   gradient_tasks.reserve(rectangles.size());
-  std::vector<par::Flow> smoothing_calculation_flows;
-  smoothing_calculation_flows.reserve(rectangles.size());
   std::vector<par::Task> smoothing_tasks;
   smoothing_tasks.reserve(rectangles.size());
 
@@ -208,7 +204,6 @@ FrameData process_frame_merged(const cv::Mat &imgOriginal,
                   << std::endl;
     };
     auto calculation = par::Calculation{calcGradient};
-    gradient_calculations.emplace_back(calcGradient);
     gradient_tasks.emplace_back(calculation.make_task());
   }
 
@@ -233,14 +228,11 @@ FrameData process_frame_merged(const cv::Mat &imgOriginal,
         std::cout << "all rectangles processed for rect " << rect.to_string()
                   << std::endl;
     };
-    smoothing_calculation_flows.emplace_back(par::Flow{});
-    smoothing_calculation_flows.back().add(
-        par::Calculation{calcSmoothedContours});
-    smoothing_calculation_flows.back().add(
-        par::Calculation{calcAllRectangles});
+    auto flow = par::Flow{};
+    flow.add(par::Calculation{calcSmoothedContours});
+    flow.add(par::Calculation{calcAllRectangles});
 
-    smoothing_tasks.emplace_back(
-        smoothing_calculation_flows.back().make_task());
+    smoothing_tasks.emplace_back(flow.make_task());
   }
 
   // define dependencies between tasks
@@ -255,18 +247,18 @@ FrameData process_frame_merged(const cv::Mat &imgOriginal,
   }
 
   // kick off tasks
-  for (auto &gradient_calculation : gradient_calculations) {
-    executor.run(&gradient_calculation);
+  for (auto &gradient_task : gradient_tasks) {
+    executor.run(gradient_task);
   }
-  for (auto &smoothing_calculation_flow : smoothing_calculation_flows) {
-    executor.run(&smoothing_calculation_flow);
+  for (auto &smoothing_task : smoothing_tasks) {
+    executor.run(smoothing_task);
   }
 
-  for (auto &gradient_calculation : gradient_calculations) {
-    executor.wait_for(&gradient_calculation);
+  for (auto &gradient_task : gradient_tasks) {
+    executor.wait_for(gradient_task);
   }
-  for (auto &smoothing_calculation_flow : smoothing_calculation_flows) {
-    executor.wait_for(&smoothing_calculation_flow);
+  for (auto &smoothing_task : smoothing_tasks) {
+    executor.wait_for(smoothing_task);
   }
   return frame_data;
 }
