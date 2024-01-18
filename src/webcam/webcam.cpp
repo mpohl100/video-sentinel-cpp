@@ -92,10 +92,10 @@ par::Flow process_frame(FrameData &frame_data, const cv::Mat &imgOriginal,
 
     auto flow = par::Flow{};
     // const auto calcCountoursTask = executor.emplace(calcCountours);
-    flow.add(std::make_unique<par::Calculation>(calcGradient));
-    flow.add(std::make_unique<par::Calculation>(calcSmoothedContours));
+    flow.add(par::Calculation{calcGradient});
+    flow.add(par::Calculation{calcSmoothedContours});
     // auto calcSmoothedGradientTask = taskflow.emplace(calcSmoothedGradient);
-    flow.add(std::make_unique<par::Calculation>(calcAllRectangles));
+    flow.add(par::Calculation{calcAllRectangles});
     return flow;
   };
 
@@ -235,9 +235,9 @@ FrameData process_frame_merged(const cv::Mat &imgOriginal,
     };
     smoothing_calculation_flows.emplace_back(par::Flow{});
     smoothing_calculation_flows.back().add(
-        std::make_unique<par::Calculation>(calcSmoothedContours));
+        par::Calculation{calcSmoothedContours});
     smoothing_calculation_flows.back().add(
-        std::make_unique<par::Calculation>(calcAllRectangles));
+        par::Calculation{calcAllRectangles});
 
     smoothing_tasks.emplace_back(
         smoothing_calculation_flows.back().make_task());
