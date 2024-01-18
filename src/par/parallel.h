@@ -6,6 +6,7 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <thread>
 
 #define DO_LOG 0
@@ -14,6 +15,7 @@ namespace par {
 
 class Work;
 class FlowImpl;
+class Executor;
 
 class Task {
 public:
@@ -28,8 +30,15 @@ public:
   void precede(Task &task);
 
 private:
+  std::shared_ptr<Work> get() const { return _work; }
   std::shared_ptr<Work> _work;
+  friend bool operator==(const Task &lhs, const Task &rhs);
+  friend class Executor;
 };
+
+inline bool operator==(const Task &lhs, const Task &rhs) {
+  return lhs._work.get() == rhs._work.get();
+}
 
 class Work {
 public:
@@ -174,7 +183,7 @@ public:
     std::cout << "Executor::run()" << std::endl;
 #endif
     std::unique_lock<std::mutex> lock(*_mutex);
-    _queued_task.push_back(task);
+    _queued_tasks.push_back(task);
   }
 
   void wait_for(Task work) {
@@ -241,32 +250,32 @@ private:
         break;
       }
       schedule_task();
-      auto *work = pop_task();
-      if (work == nullptr) {
+      auto work = pop_task();
+      if (!work) {
 #if DO_LOG
         std::cout << "Executor::execute_worker_thread() sleep 1ms" << std::endl;
 #endif
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
       }
-      if (work) {
+      else{
 #if DO_LOG
         std::cout << "Executor::execute_worker_thread() do_work" << std::endl;
 #endif
-        work->call();
-        work->set_finished();
+        work->get()->call();
+        work->get()->set_finished();
 #if DO_LOG
         std::cout << "Executor::execute_worker_thread() finished_work"
                   << std::endl;
 #endif
         std::unique_lock<std::mutex> lock(*_mutex);
         _started_tasks.erase(
-            std::remove(_started_tasks.begin(), _started_tasks.end(), work),
+            std::remove(_started_tasks.begin(), _started_tasks.end(), *work),
             _started_tasks.end());
 #if DO_LOG
         std::cout << "Executor::execute_worker_thread() removing finished work"
                   << std::endl;
 #endif
-        _finished_tasks.push_back(work);
+        _finished_tasks.push_back(*work);
       }
     }
   }
@@ -279,7 +288,7 @@ private:
     std::unique_lock<std::mutex> lock(*_mutex);
     auto queued_tasks_iterator = _queued_tasks.begin();
     while (queued_tasks_iterator != _queued_tasks.end()) {
-      if ((*queued_tasks_iterator)->can_be_started()) {
+      if (queued_tasks_iterator->get()->can_be_started()) {
         _scheduled_tasks.insert(_scheduled_tasks.begin(), *queued_tasks_iterator);
         queued_tasks_iterator = _queued_tasks.erase(queued_tasks_iterator);
       } else
@@ -287,15 +296,15 @@ private:
     }
   }
 
-  Task pop_task() {
+  std::optional<Task> pop_task() {
 #if DO_LOG
     std::cout << "Executor::pop_task()" << std::endl;
 #endif
     std::unique_lock<std::mutex> lock(*_mutex);
     if (_scheduled_tasks.empty()) {
-      return nullptr;
+      return std::nullopt;
     }
-    auto *work = _scheduled_tasks.back();
+    auto work = _scheduled_tasks.back();
     _scheduled_tasks.pop_back();
     _started_tasks.push_back(work);
     return work;
