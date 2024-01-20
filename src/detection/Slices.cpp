@@ -15,6 +15,8 @@ struct Slice {
   math2d::Point start = math2d::Point{0, 0};
   math2d::Point end = math2d::Point{0, 0};
 
+  math2d::number_type size() const { return end.x - start.x; }
+
   friend constexpr auto operator<=>(const Slice &lhs,
                                     const Slice &rhs) = default;
 
@@ -120,10 +122,22 @@ Slices deduce_slices(const cv::Mat &contours, const Rectangle &rectangle) {
       Slices{math2d::Point{static_cast<math2d::number_type>(rectangle.x),
                            static_cast<math2d::number_type>(rectangle.y)}};
   std::optional<AnnotatedSlice> current_slice = std::nullopt;
-  cv::Vec3b const*row = nullptr;
+  cv::Vec3b const *row = nullptr;
   for (int y = od::row_min(0, rectangle);
        y < od::row_max(contours.rows, rectangle); ++y) {
     auto current_line = std::vector<AnnotatedSlice>{};
+    current_slice = AnnotatedSlice{
+        Slice{math2d::Point{0, static_cast<math2d::number_type>(y)},
+              math2d::Point{0, static_cast<math2d::number_type>(y)}},
+        static_cast<size_t>(y)};
+    const auto emplace_current_slice = [&]() {
+      if (current_slice.has_value()) {
+        if (current_slice->slice.size() > 0) {
+          current_line.push_back(current_slice.value());
+        }
+        current_slice = std::nullopt;
+      }
+    };
     row = contours.ptr<const cv::Vec3b>(y);
     for (int x = od::col_min(0, rectangle);
          x < od::col_max(contours.cols, rectangle); ++x) {
@@ -131,10 +145,7 @@ Slices deduce_slices(const cv::Mat &contours, const Rectangle &rectangle) {
                                        static_cast<math2d::number_type>(y)};
       const auto current_pixel_value = row[x][0];
       if (current_pixel_value == 255) {
-        if (current_slice.has_value()) {
-          current_line.push_back(current_slice.value());
-          current_slice = std::nullopt;
-        }
+        emplace_current_slice();
       } else {
         if (!current_slice.has_value()) {
           current_slice =
@@ -144,10 +155,7 @@ Slices deduce_slices(const cv::Mat &contours, const Rectangle &rectangle) {
         }
       }
     }
-    if (current_slice.has_value()) {
-      current_line.push_back(current_slice.value());
-      current_slice = std::nullopt;
-    }
+    emplace_current_slice();
     slices.slices.push_back(current_line);
   }
   return slices;
@@ -184,7 +192,7 @@ AllRectangles deduce_rectangles(std::vector<Slices> objects) {
 }
 
 void establishing_shot_slices(AllRectangles &ret, const cv::Mat &contours,
-                                       const Rectangle &rectangle) {
+                              const Rectangle &rectangle) {
   constexpr auto debug = false;
   if constexpr (debug) {
     std::cout << "establishing_shot_slices" << std::endl;
@@ -213,8 +221,6 @@ void establishing_shot_slices(AllRectangles &ret, const cv::Mat &contours,
                         all_rectangles.rectangles.end());
 }
 
-void print(){
-    std::cout << "I am alive!" << std::endl;
-}
+void print() { std::cout << "I am alive!" << std::endl; }
 
 } // namespace od
