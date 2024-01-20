@@ -21,15 +21,9 @@ Slices deduce_slices(const cv::Mat &contours, const Rectangle &rectangle) {
   for (int y = od::row_min(0, rectangle);
        y < od::row_max(contours.rows, rectangle); ++y) {
     auto current_line = std::vector<AnnotatedSlice>{};
-    current_slice = AnnotatedSlice{
-        Slice{math2d::Point{0, static_cast<math2d::number_type>(y)},
-              math2d::Point{0, static_cast<math2d::number_type>(y)}},
-        static_cast<size_t>(y)};
     const auto emplace_current_slice = [&]() {
       if (current_slice.has_value()) {
-        if (current_slice->slice.size() > 0) {
-          current_line.push_back(current_slice.value());
-        }
+        current_line.push_back(current_slice.value());
         current_slice = std::nullopt;
       }
     };
@@ -39,15 +33,16 @@ Slices deduce_slices(const cv::Mat &contours, const Rectangle &rectangle) {
       const auto point = math2d::Point{static_cast<math2d::number_type>(x),
                                        static_cast<math2d::number_type>(y)};
       const auto current_pixel_value = row[x][0];
+      // if pixel is white
       if (current_pixel_value == 255) {
-        emplace_current_slice();
-      } else {
-        if (!current_slice.has_value()) {
+        if (!current_slice) {
           current_slice =
               AnnotatedSlice{Slice{point, point}, static_cast<size_t>(y)};
         } else {
           current_slice->slice.end = point;
         }
+      } else {
+        emplace_current_slice();
       }
     }
     emplace_current_slice();

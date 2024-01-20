@@ -12,8 +12,6 @@ struct Slice {
   math2d::Point start = math2d::Point{0, 0};
   math2d::Point end = math2d::Point{0, 0};
 
-  math2d::number_type size() const { return end.x - start.x; }
-
   friend constexpr auto operator<=>(const Slice &lhs,
                                     const Slice &rhs) = default;
 
