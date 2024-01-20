@@ -32,9 +32,12 @@ Slices deduce_slices(const cv::Mat &contours, const Rectangle &rectangle) {
          x < od::col_max(contours.cols, rectangle); ++x) {
       const auto point = math2d::Point{static_cast<math2d::number_type>(x),
                                        static_cast<math2d::number_type>(y)};
-      const auto current_pixel_value = row[x][0];
+      const auto current_pixel = row[x];
+      const auto is_within_object = [](const cv::Vec3b &pixel) {
+        return pixel[0] == 255 && pixel[1] == 255 && pixel[2] == 255;
+      };
       // if pixel is white
-      if (current_pixel_value == 255) {
+      if (is_within_object(current_pixel)) {
         if (!current_slice) {
           current_slice =
               AnnotatedSlice{Slice{point, point}, static_cast<size_t>(y)};

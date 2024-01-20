@@ -27,7 +27,7 @@ public:
   virtual ~Task() = default;
   Task(std::shared_ptr<Work> work) : _work{work} {}
 
-  void precede(Task &task);
+  void succeed(Task &task);
 
 private:
   std::shared_ptr<Work> get() const { return _work; }
@@ -66,11 +66,11 @@ private:
   bool _finished = false;
 };
 
-inline void Task::precede(Task &task) {
+inline void Task::succeed(Task &task) {
 #if DO_LOG
   std::cout << "Task::precede()" << std::endl;
 #endif
-  task._work->add_predecessor(_work);
+  _work->add_predecessor(task._work);
 }
 
 class CalculationImpl : public Work {
