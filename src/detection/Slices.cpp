@@ -1,4 +1,5 @@
 #include "Slices.h"
+#include "Object.h"
 
 #include "math2d/math2d.h"
 
@@ -10,112 +11,6 @@
 #include <vector>
 
 namespace od {
-
-struct Slice {
-  math2d::Point start = math2d::Point{0, 0};
-  math2d::Point end = math2d::Point{0, 0};
-
-  math2d::number_type size() const { return end.x - start.x; }
-
-  friend constexpr auto operator<=>(const Slice &lhs,
-                                    const Slice &rhs) = default;
-
-  bool touches(const Slice &other) const {
-    return (start >= other.start && start <= other.end) ||
-           (end >= other.start && end <= other.end) ||
-           (other.start >= start && other.start <= end) ||
-           (other.end >= start && other.end <= end);
-  }
-};
-
-struct AnnotatedSlice {
-  Slice slice;
-  size_t line_number = 0;
-  friend constexpr auto operator<=>(const AnnotatedSlice &lhs,
-                                    const AnnotatedSlice &rhs) = default;
-};
-
-struct Slices {
-  std::vector<std::vector<AnnotatedSlice>> slices;
-  math2d::Point top_left = math2d::Point{0, 0};
-
-  Slices(const Slices &) = default;
-  Slices(Slices &&) = default;
-  Slices &operator=(const Slices &) = default;
-  Slices &operator=(Slices &&) = default;
-  Slices(math2d::Point top_left) : top_left{top_left} {}
-
-  bool contains_slices() const {
-    for (const auto &slice_line : slices) {
-      if (!slice_line.empty()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  AnnotatedSlice get_first_slice() {
-    for (auto &slice_line : slices) {
-      if (!slice_line.empty()) {
-        auto slice = slice_line.back();
-        slice_line.pop_back();
-        return slice;
-      }
-    }
-    return AnnotatedSlice{};
-  }
-
-  std::vector<AnnotatedSlice>
-  get_touching_slices(const std::vector<AnnotatedSlice> &slices_of_object) {
-    if (slices_of_object.empty()) {
-      return {};
-    }
-    const auto last_slice = slices_of_object.back();
-    const auto line_number = last_slice.line_number;
-    if (get_index(line_number) == slices.size() - 1) {
-      return {};
-    }
-    const auto next_line_index = get_index(line_number + 1);
-    auto &next_line = slices[next_line_index];
-    std::vector<AnnotatedSlice> ret;
-    for (const auto &annotatedSlice : slices_of_object) {
-      for (const auto &slice : next_line) {
-        if (annotatedSlice.slice.touches(slice.slice)) {
-          ret.push_back(slice);
-        }
-      }
-    }
-    const auto last = std::unique(ret.begin(), ret.end());
-    ret.erase(last, ret.end());
-    std::sort(ret.begin(), ret.end());
-    std::vector<AnnotatedSlice> cleared_next_line;
-    std::set_difference(next_line.begin(), next_line.end(), ret.begin(),
-                        ret.end(), std::back_inserter(cleared_next_line));
-    slices[next_line_index] = cleared_next_line;
-    return ret;
-  }
-
-  Rectangle to_rectangle() const {
-    int min_x = 10000000;
-    int max_x = 0;
-    int min_y = 10000000;
-    int max_y = 0;
-    for (const auto &slice_line : slices) {
-      for (const auto &slice : slice_line) {
-        min_x = std::min(min_x, static_cast<int>(slice.slice.start.x));
-        max_x = std::max(max_x, static_cast<int>(slice.slice.end.x));
-        min_y = std::min(min_y, static_cast<int>(slice.slice.start.y));
-        max_y = std::max(max_y, static_cast<int>(slice.slice.end.y));
-      }
-    }
-    return Rectangle{min_x, min_y, max_x - min_x, max_y - min_y};
-  }
-
-private:
-  size_t get_index(size_t line_number) const {
-    return line_number - top_left.y;
-  }
-};
 
 Slices deduce_slices(const cv::Mat &contours, const Rectangle &rectangle) {
   auto slices =
@@ -161,28 +56,28 @@ Slices deduce_slices(const cv::Mat &contours, const Rectangle &rectangle) {
   return slices;
 }
 
-std::vector<Slices> deduce_objects(Slices &slices) {
-  std::vector<Slices> objects;
+std::vector<Object> deduce_objects(Slices &slices) {
+  std::vector<Object> objects;
   while (slices.contains_slices()) {
     std::vector<AnnotatedSlice> current_slices;
     const auto first_slice = slices.get_first_slice();
     current_slices.push_back(first_slice);
-    auto current_object = Slices{
-        math2d::Point{first_slice.slice.start.x, first_slice.slice.start.y}};
-    current_object.slices.push_back(current_slices);
+    auto current_object = Object{Slices{
+        math2d::Point{first_slice.slice.start.x, first_slice.slice.start.y}}};
+    current_object.slices.slices.push_back(current_slices);
     while (!current_slices.empty()) {
       current_slices = slices.get_touching_slices(current_slices);
-      current_object.slices.push_back(current_slices);
+      current_object.slices.slices.push_back(current_slices);
     }
     objects.push_back(current_object);
   }
   return objects;
 }
 
-AllRectangles deduce_rectangles(std::vector<Slices> objects) {
+AllRectangles deduce_rectangles(const std::vector<Object> &objects) {
   AllRectangles ret;
   for (const auto &object : objects) {
-    auto rectangle = object.to_rectangle();
+    auto rectangle = object.slices.to_rectangle();
     const auto expanded_rectangle =
         Rectangle{rectangle.x - 5, rectangle.y - 5, rectangle.width + 10,
                   rectangle.height + 10};
