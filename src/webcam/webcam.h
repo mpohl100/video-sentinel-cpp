@@ -1,5 +1,6 @@
 #include "detection/Detection.h"
 #include "detection/Slices.h"
+#include "detection/Object.h"
 
 #include "par/parallel.h"
 
@@ -33,6 +34,7 @@ struct FrameData {
   cv::Mat gradient;
   cv::Mat smoothed_contours_mat;
   cv::Mat smoothed_gradient_mat;
+  od::AllObjects all_objects;
   od::AllRectangles all_rectangles;
 
   FrameData() = default;
