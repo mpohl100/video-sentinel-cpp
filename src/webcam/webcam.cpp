@@ -263,4 +263,118 @@ FrameData process_frame_merged(const cv::Mat &imgOriginal,
   return frame_data;
 }
 
+FrameData process_frame_merge_objects(const cv::Mat &imgOriginal,
+                                      const od::Rectangle &rectangle,
+                                      par::Executor &executor, int rings,
+                                      int gradient_threshold,
+                                      int nb_pixels_per_tile) {
+  constexpr auto debug = true;
+  auto frame_data = FrameData{imgOriginal};
+  const auto rectangles =
+      split_rectangle_into_parts(rectangle, nb_pixels_per_tile);
+  std::vector<par::Task> gradient_tasks;
+  gradient_tasks.reserve(rectangles.size());
+  std::vector<par::Task> smoothing_tasks;
+  smoothing_tasks.reserve(rectangles.size());
+
+  for (const auto &rect : rectangles) {
+    const auto calcGradient = [&, rect]() {
+      if (debug)
+        std::cout << "calculating gradient for rect " << rect.to_string()
+                  << std::endl;
+      od::detect_directions(frame_data.gradient, imgOriginal, rect);
+      if (debug)
+        std::cout << "gradient processedfor rect " << rect.to_string()
+                  << std::endl;
+    };
+    auto calculation = par::Calculation{calcGradient};
+    gradient_tasks.emplace_back(calculation.make_task());
+  }
+
+  frame_data.all_objects =
+      od::AllObjects{imgOriginal.rows / nb_pixels_per_tile,
+                     imgOriginal.cols / nb_pixels_per_tile};
+  for (const auto &rect : rectangles) {
+    const auto calcSmoothedContours = [&, rect, rings, gradient_threshold]() {
+      if (debug)
+        std::cout << "calculating smoothed contours for rect "
+                  << rect.to_string() << std::endl;
+      od::smooth_angles(frame_data.smoothed_contours_mat, frame_data.gradient,
+                        rings, true, gradient_threshold, rect);
+      if (debug)
+        std::cout << "smoothed contours processed for rect " << rect.to_string()
+                  << std::endl;
+    };
+    const auto calcAllObjects = [&, rect]() {
+      if (debug)
+        std::cout << "calculating all rectangles for rect " << rect.to_string()
+                  << std::endl;
+      od::establishing_shot_objects(
+          frame_data.all_objects.get(rect.x / nb_pixels_per_tile,
+                                     rect.y / nb_pixels_per_tile),
+          frame_data.smoothed_contours_mat, rect);
+      if (debug)
+        std::cout << "all rectangles processed for rect " << rect.to_string()
+                  << std::endl;
+    };
+    auto flow = par::Flow{};
+    flow.add(par::Calculation{calcSmoothedContours});
+    flow.add(par::Calculation{calcAllObjects});
+
+    smoothing_tasks.emplace_back(flow.make_task());
+  }
+
+  // define dependencies between tasks
+  size_t i = 0;
+  for (const auto &rect : rectangles) {
+    std::vector<size_t> touching_rectangles =
+        deduce_touching_rectangles(expand_rectangle(rect, rings), rectangles);
+    for (const auto &touching_rectangle : touching_rectangles) {
+      smoothing_tasks[i].succeed(gradient_tasks[touching_rectangle]);
+    }
+    i++;
+  }
+
+  // kick off tasks
+  for (auto &gradient_task : gradient_tasks) {
+    executor.run(gradient_task);
+  }
+  for (auto &smoothing_task : smoothing_tasks) {
+    executor.run(smoothing_task);
+  }
+
+  for (auto &gradient_task : gradient_tasks) {
+    executor.wait_for(gradient_task);
+  }
+  for (auto &smoothing_task : smoothing_tasks) {
+    executor.wait_for(smoothing_task);
+  }
+
+  // merge all objects
+  std::vector<par::Task> append_right_tasks;
+  std::vector<od::ObjectsPerRectangle> line_objects;
+  for (size_t row = 0; row < frame_data.all_objects.get_rows(); ++row) {
+    line_objects.emplace_back(frame_data.all_objects.get(row, 0));
+    auto flow = par::Flow{};
+    for (size_t col = 1; col < frame_data.all_objects.get_cols(); ++col) {
+      const auto append_right = [&, row, col]() {
+        line_objects[row].append_right(frame_data.all_objects.get(row, col));
+      };
+    }
+    append_right_tasks.emplace_back(flow.make_task());
+  }
+  for (const auto &task : append_right_tasks) {
+    executor.run(task);
+  }
+  for (const auto &task : append_right_tasks) {
+    executor.wait_for(task);
+  }
+  frame_data.all_objects = line_objects[0];
+  for (size_t i = 1; i < line_objects.size(); ++i) {
+    frame_data.all_objects.append_down(line_objects[i]);
+  }
+
+  return frame_data;
+}
+
 } // namespace webcam

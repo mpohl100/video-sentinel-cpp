@@ -8,6 +8,8 @@
 
 namespace od {
 
+struct ObjectsPerRectangle;
+
 struct Slice {
   math2d::Point start = math2d::Point{0, 0};
   math2d::Point end = math2d::Point{0, 0};
@@ -119,4 +121,7 @@ struct AllRectangles {
 
 void establishing_shot_slices(AllRectangles &ret, const cv::Mat &contours,
                               const Rectangle &rectangle);
+
+void establishing_slot_objects(ObjectsPerRectangle &ret, const cv::Mat &contours,
+                               const Rectangle &rectangle);
 } // namespace od

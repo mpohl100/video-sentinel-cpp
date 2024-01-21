@@ -116,4 +116,29 @@ void establishing_shot_slices(AllRectangles &ret, const cv::Mat &contours,
 
 void print() { std::cout << "I am alive!" << std::endl; }
 
+void establishing_slot_objects(ObjectsPerRectangle &ret,
+                               const cv::Mat &contours,
+                               const Rectangle &rectangle) {
+  constexpr auto debug = false;
+  if constexpr (debug) {
+    std::cout << "establishing_shot_slices" << std::endl;
+    std::cout << "deducing slices ..." << std::endl;
+  }
+  auto slices = deduce_slices(contours, rectangle);
+  if constexpr (debug) {
+    std::cout << "slices: " << std::endl;
+    for (const auto &slice_line : slices.slices) {
+      for (const auto &slice : slice_line) {
+        std::cout << slice.slice.start.toString() << " "
+                  << slice.slice.end.toString() << " | ";
+      }
+      std::cout << std::endl;
+    }
+    std::cout << "deducing objects ..." << std::endl;
+  }
+  const auto objects = deduce_objects(slices);
+  ret.objects = objects;
+  ret.rectangle = rectangle;
+}
+
 } // namespace od
