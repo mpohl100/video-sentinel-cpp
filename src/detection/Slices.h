@@ -110,8 +110,9 @@ struct Slices {
   }
 
   bool touching_right(const Rectangle &rectangle) const {
-    for(const auto& slice : slices){
-      if(slice.rbegin()->slice.end.x >= rectangle.top_left.x + rectangle.width - 1){
+    for (const auto &slice : slices) {
+      if (slice.rbegin()->slice.end.x >=
+          rectangle.top_left.x + rectangle.width - 1) {
         return true;
       }
     }
@@ -119,15 +120,16 @@ struct Slices {
   }
 
   bool touching_down(const Rectangle &rectangle) const {
-    if(slices.rbegin()->rbegin()->slice.start.y >= rectangle.top_left.y + rectangle.height - 1){
+    if (slices.rbegin()->rbegin()->slice.start.y >=
+        rectangle.top_left.y + rectangle.height - 1) {
       return true;
     }
     return false;
   }
 
   bool touching_left(const Rectangle &rectangle) const {
-    for(const auto &slice : slices){
-      if(slice.begin()->slice.start.x <= rectangle.top_left.x){
+    for (const auto &slice : slices) {
+      if (slice.begin()->slice.start.x <= rectangle.top_left.x) {
         return true;
       }
     }
@@ -135,79 +137,122 @@ struct Slices {
   }
 
   bool touching_up(const Rectangle &rectangle) const {
-    if(slices.begin()->begin()->slice.start.y <= rectangle.top_left.y){
+    if (slices.begin()->begin()->slice.start.y <= rectangle.top_left.y) {
       return true;
     }
     return false;
   }
 
-
-
-  bool touching_right(const Slices &other){
-    const auto overlapping_lines = 
+  bool touching_right(const Slices &other) {
+    const auto overlapping_lines = get_slices_on_the_same_line(other);
+    for (const auto &[this_slice, other_slice] : overlapping_lines) {
+      if (this_slice && other_slice) {
+        if (this_slice->rbegin()->slice.end.x >=
+            other_slice->begin()->slice.start.x) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   void merge_right(const Slices &other) {
-    throw std::runtime_error("merge_right not implemented");
-  } 
+    const auto overlapping_lines = get_slices_on_the_same_line(other);
+    std::vector<Slice> new_slices;
+    for (const auto &[this_slice, other_slice] : overlapping_lines) {
+      if (this_slice && other_slice) {
+        merge_right(*this_slice, *other_slice);
+        new_slices.push_back(*this_slice);
+      } else if (this_slice) {
+        new_slices.push_back(*this_slice);
+      } else if (other_slice) {
+        new_slices.push_back(*other_slice);
+      }
+    }
+    slices = std::move(new_slices);
+  }
 
-  bool touching_down(const Slices &other){
+  bool touching_down(const Slices &other) {
     throw std::runtime_error("touching_down not implemented");
   }
 
   void merge_down(const Slices &other) {
     throw std::runtime_error("merge_down not implemented");
   }
+
 private:
   size_t get_index(size_t line_number) const {
     return line_number - top_left.y;
   }
 
-  std::vector<td::pair<Slice*, Slice*>> get_slices_on_the_same_line(const Slices &other){
-    std::vector<td::pair<Slice*, Slice*>> ret;
+  std::vector<td::pair<std::vector<Slice> *, std::vector<Slice> *>>
+  get_slices_on_the_same_line(const Slices &other) {
+    std::vector<td::pair<std::vector<Slice> *, std::vector<Slice> *>> ret;
     size_t line_number = slices.front().front().line_number;
     size_t other_line_number = other.slices.front().front().line_number;
-    if(line_number < other_line_number){
-      auto it = std::find_if(slices.begin(), slices.end(), [other_line_number](const auto& slice_line){
-        return slice_line.front().line_number == other_line_number;
-      });
+    if (line_number < other_line_number) {
+      auto it = std::find_if(slices.begin(), slices.end(),
+                             [other_line_number](const auto &slice_line) {
+                               return slice_line.front().line_number ==
+                                      other_line_number;
+                             });
       // add slices of this
-      for(auto this_it = slices.begin(); this_it != it; ++this_it){
+      for (auto this_it = slices.begin(); this_it != it; ++this_it) {
         ret.push_back({&*this_it, nullptr});
       }
       // add overlapping slices
       auto other_it = other.slices.begin();
-      while(it != slices.end() && other_it != other.slices.end()){
+      while (it != slices.end() && other_it != other.slices.end()) {
         ret.push_back({&*it, &*other_it});
         ++it;
         ++other_it;
       }
       // add other slices
-      for(auto final_other_it = other_it; final_other_it != other.slices.end(); ++final_other_it){
+      for (auto final_other_it = other_it; final_other_it != other.slices.end();
+           ++final_other_it) {
         ret.push_back({nullptr, &*final_other_it});
       }
-    }
-    else{
-      auto other_it = std::find_if(other.slices.begin(), other.slices.end(), [line_number](const auto& slice_line){
-        return slice_line.front().line_number == line_number;
-      });
+    } else {
+      auto other_it =
+          std::find_if(other.slices.begin(), other.slices.end(),
+                       [line_number](const auto &slice_line) {
+                         return slice_line.front().line_number == line_number;
+                       });
       // add slices of other
-      for(auto this_it = other.slices.begin(); this_it != other_it; ++this_it){
+      for (auto this_it = other.slices.begin(); this_it != other_it;
+           ++this_it) {
         ret.push_back({nullptr, &*this_it});
       }
       // add overlapping slices
       auto it = slices.begin();
-      while(other_it != other.slices.end() && it != slices.end()){
+      while (other_it != other.slices.end() && it != slices.end()) {
         ret.push_back({*it, *other_it});
         ++it;
         ++other_it;
       }
       // add slices of this
-      for(auto final_it = it; final_it != slices.end(); ++final_it){
+      for (auto final_it = it; final_it != slices.end(); ++final_it) {
         ret.push_back({&*final_it, nullptr});
       }
     }
     return ret;
+  }
+
+  void merge_right(std::vector<Slice> &left, const std::vector<Slice> &right) {
+    // if the linenumbers mismatch, throw
+    if (left.front().line_number != right.front().line_number) {
+      throw std::runtime_error(
+          "Cannot merge slices with different line numbers");
+    }
+    // do the merging of the slices
+    if (left.back().slice.end.x >= right.front().slice.start.x) {
+      left.back().slice.end.x = right.front().slice.end.x;
+    } else {
+      left.push_back(right.front());
+    }
+    for (size_t i = 1; i < right.size(); ++i) {
+      left.push_back(right[i]);
+    }
   }
 };
 
@@ -218,6 +263,7 @@ struct AllRectangles {
 void establishing_shot_slices(AllRectangles &ret, const cv::Mat &contours,
                               const Rectangle &rectangle);
 
-void establishing_slot_objects(ObjectsPerRectangle &ret, const cv::Mat &contours,
+void establishing_slot_objects(ObjectsPerRectangle &ret,
+                               const cv::Mat &contours,
                                const Rectangle &rectangle);
 } // namespace od
