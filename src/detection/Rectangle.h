@@ -2,6 +2,7 @@
 
 #include "math2d/math2d.h"
 
+#include <stdexcept>
 #include <string>
 
 namespace od{
@@ -23,15 +24,15 @@ struct Rectangle {
            y + height >= other.y + other.height;
   }
 
-  void merge_left(const Rectangle &other) {
+  void merge_right(const Rectangle &other) {
     if(!x + width != other.x){
-      throw std::runtime_error("Cannot merge left because of x");
+      throw std::runtime_error("Cannot merge right because of x");
     }
     if(y != other.y){
-      throw std::runtime_error("Cannot merge left because of y");
+      throw std::runtime_error("Cannot merge right because of y");
     }
     if(height != other.height){
-      throw std::runtime_error("Cannot merge left because of height");
+      throw std::runtime_error("Cannot merge right because of height");
     }
     width += other.width;
   }
