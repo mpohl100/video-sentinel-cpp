@@ -110,19 +110,35 @@ struct Slices {
   }
 
   bool touching_right(const Rectangle &rectangle) const {
-    throw std::runtime_error("touching_right not implemented");
+    for(const auto& slice : slices){
+      if(slice.rbegin()->slice.end.x >= rectangle.top_left.x + rectangle.width - 1){
+        return true;
+      }
+    }
+    return false;
   }
 
   bool touching_down(const Rectangle &rectangle) const {
-    throw std::runtime_error("touching_down not implemented");
+    if(slices.rbegin()->rbegin()->slice.start.y >= rectangle.top_left.y + rectangle.height - 1){
+      return true;
+    }
+    return false;
   }
 
   bool touching_left(const Rectangle &rectangle) const {
-    throw std::runtime_error("touching_left not implemented");
+    for(const auto &slice : slices){
+      if(slice.begin()->slice.start.x <= rectangle.top_left.x){
+        return true;
+      }
+    }
+    return false;
   }
 
   bool touching_up(const Rectangle &rectangle) const {
-    throw std::runtime_error("touching_up not implemented");
+    if(slices.begin()->begin()->slice.start.y <= rectangle.top_left.y){
+      return true;
+    }
+    return false;
   }
 
   void merge_right(const Slices &other) {
