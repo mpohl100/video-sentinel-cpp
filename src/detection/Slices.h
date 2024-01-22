@@ -141,9 +141,19 @@ struct Slices {
     return false;
   }
 
+
+
+  bool touching_right(const Slices &other){
+    throw std::runtime_error("touching_right not implemented");
+  }
+
   void merge_right(const Slices &other) {
     throw std::runtime_error("merge_right not implemented");
   } 
+
+  bool touching_down(const Slices &other){
+    throw std::runtime_error("touching_down not implemented");
+  }
 
   void merge_down(const Slices &other) {
     throw std::runtime_error("merge_down not implemented");
@@ -151,6 +161,35 @@ struct Slices {
 private:
   size_t get_index(size_t line_number) const {
     return line_number - top_left.y;
+  }
+
+  std::vector<td::pair<Slice*, Slice*>> get_slices_on_the_same_line(const Slices &other){
+    std::vector<td::pair<Slice*, Slice*>> ret;
+    size_t line_number = slices.front().front().line_number;
+    size_t other_line_number = other.slices.front().front().line_number;
+    if(line_number < other_line_number){
+      auto it = std::find_if(slices.begin(), slices.end(), [other_line_number](const auto& slice_line){
+        return slice_line.front().line_number == other_line_number;
+      });
+      auto other_it = other.slices.begin();
+      while(it != slices.end() && other_it != other.slices.end()){
+        ret.push_back({*it, *other_it});
+        ++it;
+        ++other_it;
+      }
+    }
+    else{
+      auto other_it = std::find_if(other.slices.begin(), other.slices.end(), [line_number](const auto& slice_line){
+        return slice_line.front().line_number == line_number;
+      });
+      auto it = slices.begin();
+      while(other_it != other.slices.end() && it != slices.end()){
+        ret.push_back({*it, *other_it});
+        ++it;
+        ++other_it;
+      }
+    }
+    return ret;
   }
 };
 

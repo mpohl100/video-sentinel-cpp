@@ -19,6 +19,15 @@ struct Object {
   Object &operator=(const Object &) = default;
   Object &operator=(Object &&) = default;
   Object(const Slices& slices) : slices{slices} {}
+
+  bool try_merge_right(const Object& other){
+    if(slices.touching_right(other.slices)){
+      slices.merge_right(other.slices);
+      return true;
+    }
+    return false;
+  }
+
   Slices slices;
 };
 
