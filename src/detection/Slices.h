@@ -144,7 +144,7 @@ struct Slices {
 
 
   bool touching_right(const Slices &other){
-    throw std::runtime_error("touching_right not implemented");
+    const auto overlapping_lines = 
   }
 
   void merge_right(const Slices &other) {
@@ -171,22 +171,40 @@ private:
       auto it = std::find_if(slices.begin(), slices.end(), [other_line_number](const auto& slice_line){
         return slice_line.front().line_number == other_line_number;
       });
+      // add slices of this
+      for(auto this_it = slices.begin(); this_it != it; ++this_it){
+        ret.push_back({&*this_it, nullptr});
+      }
+      // add overlapping slices
       auto other_it = other.slices.begin();
       while(it != slices.end() && other_it != other.slices.end()){
-        ret.push_back({*it, *other_it});
+        ret.push_back({&*it, &*other_it});
         ++it;
         ++other_it;
+      }
+      // add other slices
+      for(auto final_other_it = other_it; final_other_it != other.slices.end(); ++final_other_it){
+        ret.push_back({nullptr, &*final_other_it});
       }
     }
     else{
       auto other_it = std::find_if(other.slices.begin(), other.slices.end(), [line_number](const auto& slice_line){
         return slice_line.front().line_number == line_number;
       });
+      // add slices of other
+      for(auto this_it = other.slices.begin(); this_it != other_it; ++this_it){
+        ret.push_back({nullptr, &*this_it});
+      }
+      // add overlapping slices
       auto it = slices.begin();
       while(other_it != other.slices.end() && it != slices.end()){
         ret.push_back({*it, *other_it});
         ++it;
         ++other_it;
+      }
+      // add slices of this
+      for(auto final_it = it; final_it != slices.end(); ++final_it){
+        ret.push_back({&*final_it, nullptr});
       }
     }
     return ret;
