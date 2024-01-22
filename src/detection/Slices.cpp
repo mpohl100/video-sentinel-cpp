@@ -137,8 +137,10 @@ void establishing_slot_objects(ObjectsPerRectangle &ret,
     std::cout << "deducing objects ..." << std::endl;
   }
   const auto objects = deduce_objects(slices);
-  ret.objects = objects;
-  ret.rectangle = rectangle;
+  for(const auto & object : objects){
+    ret.insert_object(object);
+  }
+  ret.set_rectangle(rectangle);
 }
 
 } // namespace od

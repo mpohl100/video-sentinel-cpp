@@ -112,7 +112,7 @@ struct Slices {
   bool touching_right(const Rectangle &rectangle) const {
     for (const auto &slice : slices) {
       if (slice.rbegin()->slice.end.x >=
-          rectangle.top_left.x + rectangle.width - 1) {
+          rectangle.x + rectangle.width - 1) {
         return true;
       }
     }
@@ -121,7 +121,7 @@ struct Slices {
 
   bool touching_down(const Rectangle &rectangle) const {
     if (slices.rbegin()->rbegin()->slice.start.y >=
-        rectangle.top_left.y + rectangle.height - 1) {
+        rectangle.y + rectangle.height - 1) {
       return true;
     }
     return false;
@@ -129,7 +129,7 @@ struct Slices {
 
   bool touching_left(const Rectangle &rectangle) const {
     for (const auto &slice : slices) {
-      if (slice.begin()->slice.start.x <= rectangle.top_left.x) {
+      if (slice.begin()->slice.start.x <= rectangle.x) {
         return true;
       }
     }
@@ -137,13 +137,13 @@ struct Slices {
   }
 
   bool touching_up(const Rectangle &rectangle) const {
-    if (slices.begin()->begin()->slice.start.y <= rectangle.top_left.y) {
+    if (slices.begin()->begin()->slice.start.y <= rectangle.y) {
       return true;
     }
     return false;
   }
 
-  bool touching_right(const Slices &other) {
+  bool touching_right(Slices &other) {
     const auto overlapping_lines = get_slices_on_the_same_line(other);
     for (const auto &[this_slice, other_slice] : overlapping_lines) {
       if (this_slice && other_slice) {
@@ -156,9 +156,9 @@ struct Slices {
     return false;
   }
 
-  void merge_right(const Slices &other) {
+  void merge_right(Slices &other) {
     const auto overlapping_lines = get_slices_on_the_same_line(other);
-    std::vector<Slice> new_slices;
+    std::vector<std::vector<AnnotatedSlice>> new_slices;
     for (const auto &[this_slice, other_slice] : overlapping_lines) {
       if (this_slice && other_slice) {
         merge_right(*this_slice, *other_slice);
@@ -173,11 +173,18 @@ struct Slices {
   }
 
   bool touching_down(const Slices &other) {
-    throw std::runtime_error("touching_down not implemented");
+    const auto &last_line = slices.back();
+    const auto &other_first_line = other.slices.front();
+    return does_overlap(last_line, other_first_line);
   }
 
   void merge_down(const Slices &other) {
-    throw std::runtime_error("merge_down not implemented");
+    if(!touching_down(other)) {
+      return;
+    }
+    for(const auto& line : other.slices) {
+      slices.push_back(line);
+    }
   }
 
 private:
@@ -185,9 +192,9 @@ private:
     return line_number - top_left.y;
   }
 
-  std::vector<td::pair<std::vector<Slice> *, std::vector<Slice> *>>
-  get_slices_on_the_same_line(const Slices &other) {
-    std::vector<td::pair<std::vector<Slice> *, std::vector<Slice> *>> ret;
+  std::vector<std::pair<std::vector<AnnotatedSlice> *, std::vector<AnnotatedSlice> *>>
+  get_slices_on_the_same_line(Slices &other) {
+    std::vector<std::pair<std::vector<AnnotatedSlice> *, std::vector<AnnotatedSlice> *>> ret;
     size_t line_number = slices.front().front().line_number;
     size_t other_line_number = other.slices.front().front().line_number;
     if (line_number < other_line_number) {
@@ -226,7 +233,7 @@ private:
       // add overlapping slices
       auto it = slices.begin();
       while (other_it != other.slices.end() && it != slices.end()) {
-        ret.push_back({*it, *other_it});
+        ret.push_back({&*it, &*other_it});
         ++it;
         ++other_it;
       }
@@ -238,7 +245,7 @@ private:
     return ret;
   }
 
-  void merge_right(std::vector<Slice> &left, const std::vector<Slice> &right) {
+  void merge_right(std::vector<AnnotatedSlice> &left, const std::vector<AnnotatedSlice> &right) const {
     // if the linenumbers mismatch, throw
     if (left.front().line_number != right.front().line_number) {
       throw std::runtime_error(
@@ -253,6 +260,21 @@ private:
     for (size_t i = 1; i < right.size(); ++i) {
       left.push_back(right[i]);
     }
+  }
+
+  bool does_overlap(const std::vector<AnnotatedSlice> &top, const std::vector<AnnotatedSlice> &bottom) const
+  {
+    if (top.front().line_number + 1 != bottom.front().line_number) {
+      return false;
+    }
+    for (const auto &top_slice : top) {
+      for (const auto &bottom_slice : bottom) {
+        if (top_slice.slice.touches(bottom_slice.slice)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 };
 

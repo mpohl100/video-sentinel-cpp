@@ -20,7 +20,7 @@ struct Object {
   Object &operator=(Object &&) = default;
   Object(const Slices& slices) : slices{slices} {}
 
-  bool try_merge_right(const Object& other){
+  bool try_merge_right(Object& other){
     if(slices.touching_right(other.slices)){
       slices.merge_right(other.slices);
       return true;
@@ -32,17 +32,21 @@ struct Object {
 };
 
 struct ObjectsPerRectangle {
+  void set_rectangle(const Rectangle& rectangle){
+    this->rectangle = rectangle;
+  }
+
   void append_right(const ObjectsPerRectangle& other){
     std::vector<Object> new_objects;
     // first add all objects that are not touching the right side
     for(const auto& object : objects){
-      if(!std::find(objects_touching_right.begin(), objects_touching_right.end(), &object)){
+      if(std::find(objects_touching_right.begin(), objects_touching_right.end(), &object) == objects_touching_right.end()){
         new_objects.push_back(object);
       }
     }
     // next add all objects from other that are not touching the left side
     for(const auto& object : other.objects){
-      if(!std::find(other.objects_touching_left.begin(), other.objects_touching_left.end(), &object)){
+      if(std::find(other.objects_touching_left.begin(), other.objects_touching_left.end(), &object) == other.objects_touching_left.end()){
         new_objects.push_back(object);
       }
     }
@@ -52,7 +56,7 @@ struct ObjectsPerRectangle {
       std::vector<size_t> indexes_to_remove;
       size_t i = 0;
       for(auto* other_object : other_objects_touching_left){
-        const auto merged = object->try_merge_right(other_object);
+        const auto merged = object->try_merge_right(*other_object);
         if(merged){
           indexes_to_remove.push_back(i);
         }
@@ -70,7 +74,7 @@ struct ObjectsPerRectangle {
     for(const auto& object : new_objects){
       insert_object(object);
     }
-    rectangle = rectangle.merge_right(other.rectangle);
+    rectangle.merge_right(other.rectangle);
   }
 
   void append_down(const ObjectsPerRectangle& other){
