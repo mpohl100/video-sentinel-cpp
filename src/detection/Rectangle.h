@@ -23,6 +23,19 @@ struct Rectangle {
            y + height >= other.y + other.height;
   }
 
+  void merge_left(const Rectangle &other) {
+    if(!x + width != other.x){
+      throw std::runtime_error("Cannot merge left because of x");
+    }
+    if(y != other.y){
+      throw std::runtime_error("Cannot merge left because of y");
+    }
+    if(height != other.height){
+      throw std::runtime_error("Cannot merge left because of height");
+    }
+    width += other.width;
+  }
+
   std::string to_string() const{
     return "Rectangle{x: " + std::to_string(x) + "; y: " + std::to_string(y) + "; width: " + std::to_string(width) + "; height: " + std::to_string(height) + "}";
   }

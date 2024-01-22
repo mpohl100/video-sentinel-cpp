@@ -109,6 +109,29 @@ struct Slices {
     return Rectangle{min_x, min_y, max_x - min_x, max_y - min_y};
   }
 
+  bool touching_right(const Rectangle &rectangle) const {
+    throw std::runtime_error("touching_right not implemented");
+  }
+
+  bool touching_down(const Rectangle &rectangle) const {
+    throw std::runtime_error("touching_down not implemented");
+  }
+
+  bool touching_left(const Rectangle &rectangle) const {
+    throw std::runtime_error("touching_left not implemented");
+  }
+
+  bool touching_up(const Rectangle &rectangle) const {
+    throw std::runtime_error("touching_up not implemented");
+  }
+
+  void merge_right(const Slices &other) {
+    throw std::runtime_error("merge_right not implemented");
+  } 
+
+  void merge_down(const Slices &other) {
+    throw std::runtime_error("merge_down not implemented");
+  }
 private:
   size_t get_index(size_t line_number) const {
     return line_number - top_left.y;
