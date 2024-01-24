@@ -111,8 +111,7 @@ struct Slices {
 
   bool touching_right(const Rectangle &rectangle) const {
     for (const auto &slice : slices) {
-      if (slice.rbegin()->slice.end.x >=
-          rectangle.x + rectangle.width - 1) {
+      if (slice.rbegin()->slice.end.x >= rectangle.x + rectangle.width - 1) {
         return true;
       }
     }
@@ -179,10 +178,10 @@ struct Slices {
   }
 
   void merge_down(const Slices &other) {
-    if(!touching_down(other)) {
+    if (!touching_down(other)) {
       return;
     }
-    for(const auto& line : other.slices) {
+    for (const auto &line : other.slices) {
       slices.push_back(line);
     }
   }
@@ -192,9 +191,12 @@ private:
     return line_number - top_left.y;
   }
 
-  std::vector<std::pair<std::vector<AnnotatedSlice> *, std::vector<AnnotatedSlice> *>>
+  std::vector<
+      std::pair<std::vector<AnnotatedSlice> *, std::vector<AnnotatedSlice> *>>
   get_slices_on_the_same_line(Slices &other) {
-    std::vector<std::pair<std::vector<AnnotatedSlice> *, std::vector<AnnotatedSlice> *>> ret;
+    std::vector<
+        std::pair<std::vector<AnnotatedSlice> *, std::vector<AnnotatedSlice> *>>
+        ret;
     size_t line_number = slices.front().front().line_number;
     size_t other_line_number = other.slices.front().front().line_number;
     if (line_number < other_line_number) {
@@ -245,7 +247,8 @@ private:
     return ret;
   }
 
-  void merge_right(std::vector<AnnotatedSlice> &left, const std::vector<AnnotatedSlice> &right) const {
+  void merge_right(std::vector<AnnotatedSlice> &left,
+                   const std::vector<AnnotatedSlice> &right) const {
     // if the linenumbers mismatch, throw
     if (left.front().line_number != right.front().line_number) {
       throw std::runtime_error(
@@ -262,8 +265,8 @@ private:
     }
   }
 
-  bool does_overlap(const std::vector<AnnotatedSlice> &top, const std::vector<AnnotatedSlice> &bottom) const
-  {
+  bool does_overlap(const std::vector<AnnotatedSlice> &top,
+                    const std::vector<AnnotatedSlice> &bottom) const {
     if (top.front().line_number + 1 != bottom.front().line_number) {
       return false;
     }
@@ -282,10 +285,12 @@ struct AllRectangles {
   std::vector<Rectangle> rectangles;
 };
 
+AllRectangles deduce_rectangles(const ObjectsPerRectangle &objects);
+
 void establishing_shot_slices(AllRectangles &ret, const cv::Mat &contours,
                               const Rectangle &rectangle);
 
-void establishing_slot_objects(ObjectsPerRectangle &ret,
+void establishing_shot_objects(ObjectsPerRectangle &ret,
                                const cv::Mat &contours,
                                const Rectangle &rectangle);
 } // namespace od

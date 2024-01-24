@@ -292,8 +292,8 @@ FrameData process_frame_merge_objects(const cv::Mat &imgOriginal,
   }
 
   frame_data.all_objects =
-      od::AllObjects{imgOriginal.rows / nb_pixels_per_tile,
-                     imgOriginal.cols / nb_pixels_per_tile};
+      od::AllObjects{static_cast<size_t>(rectangle.height / nb_pixels_per_tile),
+                     static_cast<size_t>(rectangle.width / nb_pixels_per_tile)};
   for (const auto &rect : rectangles) {
     const auto calcSmoothedContours = [&, rect, rings, gradient_threshold]() {
       if (debug)
@@ -369,10 +369,12 @@ FrameData process_frame_merge_objects(const cv::Mat &imgOriginal,
   for (const auto &task : append_right_tasks) {
     executor.wait_for(task);
   }
-  frame_data.all_objects = line_objects[0];
+  frame_data.result_objects = line_objects[0];
   for (size_t i = 1; i < line_objects.size(); ++i) {
-    frame_data.all_objects.append_down(line_objects[i]);
+    frame_data.result_objects.append_down(line_objects[i]);
   }
+
+  frame_data.all_rectangles = od::deduce_rectangles(frame_data.result_objects);
 
   return frame_data;
 }

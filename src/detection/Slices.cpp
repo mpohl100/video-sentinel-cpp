@@ -72,9 +72,10 @@ std::vector<Object> deduce_objects(Slices &slices) {
   return objects;
 }
 
-AllRectangles deduce_rectangles(const std::vector<Object> &objects) {
+AllRectangles
+deduce_rectangles(const ObjectsPerRectangle &objects_per_rectangle) {
   AllRectangles ret;
-  for (const auto &object : objects) {
+  for (const auto &object : objects_per_rectangle.get_objects()) {
     auto rectangle = object.slices.to_rectangle();
     const auto expanded_rectangle =
         Rectangle{rectangle.x - 5, rectangle.y - 5, rectangle.width + 10,
@@ -107,7 +108,12 @@ void establishing_shot_slices(AllRectangles &ret, const cv::Mat &contours,
   if constexpr (debug) {
     std::cout << "deducing rectangles ..." << std::endl;
   }
-  const auto all_rectangles = deduce_rectangles(objects);
+  auto objects_per_rectangle = ObjectsPerRectangle{};
+  objects_per_rectangle.set_rectangle(rectangle);
+  for (const auto &object : objects) {
+    objects_per_rectangle.insert_object(object);
+  }
+  const auto all_rectangles = deduce_rectangles(objects_per_rectangle);
   static std::mutex mutex;
   std::lock_guard<std::mutex> lock(mutex);
   ret.rectangles.insert(ret.rectangles.end(), all_rectangles.rectangles.begin(),
@@ -116,7 +122,7 @@ void establishing_shot_slices(AllRectangles &ret, const cv::Mat &contours,
 
 void print() { std::cout << "I am alive!" << std::endl; }
 
-void establishing_slot_objects(ObjectsPerRectangle &ret,
+void establishing_shot_objects(ObjectsPerRectangle &ret,
                                const cv::Mat &contours,
                                const Rectangle &rectangle) {
   constexpr auto debug = false;
@@ -137,7 +143,7 @@ void establishing_slot_objects(ObjectsPerRectangle &ret,
     std::cout << "deducing objects ..." << std::endl;
   }
   const auto objects = deduce_objects(slices);
-  for(const auto & object : objects){
+  for (const auto &object : objects) {
     ret.insert_object(object);
   }
   ret.set_rectangle(rectangle);
