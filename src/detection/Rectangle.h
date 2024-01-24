@@ -37,6 +37,19 @@ struct Rectangle {
     width += other.width;
   }
 
+  void merge_down(const Rectangle &rectangle){
+    if(x != rectangle.x){
+      throw std::runtime_error("Cannot merge down because of x");
+    }
+    if((y + height) != rectangle.y){
+      throw std::runtime_error("Cannot merge down because of y");
+    }
+    if(width != rectangle.width){
+      throw std::runtime_error("Cannot merge down because of width");
+    }
+    height += rectangle.height;
+  }
+
   std::string to_string() const{
     return "Rectangle{x: " + std::to_string(x) + "; y: " + std::to_string(y) + "; width: " + std::to_string(width) + "; height: " + std::to_string(height) + "}";
   }

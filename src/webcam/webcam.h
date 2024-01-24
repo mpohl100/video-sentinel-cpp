@@ -34,7 +34,8 @@ struct FrameData {
   cv::Mat gradient;
   cv::Mat smoothed_contours_mat;
   cv::Mat smoothed_gradient_mat;
-  od::ObjectsPerRectangle all_objects;
+  od::AllObjects all_objects;
+  od::ObjectsPerRectangle result_objects;
   od::AllRectangles all_rectangles;
 
   FrameData() = default;
