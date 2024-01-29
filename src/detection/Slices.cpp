@@ -54,18 +54,18 @@ Slices deduce_slices(const cv::Mat &contours, const Rectangle &rectangle) {
   return slices;
 }
 
-std::vector<Object> deduce_objects(Slices &slices) {
-  std::vector<Object> objects;
+std::vector<std::shared_ptr<Object>> deduce_objects(Slices &slices) {
+  std::vector<std::shared_ptr<Object>> objects;
   while (slices.contains_slices()) {
     std::vector<AnnotatedSlice> current_slices;
     const auto first_slice = slices.get_first_slice();
     current_slices.push_back(first_slice);
-    auto current_object = Object{Slices{
-        math2d::Point{first_slice.slice.start.x, first_slice.slice.start.y}}};
-    current_object.slices.slices.push_back(current_slices);
+    auto current_object = std::make_shared<Object>(Slices{
+        math2d::Point{first_slice.slice.start.x, first_slice.slice.start.y}});
+    current_object->slices.slices.push_back(current_slices);
     while (!current_slices.empty()) {
       current_slices = slices.get_touching_slices(current_slices);
-      current_object.slices.slices.push_back(current_slices);
+      current_object->slices.slices.push_back(current_slices);
     }
     objects.push_back(current_object);
   }
@@ -76,7 +76,7 @@ AllRectangles
 deduce_rectangles(const ObjectsPerRectangle &objects_per_rectangle) {
   AllRectangles ret;
   for (const auto &object : objects_per_rectangle.get_objects()) {
-    auto rectangle = object.slices.to_rectangle();
+    auto rectangle = object->slices.to_rectangle();
     const auto expanded_rectangle =
         Rectangle{rectangle.x - 5, rectangle.y - 5, rectangle.width + 10,
                   rectangle.height + 10};
@@ -143,7 +143,7 @@ void establishing_shot_objects(ObjectsPerRectangle &ret,
     std::cout << "deducing objects ..." << std::endl;
   }
   const auto objects = deduce_objects(slices);
-  for (const auto &object : objects) {
+  for (auto object : objects) {
     ret.insert_object(object);
   }
   ret.set_rectangle(rectangle);
