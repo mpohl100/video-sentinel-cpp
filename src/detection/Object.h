@@ -181,10 +181,10 @@ struct AllObjects {
   AllObjects(AllObjects &&) = default;
   AllObjects &operator=(const AllObjects &) = default;
   AllObjects &operator=(AllObjects &&) = default;
-  AllObjects(size_t rows, size_t cols) : objects_per_rectangle{rows, cols} {}
+  AllObjects(size_t rows, size_t cols) : objects_per_rectangle{cols, rows} {}
 
-  ObjectsPerRectangle &get(size_t x, size_t y) {
-    return objects_per_rectangle.get(x, y);
+  ObjectsPerRectangle &get(size_t row, size_t col) {
+    return objects_per_rectangle.get(col, row);
   }
 
   size_t get_rows() const { return objects_per_rectangle.height(); }

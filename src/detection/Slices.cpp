@@ -142,8 +142,8 @@ void establishing_shot_objects(ObjectsPerRectangle &ret,
     }
     std::cout << "deducing objects ..." << std::endl;
   }
-  const auto objects = deduce_objects(slices);
-  for (auto object : objects) {
+  auto objects = deduce_objects(slices);
+  for (const auto& object : objects) {
     ret.insert_object(object);
   }
   ret.set_rectangle(rectangle);

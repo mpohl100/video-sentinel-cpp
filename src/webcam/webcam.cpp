@@ -170,11 +170,11 @@ std::vector<od::Rectangle>
 split_rectangle_into_parts(const od::Rectangle &rectangle,
                            int nb_pixels_per_tile) {
   std::vector<od::Rectangle> rectangles;
-  for (size_t i = rectangle.x; i < rectangle.x + rectangle.width;
-       i += nb_pixels_per_tile) {
-    for (size_t j = rectangle.y; j < rectangle.y + rectangle.height;
-         j += nb_pixels_per_tile) {
-      rectangles.emplace_back(i, j, nb_pixels_per_tile, nb_pixels_per_tile);
+  for (size_t y = rectangle.y; y < rectangle.y + rectangle.height;
+       y += nb_pixels_per_tile) {
+    for (size_t x = rectangle.x; x < rectangle.x + rectangle.width;
+         x += nb_pixels_per_tile) {
+      rectangles.emplace_back(x, y, nb_pixels_per_tile, nb_pixels_per_tile);
     }
   }
   return rectangles;
@@ -291,9 +291,16 @@ FrameData process_frame_merge_objects(const cv::Mat &imgOriginal,
     gradient_tasks.emplace_back(calculation.make_task());
   }
 
-  frame_data.all_objects =
-      od::AllObjects{static_cast<size_t>(rectangle.width / nb_pixels_per_tile),
-                     static_cast<size_t>(rectangle.height / nb_pixels_per_tile)};
+  // print all rectangles:
+  if constexpr (debug) {
+    for (const auto &rect : rectangles) {
+      std::cout << "rect: " << rect.to_string() << std::endl;
+    }
+  }
+
+  frame_data.all_objects = od::AllObjects{
+      static_cast<size_t>(rectangle.height / nb_pixels_per_tile) + 1,
+      static_cast<size_t>(rectangle.width / nb_pixels_per_tile) + 1};
   for (const auto &rect : rectangles) {
     const auto calcSmoothedContours = [&, rect, rings, gradient_threshold]() {
       if (debug)
@@ -349,17 +356,17 @@ FrameData process_frame_merge_objects(const cv::Mat &imgOriginal,
   for (auto &smoothing_task : smoothing_tasks) {
     executor.wait_for(smoothing_task);
   }
-
-  // print all rectangles in the matrix
-  for (size_t row = 0; row < frame_data.all_objects.get_rows(); ++row) {
-    for (size_t col = 0; col < frame_data.all_objects.get_cols(); ++col) {
-      std::cout << "row " << row << " col " << col << ": ";
-      std::cout << frame_data.all_objects.get(row, col).get_rectangle().to_string()
-                << std::endl;
+  if constexpr (debug) {
+    // print all rectangles in the matrix
+    for (size_t row = 0; row < frame_data.all_objects.get_rows(); ++row) {
+      for (size_t col = 0; col < frame_data.all_objects.get_cols(); ++col) {
+        std::cout << "row " << row << " col " << col << ": ";
+        std::cout
+            << frame_data.all_objects.get(row, col).get_rectangle().to_string()
+            << std::endl;
+      }
     }
   }
-
-
   // merge all objects
   std::vector<par::Task> append_right_tasks;
   std::vector<od::ObjectsPerRectangle> line_objects;

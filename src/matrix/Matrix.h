@@ -18,8 +18,14 @@ public:
   Matrix &operator=(const Matrix &) = default;
   Matrix &operator=(Matrix &&) = default;
 
-  T &get(size_t x, size_t y) { return _data[x + y * _width]; }
-  const T &get(size_t x, size_t y) const { return _data[x + y * _width]; }
+  T &get(size_t x, size_t y) { 
+    if(x >= _width || y >= _height) throw std::out_of_range("Matrix::get out of range x: " + std::to_string(x) + " y: " + std::to_string(y) + " width: " + std::to_string(_width) + " height: " + std::to_string(_height));
+    return _data[x + y * _width]; 
+  }
+  const T &get(size_t x, size_t y) const { 
+    if(x >= _width || y >= _height) throw std::out_of_range("Matrix::get out of range x: " + std::to_string(x) + " y: " + std::to_string(y) + " width: " + std::to_string(_width) + " height: " + std::to_string(_height));
+    return _data[x + y * _width]; 
+  }
 
   size_t width() const { return _width; }
 
