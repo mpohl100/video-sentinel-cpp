@@ -292,8 +292,8 @@ FrameData process_frame_merge_objects(const cv::Mat &imgOriginal,
   }
 
   frame_data.all_objects =
-      od::AllObjects{static_cast<size_t>(rectangle.height / nb_pixels_per_tile),
-                     static_cast<size_t>(rectangle.width / nb_pixels_per_tile)};
+      od::AllObjects{static_cast<size_t>(rectangle.width / nb_pixels_per_tile),
+                     static_cast<size_t>(rectangle.height / nb_pixels_per_tile)};
   for (const auto &rect : rectangles) {
     const auto calcSmoothedContours = [&, rect, rings, gradient_threshold]() {
       if (debug)
@@ -310,8 +310,8 @@ FrameData process_frame_merge_objects(const cv::Mat &imgOriginal,
         std::cout << "calculating all rectangles for rect " << rect.to_string()
                   << std::endl;
       od::establishing_shot_objects(
-          frame_data.all_objects.get(rect.x / nb_pixels_per_tile,
-                                     rect.y / nb_pixels_per_tile),
+          frame_data.all_objects.get(rect.y / nb_pixels_per_tile,
+                                     rect.x / nb_pixels_per_tile),
           frame_data.smoothed_contours_mat, rect);
       if (debug)
         std::cout << "all rectangles processed for rect " << rect.to_string()
@@ -350,6 +350,16 @@ FrameData process_frame_merge_objects(const cv::Mat &imgOriginal,
     executor.wait_for(smoothing_task);
   }
 
+  // print all rectangles in the matrix
+  for (size_t row = 0; row < frame_data.all_objects.get_rows(); ++row) {
+    for (size_t col = 0; col < frame_data.all_objects.get_cols(); ++col) {
+      std::cout << "row " << row << " col " << col << ": ";
+      std::cout << frame_data.all_objects.get(row, col).get_rectangle().to_string()
+                << std::endl;
+    }
+  }
+
+
   // merge all objects
   std::vector<par::Task> append_right_tasks;
   std::vector<od::ObjectsPerRectangle> line_objects;
@@ -360,6 +370,7 @@ FrameData process_frame_merge_objects(const cv::Mat &imgOriginal,
       const auto append_right = [&, row, col]() {
         line_objects[row].append_right(frame_data.all_objects.get(row, col));
       };
+      flow.add(par::Calculation{append_right});
     }
     append_right_tasks.emplace_back(flow.make_task());
   }

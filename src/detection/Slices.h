@@ -111,7 +111,7 @@ struct Slices {
 
   bool touching_right(const Rectangle &rectangle) const {
     for (const auto &slice : slices) {
-      if (slice.rbegin()->slice.end.x >= rectangle.x + rectangle.width - 1) {
+      if (!slice.empty() && slice.rbegin()->slice.end.x >= rectangle.x + rectangle.width - 1) {
         return true;
       }
     }
@@ -119,7 +119,7 @@ struct Slices {
   }
 
   bool touching_down(const Rectangle &rectangle) const {
-    if (slices.rbegin()->rbegin()->slice.start.y >=
+    if (!slices.empty() && !slices.rbegin()->empty() && slices.rbegin()->rbegin()->slice.start.y >=
         rectangle.y + rectangle.height - 1) {
       return true;
     }
@@ -128,7 +128,7 @@ struct Slices {
 
   bool touching_left(const Rectangle &rectangle) const {
     for (const auto &slice : slices) {
-      if (slice.begin()->slice.start.x <= rectangle.x) {
+      if (!slice.empty() && slice.begin()->slice.start.x <= rectangle.x) {
         return true;
       }
     }
@@ -136,7 +136,7 @@ struct Slices {
   }
 
   bool touching_up(const Rectangle &rectangle) const {
-    if (slices.begin()->begin()->slice.start.y <= rectangle.y) {
+    if (!slices.empty() && !slices.begin()->empty() && slices.begin()->begin()->slice.start.y <= rectangle.y) {
       return true;
     }
     return false;

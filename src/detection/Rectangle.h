@@ -25,27 +25,27 @@ struct Rectangle {
   }
 
   void merge_right(const Rectangle &other) {
-    if(!x + width != other.x){
-      throw std::runtime_error("Cannot merge right because of x");
+    if((x + width) != other.x){
+      throw std::runtime_error("Cannot merge right because of x! this: " + to_string() + "; other: " + other.to_string());
     }
     if(y != other.y){
-      throw std::runtime_error("Cannot merge right because of y");
+      throw std::runtime_error("Cannot merge right because of y! this: " + to_string() + "; other: " + other.to_string());
     }
     if(height != other.height){
-      throw std::runtime_error("Cannot merge right because of height");
+      throw std::runtime_error("Cannot merge right because of height! this: " + to_string() + "; other: " + other.to_string());
     }
     width += other.width;
   }
 
   void merge_down(const Rectangle &rectangle){
     if(x != rectangle.x){
-      throw std::runtime_error("Cannot merge down because of x");
+      throw std::runtime_error("Cannot merge down because of x! this: " + to_string() + "; other: " + rectangle.to_string());
     }
     if((y + height) != rectangle.y){
-      throw std::runtime_error("Cannot merge down because of y");
+      throw std::runtime_error("Cannot merge down because of y! this: " + to_string() + "; other: " + rectangle.to_string());
     }
     if(width != rectangle.width){
-      throw std::runtime_error("Cannot merge down because of width");
+      throw std::runtime_error("Cannot merge down because of width! this: " + to_string() + "; other: " + rectangle.to_string());
     }
     height += rectangle.height;
   }
