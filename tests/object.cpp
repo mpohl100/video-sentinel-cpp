@@ -72,7 +72,7 @@ TEST_CASE("Object", "[object]") {
     CHECK_FALSE(object.try_merge_right(object2));
     CHECK_FALSE(object.try_merge_down(object2));
   }
-    SECTION("ObjectNotTouchingRightObject"){
+  SECTION("ObjectNotTouchingRightObject"){
     const auto start = math2d::Point{0, 1};
     const auto end = math2d::Point{9, 1};
     const auto slices = get_test_slices(start, end);
@@ -85,6 +85,35 @@ TEST_CASE("Object", "[object]") {
 
     CHECK_FALSE(object.try_merge_right(object2));
     CHECK_FALSE(object.try_merge_down(object2));
+  }
+  SECTION("ObjectTouchingDownObject"){
+    const auto start = math2d::Point{0, 1};
+    const auto end = math2d::Point{10, 1};
+    const auto slices = get_test_slices(start, end);
+    auto object = od::Object{slices};
+
+    const auto start2 = math2d::Point{0, 2};
+    const auto end2 = math2d::Point{10, 2};
+    const auto slices2 = get_test_slices(start2, end2);
+    auto object2 = od::Object{slices2};
+
+    CHECK(object.try_merge_down(object2));
+    CHECK_FALSE(object.try_merge_down(object2));
+    CHECK_FALSE(object.try_merge_right(object2));
+  }
+  SECTION("ObjectNotTouchingDownObject"){
+    const auto start = math2d::Point{0, 1};
+    const auto end = math2d::Point{10, 1};
+    const auto slices = get_test_slices(start, end);
+    auto object = od::Object{slices};
+
+    const auto start2 = math2d::Point{0, 3};
+    const auto end2 = math2d::Point{10, 3};
+    const auto slices2 = get_test_slices(start2, end2);
+    auto object2 = od::Object{slices2};
+
+    CHECK_FALSE(object.try_merge_down(object2));
+    CHECK_FALSE(object.try_merge_right(object2));
   }
 }
 
