@@ -115,6 +115,54 @@ TEST_CASE("Object", "[object]") {
     CHECK_FALSE(object.try_merge_down(object2));
     CHECK_FALSE(object.try_merge_right(object2));
   }
+  SECTION("ObjectTouchingDownObjectDiagonally"){
+    const auto start = math2d::Point{10, 1};
+    const auto end = math2d::Point{20, 1};
+    const auto slices = get_test_slices(start, end);
+    auto object = od::Object{slices};
+    auto second_object = object;
+
+    const auto start2 = math2d::Point{0, 2};
+    const auto end2 = math2d::Point{10, 2};
+    const auto slices2 = get_test_slices(start2, end2);
+    auto object2 = od::Object{slices2};
+
+    CHECK(object.try_merge_down(object2));
+    CHECK_FALSE(object.try_merge_down(object2));
+    CHECK_FALSE(object.try_merge_right(object2));
+
+    const auto start3 = math2d::Point{20, 2};
+    const auto end3 = math2d::Point{30, 2};
+    const auto slices3 = get_test_slices(start3, end3);
+    auto object3 = od::Object{slices3};
+
+    CHECK(second_object.try_merge_down(object3));
+    CHECK_FALSE(second_object.try_merge_down(object3));
+    CHECK_FALSE(second_object.try_merge_right(object3));
+  }
+  SECTION("ObjectNotTouchingDownObjectDiagonally"){
+    const auto start = math2d::Point{10, 1};
+    const auto end = math2d::Point{20, 1};
+    const auto slices = get_test_slices(start, end);
+    auto object = od::Object{slices};
+    auto second_object = object;
+
+    const auto start2 = math2d::Point{0, 2};
+    const auto end2 = math2d::Point{8, 2};
+    const auto slices2 = get_test_slices(start2, end2);
+    auto object2 = od::Object{slices2};
+
+    CHECK_FALSE(object.try_merge_down(object2));
+    CHECK_FALSE(object.try_merge_right(object2));
+
+    const auto start3 = math2d::Point{22, 2};
+    const auto end3 = math2d::Point{30, 2};
+    const auto slices3 = get_test_slices(start3, end3);
+    auto object3 = od::Object{slices3};
+
+    CHECK_FALSE(second_object.try_merge_down(object3));
+    CHECK_FALSE(second_object.try_merge_right(object3));
+  }
 }
 
 } // namespace
