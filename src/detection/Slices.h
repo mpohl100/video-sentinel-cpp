@@ -146,7 +146,7 @@ struct Slices {
     const auto overlapping_lines = get_slices_on_the_same_line(other);
     for (const auto &[this_slice, other_slice] : overlapping_lines) {
       if (this_slice && other_slice) {
-        if (this_slice->rbegin()->slice.end.x >=
+        if (this_slice->rbegin()->slice.end.x + 1 ==
             other_slice->begin()->slice.start.x) {
           return true;
         }
