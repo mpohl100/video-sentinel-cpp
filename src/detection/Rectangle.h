@@ -15,6 +15,11 @@ struct Rectangle {
   Rectangle &operator=(Rectangle &&) = default;
   Rectangle(const math2d::Rectangle &rectangle);
   Rectangle(int xx, int yy, int w, int h) : x{xx}, y{yy}, width{w}, height{h} {}
+  Rectangle(math2d::Point start, math2d::Point end)
+      : x{static_cast<int>(start.x)},
+        y{static_cast<int>(start.y)},
+        width{static_cast<int>(end.x - start.x)},
+        height{static_cast<int>(end.y - start.y)} {}
 
   math2d::Rectangle to_math2d_rectangle() const;
 
