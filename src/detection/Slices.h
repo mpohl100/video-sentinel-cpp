@@ -18,10 +18,18 @@ struct Slice {
                                     const Slice &rhs) = default;
 
   bool touches(const Slice &other) const {
-    return (start >= other.start && start <= other.end) ||
-           (end >= other.start && end <= other.end) ||
-           (other.start >= start && other.start <= end) ||
-           (other.end >= start && other.end <= end);
+    return (start.x >= other.start.x && start.x <= other.end.x) ||
+           (end.x >= other.start.x && end.x <= other.end.x) ||
+           (other.start.x >= start.x && other.start.x <= end.x) ||
+           (other.end.x >= start.x && other.end.x <= end.x);
+  }
+
+  bool touches_with_tolerance(const Slice &other) const {
+    constexpr int tolerance = 1;
+    return (start.x >= (other.start.x - tolerance) && start.x <= (other.end.x + tolerance)) ||
+           (end.x >= (other.start.x - tolerance) && end.x <= (other.end.x + tolerance)) ||
+           (other.start.x >= (start.x - tolerance) && other.start.x <= (end.x + tolerance)) ||
+           (other.end.x >= (start.x - tolerance) && other.end.x <= (end.x + tolerance));
   }
 };
 
@@ -272,7 +280,7 @@ private:
     }
     for (const auto &top_slice : top) {
       for (const auto &bottom_slice : bottom) {
-        if (top_slice.slice.touches(bottom_slice.slice)) {
+        if (top_slice.slice.touches_with_tolerance(bottom_slice.slice)) {
           return true;
         }
       }
