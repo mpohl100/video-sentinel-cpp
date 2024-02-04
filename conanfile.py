@@ -1,4 +1,5 @@
-from conans import ConanFile, CMake
+from conan import ConanFile
+from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps
 
 class VideoSentinelConan(ConanFile):
     name = "VideoSentinel"
@@ -14,21 +15,20 @@ class VideoSentinelConan(ConanFile):
         "clara/1.1.5",
         "opencv/4.5.5"
     ]
-    options = {"opencv:with_v4l": [True, False]}
-    default_options = {"opencv:with_v4l": True}
+    options = {"opencv/*:with_v4l": [True, False]}
+    default_options = {"opencv/*:with_v4l": True}
 
     def layout(self):
         self.folders.build = "cmake_build"
         self.folders.source = "src"
 
     def configure(self):
-        if self.options["opencv"].with_v4l:
-            self.options["opencv"].with_v4l = True
+        if self.options["opencv/*"].with_v4l:
+            self.options["opencv/*"].with_v4l = True
 
     def requirements(self):
-        if self.options["opencv"].with_v4l:
-            # Override libpng for OpenCV
-            self.requires["opencv"].ref.requires["libpng"].version = "1.6.42"
+        # Override libpng for OpenCV
+        self.requires("libpng/1.6.42", override=True)
 
     def build(self):
         cmake = CMake(self)
