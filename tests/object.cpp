@@ -374,6 +374,46 @@ TEST_CASE("Object", "[object]") {
     CHECK(objects_per_rectangle_left.get_objects_touching_left().size() == 0);
     CHECK(objects_per_rectangle_left.get_objects_touching_up().size() == 0);
   }
+  SECTION("ObjectsPerRectangleAppendDown"){
+    const auto rectangle_up = od::Rectangle{math2d::Point{0, 0}, math2d::Point{10, 10}};
+    auto objects_per_rectangle_up = od::ObjectsPerRectangle{};
+    objects_per_rectangle_up.set_rectangle(rectangle_up);
+
+    auto inside_object = std::make_shared<od::Object>(get_test_slices(math2d::Point{1, 1}, math2d::Point{2, 2}));
+    auto touching_object_down = std::make_shared<od::Object>(get_test_slices(math2d::Point{4, 4}, math2d::Point{8, 9}));
+    objects_per_rectangle_up.insert_object(inside_object);
+    objects_per_rectangle_up.insert_object(touching_object_down);
+
+    CHECK(objects_per_rectangle_up.get_objects().size() == 2);
+    CHECK(objects_per_rectangle_up.get_objects_touching_right().size() == 0);
+    CHECK(objects_per_rectangle_up.get_objects_touching_down().size() == 1);
+    CHECK(objects_per_rectangle_up.get_objects_touching_left().size() == 0);
+    CHECK(objects_per_rectangle_up.get_objects_touching_up().size() == 0);
+
+    const auto rectangle_down = od::Rectangle{math2d::Point{0, 10}, math2d::Point{10, 20}};
+    auto objects_per_rectangle_down = od::ObjectsPerRectangle{};
+    objects_per_rectangle_down.set_rectangle(rectangle_down);
+
+    auto inside_object_down = std::make_shared<od::Object>(get_test_slices(math2d::Point{1, 15}, math2d::Point{2, 16}));
+    auto touching_object_up = std::make_shared<od::Object>(get_test_slices(math2d::Point{4, 10}, math2d::Point{8, 14}));
+    objects_per_rectangle_down.insert_object(inside_object_down);
+    objects_per_rectangle_down.insert_object(touching_object_up);
+
+    CHECK(objects_per_rectangle_down.get_objects().size() == 2);
+    CHECK(objects_per_rectangle_down.get_objects_touching_right().size() == 0);
+    CHECK(objects_per_rectangle_down.get_objects_touching_down().size() == 0);
+    CHECK(objects_per_rectangle_down.get_objects_touching_left().size() == 0);
+    CHECK(objects_per_rectangle_down.get_objects_touching_up().size() == 1);
+
+    objects_per_rectangle_up.append_down(objects_per_rectangle_down);
+
+    CHECK(objects_per_rectangle_up.get_rectangle().to_math2d_rectangle() == od::Rectangle{math2d::Point{0, 0}, math2d::Point{10, 20}}.to_math2d_rectangle());
+    CHECK(objects_per_rectangle_up.get_objects().size() == 3);
+    CHECK(objects_per_rectangle_up.get_objects_touching_right().size() == 0);
+    CHECK(objects_per_rectangle_up.get_objects_touching_down().size() == 0);
+    CHECK(objects_per_rectangle_up.get_objects_touching_left().size() == 0);
+    CHECK(objects_per_rectangle_up.get_objects_touching_up().size() == 0);
+  }
 }
 
 } // namespace
