@@ -41,6 +41,10 @@ struct Object {
 
 struct ObjectsPerRectangle {
   const std::vector<std::shared_ptr<Object>> &get_objects() const { return objects; }
+  const std::vector<std::shared_ptr<Object>> &get_objects_touching_right() const { return objects_touching_right; }
+  const std::vector<std::shared_ptr<Object>> &get_objects_touching_left() const { return objects_touching_left; }
+  const std::vector<std::shared_ptr<Object>> &get_objects_touching_down() const { return objects_touching_down; }
+  const std::vector<std::shared_ptr<Object>> &get_objects_touching_up() const { return objects_touching_up; }
 
   void set_rectangle(const Rectangle &rectangle) {
     this->rectangle = rectangle;
