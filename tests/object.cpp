@@ -8,14 +8,19 @@
 namespace {
 
 const auto get_test_slices(const math2d::Point &start, const math2d::Point &end) {
-  if(start.y != end.y) {
-    throw std::runtime_error("start and end y must be the same");
+  if(start.y > end.y) {
+    throw std::runtime_error("start y must be smaller or equal to end y");
   }
-  const auto slice = od::Slice{start, end};
-  auto slices = od::Slices{slice.start};
-  std::vector<od::AnnotatedSlice> current_line;
-  current_line.push_back(od::AnnotatedSlice{slice, static_cast<size_t>(start.y)});
-  slices.slices.push_back(current_line);
+  if(start.x > end.x) {
+    throw std::runtime_error("start x must be smaller or equal to end x");
+  }
+  auto slices = od::Slices{start};
+  for(auto y = start.y; y <= end.y; ++y) {
+    std::vector<od::AnnotatedSlice> current_line;
+    const auto slice = od::Slice{math2d::Point{start.x, y}, math2d::Point{end.x, y}};
+    current_line.push_back(od::AnnotatedSlice{slice, static_cast<size_t>(y)});
+    slices.slices.push_back(current_line);
+  }
   return slices;
 }
 
@@ -162,6 +167,45 @@ TEST_CASE("Object", "[object]") {
 
     CHECK_FALSE(second_object.try_merge_down(object3));
     CHECK_FALSE(second_object.try_merge_right(object3));
+  }
+  SECTION("ObjectsPerRectangleObjectInCorrectTouchingCaches"){
+    const auto start = math2d::Point{0, 1};
+    const auto end = math2d::Point{10, 3};
+    const auto slices = get_test_slices(start, end);
+    auto object = std::make_shared<od::Object>(slices);
+
+    // test fitting rectangle touches everything
+    auto objects_per_rectangle = od::ObjectsPerRectangle{};
+    objects_per_rectangle.set_rectangle(od::Rectangle{start, math2d::Point{end.x + 1, end.y + 1}});
+    objects_per_rectangle.insert_object(object);
+    
+    CHECK(objects_per_rectangle.get_objects().size() == 1);
+    CHECK(objects_per_rectangle.get_objects_touching_right().size() == 1);
+    CHECK(objects_per_rectangle.get_objects_touching_down().size() == 1);
+    CHECK(objects_per_rectangle.get_objects_touching_left().size() == 1);
+    CHECK(objects_per_rectangle.get_objects_touching_up().size() == 1);
+
+    // test smaller rectangle touches everything
+    auto smaller_objects_per_rectangle = od::ObjectsPerRectangle{};
+    smaller_objects_per_rectangle.set_rectangle(od::Rectangle{math2d::Point{start.x + 1, start.y + 1}, math2d::Point{end.x - 1, end.y - 1}});
+    smaller_objects_per_rectangle.insert_object(object);
+
+    CHECK(smaller_objects_per_rectangle.get_objects().size() == 1);
+    CHECK(smaller_objects_per_rectangle.get_objects_touching_right().size() == 1);
+    CHECK(smaller_objects_per_rectangle.get_objects_touching_down().size() == 1);
+    CHECK(smaller_objects_per_rectangle.get_objects_touching_left().size() == 1);
+    CHECK(smaller_objects_per_rectangle.get_objects_touching_up().size() == 1);
+
+    // test bigger rectangle touches nothing
+    auto bigger_objects_per_rectangle = od::ObjectsPerRectangle{};
+    bigger_objects_per_rectangle.set_rectangle(od::Rectangle{math2d::Point{start.x - 1, start.y - 1}, math2d::Point{end.x + 2, end.y + 2}});
+    bigger_objects_per_rectangle.insert_object(object);
+
+    CHECK(bigger_objects_per_rectangle.get_objects().size() == 1);
+    CHECK(bigger_objects_per_rectangle.get_objects_touching_right().size() == 0);
+    CHECK(bigger_objects_per_rectangle.get_objects_touching_down().size() == 0);
+    CHECK(bigger_objects_per_rectangle.get_objects_touching_left().size() == 0);
+    CHECK(bigger_objects_per_rectangle.get_objects_touching_up().size() == 0);
   }
 }
 
