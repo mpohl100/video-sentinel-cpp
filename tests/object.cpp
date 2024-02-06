@@ -206,6 +206,50 @@ TEST_CASE("Object", "[object]") {
     CHECK(bigger_objects_per_rectangle.get_objects_touching_down().size() == 0);
     CHECK(bigger_objects_per_rectangle.get_objects_touching_left().size() == 0);
     CHECK(bigger_objects_per_rectangle.get_objects_touching_up().size() == 0);
+
+    // test object touches everything except the right side
+    auto no_right_objects_per_rectangle = od::ObjectsPerRectangle{};
+    no_right_objects_per_rectangle.set_rectangle(od::Rectangle{start, math2d::Point{end.x + 2, end.y + 1}});
+    no_right_objects_per_rectangle.insert_object(object);
+
+    CHECK(no_right_objects_per_rectangle.get_objects().size() == 1);
+    CHECK(no_right_objects_per_rectangle.get_objects_touching_right().size() == 0);
+    CHECK(no_right_objects_per_rectangle.get_objects_touching_down().size() == 1);
+    CHECK(no_right_objects_per_rectangle.get_objects_touching_left().size() == 1);
+    CHECK(no_right_objects_per_rectangle.get_objects_touching_up().size() == 1);
+
+    // test object touches everything except the left side
+    auto no_left_objects_per_rectangle = od::ObjectsPerRectangle{};
+    no_left_objects_per_rectangle.set_rectangle(od::Rectangle{math2d::Point{start.x - 1, start.y}, math2d::Point{end.x + 1, end.y + 1}});
+    no_left_objects_per_rectangle.insert_object(object);
+
+    CHECK(no_left_objects_per_rectangle.get_objects().size() == 1);
+    CHECK(no_left_objects_per_rectangle.get_objects_touching_right().size() == 1);
+    CHECK(no_left_objects_per_rectangle.get_objects_touching_down().size() == 1);
+    CHECK(no_left_objects_per_rectangle.get_objects_touching_left().size() == 0);
+    CHECK(no_left_objects_per_rectangle.get_objects_touching_up().size() == 1);
+
+    // test object touches everything except the up side
+    auto no_up_objects_per_rectangle = od::ObjectsPerRectangle{};
+    no_up_objects_per_rectangle.set_rectangle(od::Rectangle{math2d::Point{start.x, start.y - 1}, math2d::Point{end.x + 1, end.y + 1}});
+    no_up_objects_per_rectangle.insert_object(object);
+
+    CHECK(no_up_objects_per_rectangle.get_objects().size() == 1);
+    CHECK(no_up_objects_per_rectangle.get_objects_touching_right().size() == 1);
+    CHECK(no_up_objects_per_rectangle.get_objects_touching_down().size() == 1);
+    CHECK(no_up_objects_per_rectangle.get_objects_touching_left().size() == 1);
+    CHECK(no_up_objects_per_rectangle.get_objects_touching_up().size() == 0);
+
+    // test object touches everything except the down side
+    auto no_down_objects_per_rectangle = od::ObjectsPerRectangle{};
+    no_down_objects_per_rectangle.set_rectangle(od::Rectangle{math2d::Point{start.x, start.y}, math2d::Point{end.x + 1, end.y + 2}});
+    no_down_objects_per_rectangle.insert_object(object);
+
+    CHECK(no_down_objects_per_rectangle.get_objects().size() == 1);
+    CHECK(no_down_objects_per_rectangle.get_objects_touching_right().size() == 1);
+    CHECK(no_down_objects_per_rectangle.get_objects_touching_down().size() == 0);
+    CHECK(no_down_objects_per_rectangle.get_objects_touching_left().size() == 1);
+    CHECK(no_down_objects_per_rectangle.get_objects_touching_up().size() == 1);
   }
 }
 
