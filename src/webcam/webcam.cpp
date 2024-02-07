@@ -364,6 +364,9 @@ FrameData process_frame_merge_objects(const cv::Mat &imgOriginal,
         std::cout
             << frame_data.all_objects.get(row, col).get_rectangle().to_string()
             << std::endl;
+        for(const auto& object : frame_data.all_objects.get(row, col).get_objects()){
+          std::cout << "object: " << object->get_bounding_box().to_string() << std::endl;
+        }
       }
     }
   }
@@ -375,7 +378,12 @@ FrameData process_frame_merge_objects(const cv::Mat &imgOriginal,
     auto flow = par::Flow{};
     for (size_t col = 1; col < frame_data.all_objects.get_cols(); ++col) {
       const auto append_right = [&, row, col]() {
+        if(debug){
+          std::cout << "Appending right row " << row << " col " << col << std::endl;
+        }
         line_objects[row].append_right(frame_data.all_objects.get(row, col));
+        if(debug)
+          std::cout << "Finished appending right row " << row << " col " << col << std::endl;
       };
       flow.add(par::Calculation{append_right});
     }
@@ -389,7 +397,11 @@ FrameData process_frame_merge_objects(const cv::Mat &imgOriginal,
   }
   frame_data.result_objects = line_objects[0];
   for (size_t i = 1; i < line_objects.size(); ++i) {
+    if(debug)
+      std::cout << "Appending down row " << i << std::endl;
     frame_data.result_objects.append_down(line_objects[i]);
+    if(debug)
+      std::cout << "Finished appending down row " << i << std::endl;
   }
 
   frame_data.all_rectangles = od::deduce_rectangles(frame_data.result_objects);
