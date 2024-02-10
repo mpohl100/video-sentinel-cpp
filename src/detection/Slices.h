@@ -40,6 +40,42 @@ struct AnnotatedSlice {
                                     const AnnotatedSlice &rhs) = default;
 };
 
+struct SliceLine{
+  SliceLine(const SliceLine &) = default;
+  SliceLine(SliceLine &&) = default;
+  SliceLine &operator=(const SliceLine &) = default;
+  SliceLine &operator=(SliceLine &&) = default;
+
+  SliceLine(std::vector<AnnotatedSlice> line) : _line{std::move(line)} {
+    if (!_line.empty()) {
+      line_number = _line.front().line_number;
+    }
+    else{
+      throw std::runtime_error("can not deduce line number from empty line");
+    }
+  }
+
+  void merge_right(const SliceLine &other) {
+    // if the linenumbers mismatch, throw
+    if (line_number != other.line_number) {
+      throw std::runtime_error(
+          "Cannot merge slicelines with different line numbers");
+    }
+    // do the merging of the slicelines
+    if (_line.back().slice.end.x >= other._line.front().slice.start.x) {
+      _line.back().slice.end.x = other._line.front().slice.end.x;
+    } else {
+      _line.push_back(other._line.front());
+    }
+    for (size_t i = 1; i < other._line.size(); ++i) {
+      _line.push_back(other._line[i]);
+    }
+  }
+private:
+  std::vector<AnnotatedSlice> _line;
+  size_t line_number = 0;
+};
+
 struct Slices {
   std::vector<std::vector<AnnotatedSlice>> slices;
   math2d::Point top_left = math2d::Point{0, 0};
