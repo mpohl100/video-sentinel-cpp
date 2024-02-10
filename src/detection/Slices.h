@@ -4,6 +4,7 @@
 
 #include "opencv2/core/mat.hpp"
 
+#include <optional>
 #include <vector>
 
 namespace od {
@@ -26,10 +27,14 @@ struct Slice {
 
   bool touches_with_tolerance(const Slice &other) const {
     constexpr int tolerance = 1;
-    return (start.x >= (other.start.x - tolerance) && start.x <= (other.end.x + tolerance)) ||
-           (end.x >= (other.start.x - tolerance) && end.x <= (other.end.x + tolerance)) ||
-           (other.start.x >= (start.x - tolerance) && other.start.x <= (end.x + tolerance)) ||
-           (other.end.x >= (start.x - tolerance) && other.end.x <= (end.x + tolerance));
+    return (start.x >= (other.start.x - tolerance) &&
+            start.x <= (other.end.x + tolerance)) ||
+           (end.x >= (other.start.x - tolerance) &&
+            end.x <= (other.end.x + tolerance)) ||
+           (other.start.x >= (start.x - tolerance) &&
+            other.start.x <= (end.x + tolerance)) ||
+           (other.end.x >= (start.x - tolerance) &&
+            other.end.x <= (end.x + tolerance));
   }
 };
 
@@ -40,7 +45,7 @@ struct AnnotatedSlice {
                                     const AnnotatedSlice &rhs) = default;
 };
 
-struct SliceLine{
+struct SliceLine {
   SliceLine(const SliceLine &) = default;
   SliceLine(SliceLine &&) = default;
   SliceLine &operator=(const SliceLine &) = default;
@@ -48,16 +53,27 @@ struct SliceLine{
 
   SliceLine(std::vector<AnnotatedSlice> line) : _line{std::move(line)} {
     if (!_line.empty()) {
-      line_number = _line.front().line_number;
-    }
-    else{
+      _line_number = _line.front().line_number;
+    } else {
       throw std::runtime_error("can not deduce line number from empty line");
     }
   }
 
+  SliceLine(std::vector<AnnotatedSlice> line, size_t line_number)
+      : _line{std::move(line)}, _line_number{line_number} {
+    for (const auto &slice : _line) {
+      if (slice.line_number != line_number) {
+        throw std::runtime_error("line number mismatch");
+      }
+    }
+  }
+
+  size_t line_number() const { return _line_number; }
+  const std::vector<AnnotatedSlice> &line() const { return _line; }
+
   void merge_right(const SliceLine &other) {
     // if the linenumbers mismatch, throw
-    if (line_number != other.line_number) {
+    if (line_number() != other.line_number()) {
       throw std::runtime_error(
           "Cannot merge slicelines with different line numbers");
     }
@@ -71,13 +87,33 @@ struct SliceLine{
       _line.push_back(other._line[i]);
     }
   }
+
+  bool does_overlap(const SliceLine &bottom) const {
+    if(line().empty() || bottom.line().empty()) {
+      return false;
+    }
+    if (line_number() + 1 != bottom.line_number()) {
+      return false;
+    }
+    for (const auto &top_slice : line()) {
+      for (const auto &bottom_slice : bottom.line()) {
+        if (top_slice.slice.touches_with_tolerance(bottom_slice.slice)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  void pop_back() { _line.pop_back(); }
+
 private:
   std::vector<AnnotatedSlice> _line;
-  size_t line_number = 0;
+  size_t _line_number = 0;
 };
 
 struct Slices {
-  std::vector<std::vector<AnnotatedSlice>> slices;
+  std::vector<SliceLine> slices;
   math2d::Point top_left = math2d::Point{0, 0};
 
   Slices() = default;
@@ -89,39 +125,38 @@ struct Slices {
 
   bool contains_slices() const {
     for (const auto &slice_line : slices) {
-      if (!slice_line.empty()) {
+      if (!slice_line.line().empty()) {
         return true;
       }
     }
     return false;
   }
 
-  AnnotatedSlice get_first_slice() {
+  std::optional<AnnotatedSlice> get_first_slice() {
     for (auto &slice_line : slices) {
-      if (!slice_line.empty()) {
-        auto slice = slice_line.back();
+      if (!slice_line.line().empty()) {
+        auto slice = slice_line.line().back();
         slice_line.pop_back();
         return slice;
       }
     }
-    return AnnotatedSlice{};
+    return std::nullopt;
   }
 
-  std::vector<AnnotatedSlice>
-  get_touching_slices(const std::vector<AnnotatedSlice> &slices_of_object) {
-    if (slices_of_object.empty()) {
-      return {};
+  std::optional<SliceLine> get_touching_slices(const SliceLine &slices_of_object) {
+    if (slices_of_object.line().empty()) {
+      throw std::runtime_error("slices_of_object is empty");
     }
-    const auto last_slice = slices_of_object.back();
-    const auto line_number = last_slice.line_number;
+    const auto last_slice = slices_of_object.line().back();
+    const auto line_number = slices_of_object.line_number();
     if (get_index(line_number) == slices.size() - 1) {
-      return {};
+      return std::nullopt;
     }
     const auto next_line_index = get_index(line_number + 1);
     auto &next_line = slices[next_line_index];
     std::vector<AnnotatedSlice> ret;
-    for (const auto &annotatedSlice : slices_of_object) {
-      for (const auto &slice : next_line) {
+    for (const auto &annotatedSlice : slices_of_object.line()) {
+      for (const auto &slice : next_line.line()) {
         if (annotatedSlice.slice.touches(slice.slice)) {
           ret.push_back(slice);
         }
@@ -131,10 +166,13 @@ struct Slices {
     ret.erase(last, ret.end());
     std::sort(ret.begin(), ret.end());
     std::vector<AnnotatedSlice> cleared_next_line;
-    std::set_difference(next_line.begin(), next_line.end(), ret.begin(),
+    std::set_difference(next_line.line().begin(), next_line.line().end(), ret.begin(),
                         ret.end(), std::back_inserter(cleared_next_line));
-    slices[next_line_index] = cleared_next_line;
-    return ret;
+    slices[next_line_index] = SliceLine{cleared_next_line, line_number + 1};
+    if(!ret.empty()) {
+      return SliceLine{ret};
+    }
+    return std::nullopt;
   }
 
   Rectangle to_rectangle() const {
@@ -143,7 +181,7 @@ struct Slices {
     int min_y = 10000000;
     int max_y = 0;
     for (const auto &slice_line : slices) {
-      for (const auto &slice : slice_line) {
+      for (const auto &slice : slice_line.line()) {
         min_x = std::min(min_x, static_cast<int>(slice.slice.start.x));
         max_x = std::max(max_x, static_cast<int>(slice.slice.end.x));
         min_y = std::min(min_y, static_cast<int>(slice.slice.start.y));
@@ -154,8 +192,9 @@ struct Slices {
   }
 
   bool touching_right(const Rectangle &rectangle) const {
-    for (const auto &slice : slices) {
-      if (!slice.empty() && slice.rbegin()->slice.end.x >= rectangle.x + rectangle.width - 1) {
+    for (const auto &sliceline : slices) {
+      if (!sliceline.line().empty() &&
+          sliceline.line().rbegin()->slice.end.x >= rectangle.x + rectangle.width - 1) {
         return true;
       }
     }
@@ -163,16 +202,16 @@ struct Slices {
   }
 
   bool touching_down(const Rectangle &rectangle) const {
-    if (!slices.empty() && !slices.rbegin()->empty() && slices.rbegin()->rbegin()->slice.start.y >=
-        rectangle.y + rectangle.height - 1) {
+    if (!slices.empty() && slices.rbegin()->line_number() >=
+                               (rectangle.y + rectangle.height - 1)) {
       return true;
     }
     return false;
   }
 
   bool touching_left(const Rectangle &rectangle) const {
-    for (const auto &slice : slices) {
-      if (!slice.empty() && slice.begin()->slice.start.x <= rectangle.x) {
+    for (const auto &sliceline : slices) {
+      if (!sliceline.line().empty() && sliceline.line().begin()->slice.start.x <= rectangle.x) {
         return true;
       }
     }
@@ -180,7 +219,8 @@ struct Slices {
   }
 
   bool touching_up(const Rectangle &rectangle) const {
-    if (!slices.empty() && !slices.begin()->empty() && slices.begin()->begin()->slice.start.y <= rectangle.y) {
+    if (!slices.empty() && !slices.begin()->line().empty() &&
+        slices.begin()->line().begin()->slice.start.y <= rectangle.y) {
       return true;
     }
     return false;
@@ -190,8 +230,8 @@ struct Slices {
     const auto overlapping_lines = get_slices_on_the_same_line(other);
     for (const auto &[this_slice, other_slice] : overlapping_lines) {
       if (this_slice && other_slice) {
-        if (this_slice->rbegin()->slice.end.x + 1 ==
-            other_slice->begin()->slice.start.x) {
+        if (this_slice->line().rbegin()->slice.end.x + 1 ==
+            other_slice->line().begin()->slice.start.x) {
           return true;
         }
       }
@@ -201,10 +241,10 @@ struct Slices {
 
   void merge_right(Slices &other) {
     const auto overlapping_lines = get_slices_on_the_same_line(other);
-    std::vector<std::vector<AnnotatedSlice>> new_slices;
+    std::vector<SliceLine> new_slices;
     for (const auto &[this_slice, other_slice] : overlapping_lines) {
       if (this_slice && other_slice) {
-        merge_right(*this_slice, *other_slice);
+        this_slice->merge_right(*other_slice);
         new_slices.push_back(*this_slice);
       } else if (this_slice) {
         new_slices.push_back(*this_slice);
@@ -218,7 +258,7 @@ struct Slices {
   bool touching_down(const Slices &other) {
     const auto &last_line = slices.back();
     const auto &other_first_line = other.slices.front();
-    return does_overlap(last_line, other_first_line);
+    return last_line.does_overlap(other_first_line);
   }
 
   void merge_down(const Slices &other) {
@@ -235,18 +275,15 @@ private:
     return line_number - top_left.y;
   }
 
-  std::vector<
-      std::pair<std::vector<AnnotatedSlice> *, std::vector<AnnotatedSlice> *>>
+  std::vector<std::pair<SliceLine *, SliceLine *>>
   get_slices_on_the_same_line(Slices &other) {
-    std::vector<
-        std::pair<std::vector<AnnotatedSlice> *, std::vector<AnnotatedSlice> *>>
-        ret;
-    size_t line_number = slices.front().front().line_number;
-    size_t other_line_number = other.slices.front().front().line_number;
+    std::vector<std::pair<SliceLine *, SliceLine *>> ret;
+    size_t line_number = slices.front().line_number();
+    size_t other_line_number = other.slices.front().line_number();
     if (line_number < other_line_number) {
       auto it = std::find_if(slices.begin(), slices.end(),
                              [other_line_number](const auto &slice_line) {
-                               return slice_line.front().line_number ==
+                               return slice_line.line().front().line_number ==
                                       other_line_number;
                              });
       // add slices of this
@@ -269,7 +306,7 @@ private:
       auto other_it =
           std::find_if(other.slices.begin(), other.slices.end(),
                        [line_number](const auto &slice_line) {
-                         return slice_line.front().line_number == line_number;
+                         return slice_line.line().front().line_number == line_number;
                        });
       // add slices of other
       for (auto this_it = other.slices.begin(); this_it != other_it;
@@ -307,21 +344,6 @@ private:
     for (size_t i = 1; i < right.size(); ++i) {
       left.push_back(right[i]);
     }
-  }
-
-  bool does_overlap(const std::vector<AnnotatedSlice> &top,
-                    const std::vector<AnnotatedSlice> &bottom) const {
-    if (top.front().line_number + 1 != bottom.front().line_number) {
-      return false;
-    }
-    for (const auto &top_slice : top) {
-      for (const auto &bottom_slice : bottom) {
-        if (top_slice.slice.touches_with_tolerance(bottom_slice.slice)) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 };
 
