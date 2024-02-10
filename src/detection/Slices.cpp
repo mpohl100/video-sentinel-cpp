@@ -49,7 +49,7 @@ Slices deduce_slices(const cv::Mat &contours, const Rectangle &rectangle) {
       }
     }
     emplace_current_slice();
-    slices.slices.push_back(current_line);
+    slices.slices.push_back(SliceLine{current_line, static_cast<size_t>(y)});
   }
   return slices;
 }
@@ -57,15 +57,22 @@ Slices deduce_slices(const cv::Mat &contours, const Rectangle &rectangle) {
 std::vector<std::shared_ptr<Object>> deduce_objects(Slices &slices) {
   std::vector<std::shared_ptr<Object>> objects;
   while (slices.contains_slices()) {
-    std::vector<AnnotatedSlice> current_slices;
     const auto first_slice = slices.get_first_slice();
-    current_slices.push_back(first_slice);
+    if(!first_slice.has_value()) {
+      break;
+    }
+    std::vector<AnnotatedSlice> current_slices;
+    current_slices.push_back(*first_slice);
     auto current_object = std::make_shared<Object>(Slices{
-        math2d::Point{first_slice.slice.start.x, first_slice.slice.start.y}});
+        math2d::Point{first_slice->slice.start.x, first_slice->slice.start.y}});
     current_object->slices.slices.push_back(current_slices);
     while (!current_slices.empty()) {
-      current_slices = slices.get_touching_slices(current_slices);
-      current_object->slices.slices.push_back(current_slices);
+      const auto new_current_slices = slices.get_touching_slices(current_slices);
+      if(!new_current_slices.has_value()) {
+        break;
+      }
+      current_object->slices.slices.push_back(*new_current_slices);
+      current_slices = new_current_slices->line();
     }
     objects.push_back(current_object);
   }
@@ -96,7 +103,7 @@ void establishing_shot_slices(AllRectangles &ret, const cv::Mat &contours,
   if constexpr (debug) {
     std::cout << "slices: " << std::endl;
     for (const auto &slice_line : slices.slices) {
-      for (const auto &slice : slice_line) {
+      for (const auto &slice : slice_line.line()) {
         std::cout << slice.slice.start.toString() << " "
                   << slice.slice.end.toString() << " | ";
       }
@@ -134,7 +141,7 @@ void establishing_shot_objects(ObjectsPerRectangle &ret,
   if constexpr (debug) {
     std::cout << "slices: " << std::endl;
     for (const auto &slice_line : slices.slices) {
-      for (const auto &slice : slice_line) {
+      for (const auto &slice : slice_line.line()) {
         std::cout << slice.slice.start.toString() << " "
                   << slice.slice.end.toString() << " | ";
       }
