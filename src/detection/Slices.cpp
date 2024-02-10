@@ -143,10 +143,10 @@ void establishing_shot_objects(ObjectsPerRectangle &ret,
     std::cout << "deducing objects ..." << std::endl;
   }
   auto objects = deduce_objects(slices);
+  ret.set_rectangle(rectangle);
   for (const auto& object : objects) {
     ret.insert_object(object);
   }
-  ret.set_rectangle(rectangle);
 }
 
 } // namespace od
