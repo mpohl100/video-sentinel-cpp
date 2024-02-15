@@ -60,6 +60,9 @@ public:
   }
   bool is_finished() const { return _finished; }
   void set_finished() { _finished = true; }
+  const std::vector<std::shared_ptr<Work>> &get_predecessors() const {
+    return _predecessors;
+  }
 
 private:
   std::vector<std::shared_ptr<Work>> _predecessors;
@@ -114,7 +117,7 @@ public:
   Task make_task() { return Task{_impl}; }
 
 private:
-  std::shared_ptr<CalculationImpl> get() const{ return _impl; }
+  std::shared_ptr<CalculationImpl> get() const { return _impl; }
   std::shared_ptr<CalculationImpl> _impl;
   friend class FlowImpl;
 };
@@ -126,10 +129,8 @@ public:
   FlowImpl &operator=(FlowImpl &&) = default;
   virtual ~FlowImpl() = default;
 
-  void add(const Calculation& work) { _work.push_back(work.get()); }
-  void add(const std::shared_ptr<FlowImpl>& work) {
-    _work.push_back(work);
-  }
+  void add(const Calculation &work) { _work.push_back(work.get()); }
+  void add(const std::shared_ptr<FlowImpl> &work) { _work.push_back(work); }
 
   void call() override {
 #if DO_LOG
@@ -152,11 +153,10 @@ public:
   virtual ~Flow() = default;
 
   void add(const Calculation &work) { _impl->add(work); }
-  void add(const Flow &work) {
-      _impl->add(work._impl);
-  }
+  void add(const Flow &work) { _impl->add(work._impl); }
 
   Task make_task() { return Task{_impl}; }
+
 private:
   std::shared_ptr<FlowImpl> _impl;
 };
@@ -186,24 +186,30 @@ public:
     _queued_tasks.push_back(task);
   }
 
+  bool erase_work_from_finished(Task work) {
+    std::unique_lock<std::mutex> lock(*_mutex);
+    auto it = std::find(_finished_tasks.begin(), _finished_tasks.end(), work);
+    if (it == _finished_tasks.end()) {
+      return false;
+    }
+    _finished_tasks.erase(
+        std::remove(_finished_tasks.begin(), _finished_tasks.end(), work),
+        _finished_tasks.end());
+    for (auto predecessor : work._work->_predecessors) {
+      erase_work_from_finished(Task{predecessor});
+    }
+    return true;
+  }
+
   void wait_for(Task work) {
 #if DO_LOG
     std::cout << "Executor::wait_for()" << std::endl;
 #endif
     while (true) {
-      bool do_break = false;
-      {
 #if DO_LOG
-        std::cout << "Executor::wait_for() checking if finished" << std::endl;
+      std::cout << "Executor::wait_for() checking if finished" << std::endl;
 #endif
-        std::unique_lock<std::mutex> lock(*_mutex);
-        auto it = std::find(_finished_tasks.begin(), _finished_tasks.end(), work);
-        if (it != _finished_tasks.end()) {
-          _finished_tasks.erase(it);
-          do_break = true;
-        }
-      }
-      if (do_break) {
+      if (erase_work_from_finished(work)) {
         break;
       }
 #if DO_LOG
@@ -214,6 +220,24 @@ public:
 #if DO_LOG
     std::cout << "Executor::wait_for() return" << std::endl;
 #endif
+  }
+
+  bool does_not_know(Task work) {
+    std::unique_lock<std::mutex> lock(*_mutex);
+    bool not_in_queued_tasks =
+        std::find(_queued_tasks.begin(), _queued_tasks.end(), work) ==
+        _queued_tasks.end();
+    bool not_in_scheduled_tasks =
+        std::find(_scheduled_tasks.begin(), _scheduled_tasks.end(), work) ==
+        _scheduled_tasks.end();
+    bool not_in_started_tasks =
+        std::find(_started_tasks.begin(), _started_tasks.end(), work) ==
+        _started_tasks.end();
+    bool not_in_finished_tasks =
+        std::find(_finished_tasks.begin(), _finished_tasks.end(), work) ==
+        _finished_tasks.end();
+    return not_in_queued_tasks && not_in_scheduled_tasks &&
+           not_in_started_tasks && not_in_finished_tasks;
   }
 
 private:
@@ -256,8 +280,7 @@ private:
         std::cout << "Executor::execute_worker_thread() sleep 1ms" << std::endl;
 #endif
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
-      }
-      else{
+      } else {
 #if DO_LOG
         std::cout << "Executor::execute_worker_thread() do_work" << std::endl;
 #endif
@@ -289,7 +312,8 @@ private:
     auto queued_tasks_iterator = _queued_tasks.begin();
     while (queued_tasks_iterator != _queued_tasks.end()) {
       if (queued_tasks_iterator->get()->can_be_started()) {
-        _scheduled_tasks.insert(_scheduled_tasks.begin(), *queued_tasks_iterator);
+        _scheduled_tasks.insert(_scheduled_tasks.begin(),
+                                *queued_tasks_iterator);
         queued_tasks_iterator = _queued_tasks.erase(queued_tasks_iterator);
       } else
         queued_tasks_iterator++;
