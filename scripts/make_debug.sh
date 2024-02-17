@@ -13,6 +13,4 @@ mkdir -p "$BUILD_DIR"
 
 cd "$BUILD_DIR"
 
-conan install .. --build="missing" --output-folder=conan_output -pr:a="$(pwd)/../conan_profiles/gcc11_cpp20_debug.prof" --update -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True 
-
-conan build .. -b="missing" -pr:b="$(pwd)/../conan_profiles/gcc11_cpp20.prof"
+conan build .. -b="missing" -pr:b="$(pwd)/../conan_profiles/gcc11_cpp20_debug.prof" -s build_type=Debug
