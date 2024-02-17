@@ -1,44 +1,35 @@
 from conan import ConanFile
-from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps
+from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps, cmake_layout
 
 class VideoSentinelConan(ConanFile):
     name = "VideoSentinel"
     version = "1.0.0"
-    license = "MIT License"
+    license = "Apache License v2.0"
     author = "Michael Pohl"
     description = "A colored region detection for videos using OpenCV and C++"
     topics = ("video", "sentinel", "opencv")
     settings = "os", "compiler", "build_type", "arch"
-    generators = "CMakeDeps", "CMakeToolchain"
     requires = [
         "catch2/3.1.0",
         "clara/1.1.5",
         "opencv/4.5.5"
     ]
-    options = {"opencv/*:with_v4l": [True, False]}
-    default_options = {"opencv/*:with_v4l": True}
-
-    def layout(self):
-        self.folders.build = "cmake_build"
-        self.folders.source = "src"
 
     def configure(self):
-        if self.options["opencv/*"].with_v4l:
-            self.options["opencv/*"].with_v4l = True
+        print("try doing nothing")
 
     def requirements(self):
         # Override libpng for OpenCV
         self.requires("libpng/1.6.42", override=True)
 
+    def layout(self):
+        cmake_layout(self, src_folder=".")
+
+    def generate(self):
+        tc = CMakeToolchain(self)
+        tc.generate()
+
     def build(self):
         cmake = CMake(self)
         cmake.configure()
         cmake.build()
-
-    def package(self):
-        cmake = CMake(self)
-        cmake.install()
-
-    def package_info(self):
-        self.cpp_info.names["cmake_find_package"] = "VideoSentinel"
-        self.cpp_info.names["cmake_find_package_multi"] = "VideoSentinel"
