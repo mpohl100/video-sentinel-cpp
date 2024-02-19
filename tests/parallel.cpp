@@ -12,7 +12,7 @@ private:
   bool _got_called = false;
 public:
   bool got_called() const { return _got_called; }
-  void operator()() { got_called = true; }
+  void operator()() { _got_called = true; }
 };
 
 } // namespace
@@ -30,7 +30,7 @@ TEST_CASE("Parallel", "[parallel]") {
     executor.wait_for(task);
     
     CHECK(got_called_function.got_called());
-    CHECK(executor.does_not_know(task))
+    CHECK(executor.does_not_know(task));
   }
   SECTION("ExecutorExecutesScheduledFlow"){
     std::vector<GotCalledVoidFunction> got_called_functions{4};
@@ -58,7 +58,7 @@ TEST_CASE("Parallel", "[parallel]") {
   SECTION("ExecutorExecutesScheduledFlowWithNestedFlows"){
     std::vector<GotCalledVoidFunction> got_called_functions{4};
     auto flow = par::Flow{};
-    flow.add(par::Calculation{got_called_function[0]});
+    flow.add(par::Calculation{got_called_functions[0]});
     auto nested_flow = par::Flow{};
     for(size_t i = 1; i < got_called_functions.size(); ++i){
       nested_flow.add(par::Calculation{got_called_functions[i]});
@@ -90,7 +90,7 @@ TEST_CASE("Parallel", "[parallel]") {
       tasks.push_back(task);
     }
     for(size_t i = 1; i < tasks.size(); ++i){
-      tasks[i].succeeds(tasks[i-1]);
+      tasks[i].succeed(tasks[i-1]);
     }
     auto executor = par::Executor{4};
     CHECK_FALSE(got_called_functions[0].got_called());

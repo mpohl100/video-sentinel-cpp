@@ -130,7 +130,7 @@ public:
   virtual ~FlowImpl() = default;
 
   void add(const Calculation &work) { _work.push_back(work.get()); }
-  void add(const std::shared_ptr<FlowImpl> &work) { _work.push_back(work); }
+  void add(std::shared_ptr<FlowImpl> work) { _work.push_back(work); }
 
   void call() override {
 #if DO_LOG
@@ -186,8 +186,11 @@ public:
     _queued_tasks.push_back(task);
   }
 
-  bool erase_work_from_finished(Task work) {
-    std::unique_lock<std::mutex> lock(*_mutex);
+  bool erase_work_from_finished(Task work, bool do_lock = true) {
+    std::optional<std::unique_lock<std::mutex>> lock;
+    if(do_lock){
+      lock = std::unique_lock<std::mutex>{*_mutex};
+    }
     auto it = std::find(_finished_tasks.begin(), _finished_tasks.end(), work);
     if (it == _finished_tasks.end()) {
       return false;
@@ -195,8 +198,8 @@ public:
     _finished_tasks.erase(
         std::remove(_finished_tasks.begin(), _finished_tasks.end(), work),
         _finished_tasks.end());
-    for (auto predecessor : work._work->_predecessors) {
-      erase_work_from_finished(Task{predecessor});
+    for (auto predecessor : work._work->get_predecessors()) {
+      erase_work_from_finished(Task{predecessor}, /*do_lock=*/false);
     }
     return true;
   }
