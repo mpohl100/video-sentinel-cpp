@@ -7,85 +7,68 @@
 
 namespace {
 
-struct GotCalledVoidFunction {
-private:
-  bool _got_called = false;
-public:
-  bool got_called() const { return _got_called; }
-  void operator()() { _got_called = true; }
-};
-
-} // namespace
-
 TEST_CASE("Parallel", "[parallel]") {
 
   SECTION("ExecutorExecutesScheduledCalculation") {
-    auto got_called_function = GotCalledVoidFunction{}; 
-    auto calculation = par::Calculation{got_called_function};
+    int i = 0;
+    auto void_function = [&i](){ i++; };
+    auto calculation = par::Calculation{void_function};
     auto task = calculation.make_task();
     auto executor = par::Executor{4};
     
-    CHECK_FALSE(got_called_function.got_called());
+    CHECK(i == 0);
+
     executor.run(task);
     executor.wait_for(task);
     
-    CHECK(got_called_function.got_called());
+    CHECK(i == 1);
     CHECK(executor.does_not_know(task));
   }
   SECTION("ExecutorExecutesScheduledFlow"){
-    std::vector<GotCalledVoidFunction> got_called_functions{4};
+    int i = 0;
+    auto void_function = [&i](){ i++; };
     auto flow = par::Flow{};
-    for(auto& got_called_function : got_called_functions){
-      flow.add(par::Calculation{got_called_function});
+    for(size_t j = 0; j < 4; ++j){
+      flow.add(par::Calculation{void_function});
     }
     auto task = flow.make_task();
     auto executor = par::Executor{4};
 
-    CHECK_FALSE(got_called_functions[0].got_called());
-    CHECK_FALSE(got_called_functions[1].got_called());
-    CHECK_FALSE(got_called_functions[2].got_called());
-    CHECK_FALSE(got_called_functions[3].got_called());
+    CHECK(i == 0);
 
     executor.run(task);
     executor.wait_for(task);
 
-    CHECK(got_called_functions[0].got_called());
-    CHECK(got_called_functions[1].got_called());
-    CHECK(got_called_functions[2].got_called());
-    CHECK(got_called_functions[3].got_called());
+    CHECK(i == 4);
     CHECK(executor.does_not_know(task));
   }
   SECTION("ExecutorExecutesScheduledFlowWithNestedFlows"){
-    std::vector<GotCalledVoidFunction> got_called_functions{4};
+    int i = 0;
+    auto void_function = [&i](){ i++; };
     auto flow = par::Flow{};
-    flow.add(par::Calculation{got_called_functions[0]});
+    flow.add(par::Calculation{void_function});
     auto nested_flow = par::Flow{};
-    for(size_t i = 1; i < got_called_functions.size(); ++i){
-      nested_flow.add(par::Calculation{got_called_functions[i]});
+    for(size_t j = 1; j < 4; ++j){
+      nested_flow.add(par::Calculation{void_function});
     }
     flow.add(nested_flow);
     auto task = flow.make_task();
     auto executor = par::Executor{4};
 
-    CHECK_FALSE(got_called_functions[0].got_called());
-    CHECK_FALSE(got_called_functions[1].got_called());
-    CHECK_FALSE(got_called_functions[2].got_called());
-    CHECK_FALSE(got_called_functions[3].got_called());
+    CHECK(i == 0);
 
     executor.run(task);
     executor.wait_for(task);
 
-    CHECK(got_called_functions[0].got_called());
-    CHECK(got_called_functions[1].got_called());
-    CHECK(got_called_functions[2].got_called());
-    CHECK(got_called_functions[3].got_called());
+    CHECK(i == 4);
     CHECK(executor.does_not_know(task));
   }
   SECTION("NotWaitedForPredecesseorTasksAreRemoved"){
-    std::vector<GotCalledVoidFunction> got_called_functions{4};
+    int i = 0;
+    auto void_function = [&i](){ i++; };
     std::vector<par::Task> tasks;
-    for(auto& got_called_function : got_called_functions){
-      auto calculation = par::Calculation{got_called_function};
+    for(size_t j = 0; j < 4; ++j){
+      auto calculation = par::Calculation{void_function};
       auto task = calculation.make_task();
       tasks.push_back(task);
     }
@@ -93,20 +76,19 @@ TEST_CASE("Parallel", "[parallel]") {
       tasks[i].succeed(tasks[i-1]);
     }
     auto executor = par::Executor{4};
-    CHECK_FALSE(got_called_functions[0].got_called());
-    CHECK_FALSE(got_called_functions[1].got_called());
-    CHECK_FALSE(got_called_functions[2].got_called());
-    CHECK_FALSE(got_called_functions[3].got_called());
 
-    executor.run(tasks.back());
+    CHECK(i == 0);
+
+    for(auto task : tasks){
+      executor.run(task);
+    }
     executor.wait_for(tasks.back());
 
-    CHECK(got_called_functions[0].got_called());
-    CHECK(got_called_functions[1].got_called());
-    CHECK(got_called_functions[2].got_called());
-    CHECK(got_called_functions[3].got_called());
+    CHECK(i == 4);
     for(auto task : tasks){
       CHECK(executor.does_not_know(task));
     }
   }
 }
+
+} // namespace
