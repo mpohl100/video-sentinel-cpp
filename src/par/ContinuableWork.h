@@ -1,6 +1,7 @@
 #pragma once
 
-#include "par/parallel.h"
+#include "par/Work.h"
+#include "par/Task.h"
 
 #include <type_traits>
 
