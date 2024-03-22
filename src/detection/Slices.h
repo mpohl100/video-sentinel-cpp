@@ -120,6 +120,8 @@ struct SliceLine {
 
   void pop_back() { _line.pop_back(); }
 
+  friend auto operator<=>(const SliceLine &lhs, const SliceLine &rhs) = default;
+
 private:
   std::vector<AnnotatedSlice> _line;
   size_t _line_number = 0;
@@ -128,13 +130,15 @@ private:
 struct Slices {
   std::vector<SliceLine> slices;
   math2d::Point top_left = math2d::Point{0, 0};
+  math2d::Point imageDimensions = math2d::Point{0, 0};
 
   Slices() = default;
   Slices(const Slices &) = default;
   Slices(Slices &&) = default;
   Slices &operator=(const Slices &) = default;
   Slices &operator=(Slices &&) = default;
-  Slices(math2d::Point top_left) : top_left{top_left} {}
+  Slices(math2d::Point top_left) : top_left{top_left}, imageDimensions{math2d::Point{0, 0}} {}
+  Slices(math2d::Point top_left, math2d::Point imageDimensions) : top_left{top_left}, imageDimensions{imageDimensions} {}
 
   bool contains_slices() const {
     for (const auto &slice_line : slices) {
@@ -143,6 +147,16 @@ struct Slices {
       }
     }
     return false;
+  }
+
+  void rotate_clockwise()
+  {
+
+  }
+
+  void rotate_counterclockwise()
+  {
+
   }
 
   std::optional<AnnotatedSlice> get_first_slice() {
@@ -307,6 +321,7 @@ struct Slices {
     merge_right(other);
   }
 
+  friend auto operator<=>(const Slices &lhs, const Slices &rhs) = default;
 private:
   size_t get_index(size_t line_number) const {
     return line_number - top_left.y;

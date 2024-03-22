@@ -20,8 +20,7 @@ struct Object {
   Object &operator=(const Object &) = default;
   Object &operator=(Object &&) = default;
   Object(const Slices &slices) : slices{slices} {}
-
-  bool try_merge_right(Object &other) {
+   bool try_merge_right(Object &other) {
     bool do_log = false;
     if (get_bounding_box().to_math2d_rectangle().area() > 100 &&
         other.get_bounding_box().to_math2d_rectangle().area() > 100) {
