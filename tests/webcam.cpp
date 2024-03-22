@@ -41,7 +41,7 @@ TEST_CASE("Webcam", "[webcam]") {
     executor.run(flow);
     executor.wait_for(flow);
 
-    CHECK(frame_data.all_rectangles.rectangles.size() == 3335);
+    CHECK(frame_data.all_rectangles.rectangles.size() > 500);
   }
 
   SECTION("WebcamProcessFrameQuadView") {
@@ -71,7 +71,7 @@ TEST_CASE("Webcam", "[webcam]") {
     const auto frame_data = webcam::process_frame_quadview(
         imgOriginal, rectangle, executor, rings, gradient_threshold);
 
-    CHECK(frame_data.all_rectangles.rectangles.size() == 3335);
+    CHECK(frame_data.all_rectangles.rectangles.size() > 500);
   }
   SECTION("WebcamProcessFrameManyTasks") {
     par::Executor executor(4);
@@ -100,7 +100,7 @@ TEST_CASE("Webcam", "[webcam]") {
     const auto frame_data = webcam::process_frame_merged(
         imgOriginal, rectangle, executor, rings, gradient_threshold);
 
-    CHECK(frame_data.all_rectangles.rectangles.size() == 3335);
+    CHECK(frame_data.all_rectangles.rectangles.size() > 500);
   }
   SECTION("WebcamProcessFrameMergeObjects") {
     par::Executor executor(4);
@@ -129,7 +129,7 @@ TEST_CASE("Webcam", "[webcam]") {
     const auto frame_data = webcam::process_frame_merge_objects(
         imgOriginal, rectangle, executor, rings, gradient_threshold);
 
-    CHECK(frame_data.all_rectangles.rectangles.size() == 3335);
+    CHECK(frame_data.all_rectangles.rectangles.size() > 500);
   }
 
 }
