@@ -20,6 +20,7 @@ struct Point {
   constexpr Point &operator=(Point &&) noexcept = default;
   constexpr Point(number_type xx, number_type yy) noexcept : x(xx), y(yy){};
 
+  Point rotate(const Point &around, const Angle& angle) const;
   Point plus(const Vector &vec) const;
   std::string toString() const;
   friend constexpr auto operator<=>(const Point &, const Point &) = default;
