@@ -70,6 +70,7 @@ struct SliceLine {
 
   size_t line_number() const { return _line_number; }
   const std::vector<AnnotatedSlice> &line() const { return _line; }
+  std::vector<AnnotatedSlice> &line() { return _line; }
 
   void merge_right(const SliceLine &other) {
     // if the linenumbers mismatch, throw
@@ -151,7 +152,27 @@ struct Slices {
 
   void rotate_clockwise()
   {
-
+    // create rotated slices
+    const auto angle = math2d::Angle{90};
+    const auto midpoint = math2d::Point{imageDimensions.x / 2, imageDimensions.y / 2};
+    auto rotated_slices = slices;
+    for(auto& sliceLine : rotated_slices){
+      for(auto& slice : sliceLine.line()){
+        slice.slice.start = slice.slice.start.rotate(midpoint, angle);
+        slice.slice.end = slice.slice.end.rotate(midpoint, angle);
+      }
+    }
+    // find bounding box
+    const auto bounding_box = to_rectangle(rotated_slices);
+    // make all slices horizontal
+    slices = {};
+    for(size_t y = bounding_box.y; y < bounding_box.y + bounding_box.height; ++y){
+      std::vector<AnnotatedSlice> line;
+      for(size_t x = bounding_box.x; x < bounding_box.x + bounding_box.width; ++x){
+        const auto point = math2d::Point{x, y};
+      }
+      slices.push_back(SliceLine{line, y});
+    }
   }
 
   void rotate_counterclockwise()
@@ -205,19 +226,7 @@ struct Slices {
   }
 
   Rectangle to_rectangle() const {
-    int min_x = 10000000;
-    int max_x = 0;
-    int min_y = 10000000;
-    int max_y = 0;
-    for (const auto &slice_line : slices) {
-      for (const auto &slice : slice_line.line()) {
-        min_x = std::min(min_x, static_cast<int>(slice.slice.start.x));
-        max_x = std::max(max_x, static_cast<int>(slice.slice.end.x));
-        min_y = std::min(min_y, static_cast<int>(slice.slice.start.y));
-        max_y = std::max(max_y, static_cast<int>(slice.slice.end.y));
-      }
-    }
-    return Rectangle{min_x, min_y, max_x - min_x, max_y - min_y};
+    return to_rectangle(slices);
   }
 
   bool touching_right(const Rectangle &rectangle) const {
@@ -390,6 +399,23 @@ private:
     }
     return ret;
   }
+
+  static Rectangle to_rectangle(const std::vector<SliceLine>& slice_lines) {
+    int min_x = 10000000;
+    int max_x = 0;
+    int min_y = 10000000;
+    int max_y = 0;
+    for (const auto &slice_line : slice_lines) {
+      for (const auto &slice : slice_line.line()) {
+        min_x = std::min(min_x, static_cast<int>(slice.slice.start.x));
+        max_x = std::max(max_x, static_cast<int>(slice.slice.end.x));
+        min_y = std::min(min_y, static_cast<int>(slice.slice.start.y));
+        max_y = std::max(max_y, static_cast<int>(slice.slice.end.y));
+      }
+    }
+    return Rectangle{min_x, min_y, max_x - min_x, max_y - min_y};
+  }
+
 };
 
 struct AllRectangles {
