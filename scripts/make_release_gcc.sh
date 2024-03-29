@@ -13,4 +13,4 @@ mkdir -p "$BUILD_DIR"
 
 cd "$BUILD_DIR"
 
-conan build .. -b="missing" -pr:b="$(pwd)/../conan_profiles/gcc11_cpp20.prof" -s build_type=Release -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True 
+conan build .. -b="missing" -pr:b="$(pwd)/../conan_profiles/gcc11_cpp20.prof" -pr:h="$(pwd)/../conan_profiles/gcc11_cpp20.prof" -s build_type=Release -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True 

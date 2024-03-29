@@ -1,0 +1,42 @@
+name: Code Coverage
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Build and run tests and generate coverage report
+      uses: devcontainers/ci@v0.3
+      with:
+        runCmd: |
+          # Compile with coverage flags
+          # Replace these commands with your actual build commands
+        
+          sudo apt-get update && sudo apt-get install -y -o Acquire::Retries=3 lcov
+
+          conan profile detect
+          mkdir -p build
+          cd build
+
+          conan build .. --options coverage=True -b="missing" -pr:b="$(pwd)/../conan_profiles/gcc11_cpp20_debug.prof" -pr:h="$(pwd)/../conan_profiles/gcc11_cpp20_debug.prof" -s build_type=Debug -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True 
+          ./Debug/tests/tests
+
+          cd Debug
+          make coverage
+
+    # - name: Coveralls
+    #   uses: coverallsapp/github-action@master
+    #   with:
+    #     path-to-lcov: ${{runner.workspace}}/coverage.info
+    #     github-token: ${{ secrets.GITHUB_TOKEN }}
