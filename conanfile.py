@@ -14,6 +14,8 @@ class VideoSentinelConan(ConanFile):
         "clara/1.1.5",
         "opencv/4.5.5"
     ]
+    options = {"coverage": [True, False]}
+    default_options = {"coverage": False}
 
     def configure(self):
         print("try doing nothing")
@@ -32,6 +34,24 @@ class VideoSentinelConan(ConanFile):
         deps.generate()
 
     def build(self):
+        coverage = getattr(self.options, "coverage", False)
+
+        if coverage:
+            self.output.info("Building with coverage flags...")
+            self._build_with_coverage()
+        else:
+            self.output.info("Building without coverage flags...")
+            self._build_without_coverage()
+
+    def _build_with_coverage(self):
+        cmake = CMake(self)
+        vars = {
+            "ENABLE_COVERAGE": "true",
+        }
+        cmake.configure(vars)
+        cmake.build()
+
+    def _build_without_coverage(self):
         cmake = CMake(self)
         cmake.configure()
         cmake.build()
