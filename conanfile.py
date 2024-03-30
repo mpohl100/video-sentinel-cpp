@@ -23,6 +23,8 @@ class VideoSentinelConan(ConanFile):
     def requirements(self):
         # Override libpng for OpenCV
         self.requires("libpng/1.6.42", override=True)
+        # override xz_utils for OpenCV
+        self.requires("xz_utils/5.4.0", override=True)
 
     def layout(self):
         cmake_layout(self, src_folder=".")
