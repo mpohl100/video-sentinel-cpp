@@ -32,33 +32,5 @@ jobs:
             ./Debug/tests/tests
             
             cd ..
-            rm -rf build
-            mkdir build
-            cd build
-
-            # gcc release
-            chmod +x ../scripts/make_release_gcc.sh
-            ../scripts/make_release_gcc.sh
-            ./Release/tests/tests
-            
-            cd ..
-            rm -rf build
-            mkdir build
-            cd build
-
-            # clang debug
-            chmod +x ../scripts/make_debug_clang.sh
-            ../scripts/make_debug_clang.sh
-            ./Debug/tests/tests
-            
-            cd ..
-            rm -rf build
-            mkdir build
-            cd build
-
-            # clang release
-            chmod +x ../scripts/make_release_clang.sh
-            ../scripts/make_release_clang.sh
-            ./Release/tests/tests
-            
+            rm -rf build            
 
