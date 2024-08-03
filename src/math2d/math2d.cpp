@@ -29,6 +29,13 @@ double Vector::magnitude() const {
   return std::sqrt(std::pow(x, 2) + std::pow(y, 2));
 }
 
+Point Point::rotate(const Point &around, const Angle& angle) const
+{
+  const auto vector = Vector(around, *this);
+  const auto rotated_vector = vector.rotate(angle);
+  return around.plus(rotated_vector);
+}
+
 Point Point::plus(const Vector &vec) const {
   return Point{x + vec.x, y + vec.y};
 }

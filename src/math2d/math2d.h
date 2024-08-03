@@ -22,6 +22,7 @@ struct Point {
 
   Point plus(const Vector &vec) const;
   std::string toString() const;
+  Point rotate(const Point &around, const Angle &angle) const;
   friend constexpr auto operator<=>(const Point &, const Point &) = default;
 
   number_type x = 0;
