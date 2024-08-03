@@ -530,6 +530,40 @@ TEST_CASE("Object", "[object]") {
     CHECK(objects_per_rectangle_up.get_objects_touching_left().size() == 0);
     CHECK(objects_per_rectangle_up.get_objects_touching_up().size() == 0);
   }
+
+  SECTION("ObjectMergesDownTwice"){
+    const auto rectangle = od::Rectangle{math2d::Point{0, 0}, math2d::Point{100, 100}};
+    auto objects_per_rectangle = od::ObjectsPerRectangle{};
+    objects_per_rectangle.set_rectangle(rectangle);
+
+    auto touching_object_down = std::make_shared<od::Object>(get_test_slices(math2d::Point{1,1}, math2d::Point{98, 99}));
+    objects_per_rectangle.insert_object(touching_object_down);
+
+    CHECK(objects_per_rectangle.get_objects().size() == 1);
+    CHECK(objects_per_rectangle.get_objects_touching_right().size() == 0);
+    CHECK(objects_per_rectangle.get_objects_touching_down().size() == 1);
+    CHECK(objects_per_rectangle.get_objects_touching_left().size() == 0);
+    CHECK(objects_per_rectangle.get_objects_touching_up().size() == 0);
+
+    const auto down_rectangle = od::Rectangle{math2d::Point{0, 100}, math2d::Point{100, 200}};
+    auto down_objects_per_rectangle = od::ObjectsPerRectangle{};
+    down_objects_per_rectangle.set_rectangle(down_rectangle);
+
+    const auto touching_object_up_1 = std::make_shared<od::Object>(get_test_slices(math2d::Point{1, 100}, math2d::Point{49, 150}));
+    down_objects_per_rectangle.insert_object(touching_object_up_1);
+    const auto touching_object_up_2 = std::make_shared<od::Object>(get_test_slices(math2d::Point{51, 100}, math2d::Point{98, 150}));
+    down_objects_per_rectangle.insert_object(touching_object_up_2);
+
+    CHECK(down_objects_per_rectangle.get_objects().size() == 2);
+    CHECK(down_objects_per_rectangle.get_objects_touching_right().size() == 0);
+    CHECK(down_objects_per_rectangle.get_objects_touching_down().size() == 0);
+    CHECK(down_objects_per_rectangle.get_objects_touching_left().size() == 0);
+    CHECK(down_objects_per_rectangle.get_objects_touching_up().size() == 2);
+
+    objects_per_rectangle.append_down(down_objects_per_rectangle);
+
+    CHECK(objects_per_rectangle.get_objects().size() == 1);
+  }
 }
 
 } // namespace

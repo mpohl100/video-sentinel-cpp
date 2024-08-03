@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <memory>
+#include <set>
 #include <stdexcept>
 #include <vector>
 
@@ -51,6 +52,14 @@ struct Object {
       return true;
     }
     return false;
+  }
+
+  bool touching_right(Object &other) {
+    return slices.touching_right(other.slices);
+  }
+
+  bool touching_down(Object &other) {
+    return slices.touching_down(other.slices);
   }
 
   od::Rectangle get_bounding_box() const { return slices.to_rectangle(); }
@@ -105,25 +114,70 @@ struct ObjectsPerRectangle {
     // merge all objects
     std::vector<std::shared_ptr<Object>> other_objects_touching_left =
         other.objects_touching_left;
+    struct Merger {
+      std::shared_ptr<Object> object_touching_right;
+      std::shared_ptr<Object> object_touching_left;
+    };
+    // accumulate all mergers
+    std::vector<Merger> mergers;
+    std::vector<std::shared_ptr<Object>> not_to_be_merged;
+    std::set<size_t> indexes_to_merge_left;
+    std::set<size_t> indexes_to_merge_right;
+    size_t i = 0;
     for (auto &object : objects_touching_right) {
-      std::vector<size_t> indexes_to_remove;
-      size_t i = 0;
+      size_t j = 0;
       for (auto other_object : other_objects_touching_left) {
-        const auto merged = object->try_merge_right(*other_object);
-        if (merged) {
-          indexes_to_remove.push_back(i);
+        const auto merge_candidate = object->touching_right(*other_object);
+        if (merge_candidate) {
+          indexes_to_merge_left.insert(i);
+          indexes_to_merge_right.insert(j);
+          mergers.push_back({object, other_object});
         }
-        i++;
+        j++;
       }
-      for (auto index : indexes_to_remove) {
-        other_objects_touching_left.erase(other_objects_touching_left.begin() +
-                                          index);
+      i++;
+    }
+
+    // do one merger at a time and update remaining mergers
+    i = 0;
+    for (const auto &merger : mergers) {
+      // do the merger and update all remaining mergers
+      merger.object_touching_left->try_merge_right(
+          *merger.object_touching_right);
+      i++;
+      for (size_t j = i; j < mergers.size(); ++j) {
+        if (mergers[j].object_touching_right == merger.object_touching_right) {
+          mergers[j].object_touching_right = merger.object_touching_left;
+        }
       }
+    }
+    // collect all merged objects
+    std::vector<std::shared_ptr<Object>> new_merged_objects;
+    for (const auto &merger : mergers) {
+      new_merged_objects.push_back(merger.object_touching_left);
+    }
+    std::unique(new_merged_objects.begin(), new_merged_objects.end());
+    for (auto object : new_merged_objects) {
       new_objects.push_back(object);
     }
+
+    // collect all not merged objects
+    i = 0;
+    for (auto object : objects_touching_right) {
+      if (indexes_to_merge_left.find(i) == indexes_to_merge_left.end()) {
+        new_objects.push_back(object);
+      }
+      i++;
+    }
+
+    size_t j = 0;
     for (auto object : other_objects_touching_left) {
-      new_objects.push_back(object);
+      if (indexes_to_merge_right.find(j) == indexes_to_merge_right.end()) {
+        new_objects.push_back(object);
+      }
+      j++;
     }
+
     objects.clear();
     objects_touching_down.clear();
     objects_touching_up.clear();
@@ -155,25 +209,72 @@ struct ObjectsPerRectangle {
     // merge all objects
     std::vector<std::shared_ptr<Object>> other_objects_touching_up =
         other.objects_touching_up;
+
+    struct Merger {
+      std::shared_ptr<Object> object_touching_down;
+      std::shared_ptr<Object> object_touching_up;
+    };
+
+    // accumulate all mergers
+    std::vector<Merger> mergers;
+    std::vector<std::shared_ptr<Object>> not_to_be_merged;
+    std::set<size_t> indexes_to_merge_down;
+    std::set<size_t> indexes_to_merge_up;
+    size_t i = 0;
     for (auto &object : objects_touching_down) {
-      std::vector<size_t> indexes_to_remove;
-      size_t i = 0;
+      size_t j = 0;
       for (auto other_object : other_objects_touching_up) {
-        const auto merged = object->try_merge_down(*other_object);
-        if (merged) {
-          indexes_to_remove.push_back(i);
+        const auto merge_candidate = object->touching_down(*other_object);
+        if (merge_candidate) {
+          indexes_to_merge_down.insert(i);
+          indexes_to_merge_up.insert(j);
+          mergers.push_back({object, other_object});
         }
-        i++;
+        j++;
       }
-      for (auto index : indexes_to_remove) {
-        other_objects_touching_up.erase(other_objects_touching_up.begin() +
-                                        index);
+      i++;
+    }
+
+    // do one merger at a time and update remaining mergers
+    i = 0;
+    for (const auto &merger : mergers) {
+      // do the merger and update all remaining mergers
+      merger.object_touching_down->try_merge_down(
+          *merger.object_touching_up);
+      i++;
+      for (size_t j = i; j < mergers.size(); ++j) {
+        if (mergers[j].object_touching_up == merger.object_touching_up) {
+          mergers[j].object_touching_up = merger.object_touching_down;
+        }
       }
+    }
+    // collect all merged objects
+    std::vector<std::shared_ptr<Object>> new_merged_objects;
+    for (const auto &merger : mergers) {
+      new_merged_objects.push_back(merger.object_touching_down);
+    }
+    std::unique(new_merged_objects.begin(), new_merged_objects.end());
+    for (auto object : new_merged_objects) {
       new_objects.push_back(object);
     }
+
+    // collect all not merged objects
+    i = 0;
+    for (auto object : objects_touching_down) {
+      if (indexes_to_merge_down.find(i) == indexes_to_merge_down.end()) {
+        new_objects.push_back(object);
+      }
+      i++;
+    }
+
+    size_t j = 0;
     for (auto object : other_objects_touching_up) {
-      new_objects.push_back(object);
+      if (indexes_to_merge_up.find(j) == indexes_to_merge_up.end()) {
+        new_objects.push_back(object);
+      }
+      j++;
     }
+
     objects.clear();
     objects_touching_down.clear();
     objects_touching_up.clear();

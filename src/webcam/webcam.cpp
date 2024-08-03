@@ -169,12 +169,19 @@ deduce_touching_rectangles(const od::Rectangle &rectangle,
 std::vector<od::Rectangle>
 split_rectangle_into_parts(const od::Rectangle &rectangle,
                            int nb_pixels_per_tile) {
+  constexpr auto debug = true;
   std::vector<od::Rectangle> rectangles;
   for (size_t y = rectangle.y; y < rectangle.y + rectangle.height;
        y += nb_pixels_per_tile) {
     for (size_t x = rectangle.x; x < rectangle.x + rectangle.width;
          x += nb_pixels_per_tile) {
       rectangles.emplace_back(x, y, nb_pixels_per_tile, nb_pixels_per_tile);
+    }
+  }
+  if(debug){
+    std::cout << "Rectangles: " << std::endl;
+    for(const auto& rect : rectangles){
+      std::cout << "x: " << rect.x << " y: " << rect.y << " width: " << rect.width << " height: " << rect.height << std::endl;
     }
   }
   return rectangles;
