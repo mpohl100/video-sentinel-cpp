@@ -1,5 +1,7 @@
 #include "detection/Detection.h"
 #include "detection/Object.h"
+#include "detection/AllObjects.h"
+#include "detection/ObjectsPerRectangle.h"
 #include "detection/Slices.h"
 
 #include "par/parallel.h"
