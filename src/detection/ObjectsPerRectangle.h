@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Object.h"
+#include "ObjectMerger.h"
 
 #include <algorithm>
 #include <memory>
@@ -53,70 +54,20 @@ struct ObjectsPerRectangle {
       }
     }
     // merge all objects
-    std::vector<std::shared_ptr<Object>> other_objects_touching_left =
-        other.objects_touching_left;
-    struct Merger {
-      std::shared_ptr<Object> object_touching_right;
-      std::shared_ptr<Object> object_touching_left;
-    };
-    // accumulate all mergers
-    std::vector<Merger> mergers;
-    std::vector<std::shared_ptr<Object>> not_to_be_merged;
-    std::set<size_t> indexes_to_merge_left;
-    std::set<size_t> indexes_to_merge_right;
-    size_t i = 0;
-    for (auto &object : objects_touching_right) {
-      size_t j = 0;
-      for (auto other_object : other_objects_touching_left) {
-        const auto merge_candidate = object->touching_right(*other_object);
-        if (merge_candidate) {
-          indexes_to_merge_left.insert(i);
-          indexes_to_merge_right.insert(j);
-          mergers.push_back({object, other_object});
-        }
-        j++;
-      }
-      i++;
-    }
 
-    // do one merger at a time and update remaining mergers
-    i = 0;
-    for (const auto &merger : mergers) {
-      // do the merger and update all remaining mergers
-      merger.object_touching_left->try_merge_right(
-          *merger.object_touching_right);
-      i++;
-      for (size_t j = i; j < mergers.size(); ++j) {
-        if (mergers[j].object_touching_right == merger.object_touching_right) {
-          mergers[j].object_touching_right = merger.object_touching_left;
-        }
-      }
-    }
-    // collect all merged objects
-    std::vector<std::shared_ptr<Object>> new_merged_objects;
-    for (const auto &merger : mergers) {
-      new_merged_objects.push_back(merger.object_touching_left);
-    }
-    std::unique(new_merged_objects.begin(), new_merged_objects.end());
-    for (auto object : new_merged_objects) {
+    auto object_merger = od::ObjectMerger{
+        objects_touching_right, other.objects_touching_left,
+        [](std::shared_ptr<Object> object1, std::shared_ptr<Object> object2) {
+          object1->try_merge_right(*object2);
+        },
+        [](const std::shared_ptr<Object> &object1,
+           const std::shared_ptr<Object> &object2) {
+          return object1->touching_right(*object2);
+        }};
+    auto merged_objects = object_merger.connect_all_objects();
+
+    for(const auto &object : merged_objects) {
       new_objects.push_back(object);
-    }
-
-    // collect all not merged objects
-    i = 0;
-    for (auto object : objects_touching_right) {
-      if (indexes_to_merge_left.find(i) == indexes_to_merge_left.end()) {
-        new_objects.push_back(object);
-      }
-      i++;
-    }
-
-    size_t j = 0;
-    for (auto object : other_objects_touching_left) {
-      if (indexes_to_merge_right.find(j) == indexes_to_merge_right.end()) {
-        new_objects.push_back(object);
-      }
-      j++;
     }
 
     objects.clear();
@@ -148,72 +99,20 @@ struct ObjectsPerRectangle {
       }
     }
     // merge all objects
-    std::vector<std::shared_ptr<Object>> other_objects_touching_up =
-        other.objects_touching_up;
+    
+    auto object_merger = od::ObjectMerger{
+        objects_touching_down, other.objects_touching_up,
+        [](std::shared_ptr<Object> object1, std::shared_ptr<Object> object2) {
+          object1->try_merge_down(*object2);
+        },
+        [](const std::shared_ptr<Object> &object1,
+           const std::shared_ptr<Object> &object2) {
+          return object1->touching_down(*object2);
+        }};
+    auto merged_objects = object_merger.connect_all_objects();
 
-    struct Merger {
-      std::shared_ptr<Object> object_touching_down;
-      std::shared_ptr<Object> object_touching_up;
-    };
-
-    // accumulate all mergers
-    std::vector<Merger> mergers;
-    std::vector<std::shared_ptr<Object>> not_to_be_merged;
-    std::set<size_t> indexes_to_merge_down;
-    std::set<size_t> indexes_to_merge_up;
-    size_t i = 0;
-    for (auto &object : objects_touching_down) {
-      size_t j = 0;
-      for (auto other_object : other_objects_touching_up) {
-        const auto merge_candidate = object->touching_down(*other_object);
-        if (merge_candidate) {
-          indexes_to_merge_down.insert(i);
-          indexes_to_merge_up.insert(j);
-          mergers.push_back({object, other_object});
-        }
-        j++;
-      }
-      i++;
-    }
-
-    // do one merger at a time and update remaining mergers
-    i = 0;
-    for (const auto &merger : mergers) {
-      // do the merger and update all remaining mergers
-      merger.object_touching_down->try_merge_down(
-          *merger.object_touching_up);
-      i++;
-      for (size_t j = i; j < mergers.size(); ++j) {
-        if (mergers[j].object_touching_up == merger.object_touching_up) {
-          mergers[j].object_touching_up = merger.object_touching_down;
-        }
-      }
-    }
-    // collect all merged objects
-    std::vector<std::shared_ptr<Object>> new_merged_objects;
-    for (const auto &merger : mergers) {
-      new_merged_objects.push_back(merger.object_touching_down);
-    }
-    std::unique(new_merged_objects.begin(), new_merged_objects.end());
-    for (auto object : new_merged_objects) {
+    for(const auto &object : merged_objects) {
       new_objects.push_back(object);
-    }
-
-    // collect all not merged objects
-    i = 0;
-    for (auto object : objects_touching_down) {
-      if (indexes_to_merge_down.find(i) == indexes_to_merge_down.end()) {
-        new_objects.push_back(object);
-      }
-      i++;
-    }
-
-    size_t j = 0;
-    for (auto object : other_objects_touching_up) {
-      if (indexes_to_merge_up.find(j) == indexes_to_merge_up.end()) {
-        new_objects.push_back(object);
-      }
-      j++;
     }
 
     objects.clear();
@@ -312,4 +211,4 @@ private:
   std::vector<std::shared_ptr<Object>> objects_touching_up;
 };
 
-}
+} // namespace od
