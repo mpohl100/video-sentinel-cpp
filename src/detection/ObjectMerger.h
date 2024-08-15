@@ -54,12 +54,12 @@ public:
       std::vector<std::shared_ptr<Object>> primary_objects,
       std::vector<std::shared_ptr<Object>> secondary_objects,
       std::function<void(std::shared_ptr<Object>, std::shared_ptr<Object>)>
-          connect std::function<bool(std::shared_ptr<Object>,
-                                     std::shared_ptr<Object>)>
-              is_connected)
+          connect,
+      std::function<bool(std::shared_ptr<Object>, std::shared_ptr<Object>)>
+          is_connected)
       : _primary_objects(primary_objects),
         _secondary_objects(secondary_objects), _connect(connect),
-        is_connected(is_connected) {}
+        _is_connected(is_connected) {}
 
   std::vector<std::shared_ptr<Object>> connect_all_objects() {
     std::vector<std::shared_ptr<Object>> result;
@@ -97,27 +97,28 @@ private:
     }
     std::sort(subgraph.begin(), subgraph.end());
     std::shared_ptr<Object> merged_object = get_object_by_index(subgraph[0]);
-    std::vector<int> visited(graph.width(), 0);
+    std::vector<int> visited(_graph.width(), 0);
     merge_connections(merged_object, subgraph, subgraph[0], visited);
   }
-  
-  void merge_connections(std::shared_ptr<Object> object_to_connect_to, std::vector<int> subgraph, int index, std::vector<int>& visited){
-    if(visited[index] == 1){
-        return;
+
+  void merge_connections(std::shared_ptr<Object> object_to_connect_to,
+                         std::vector<int> subgraph, int index,
+                         std::vector<int> &visited) {
+    if (visited[index] == 1) {
+      return;
     }
     visited[index] = 1;
     const auto connections = _graph.get_connections(index);
-    for(const auto connection : connections){
-        const auto object_to_connect = get_object_by_index(connection);
-        if(is_primary_by_index(connection)){
-            _connect(object_to_connect, object_to_connect_to);
-        }
-        else{
-            _connect(object_to_connect_to, object_to_connect);
-        }
+    for (const auto connection : connections) {
+      const auto object_to_connect = get_object_by_index(connection);
+      if (is_primary_by_index(connection)) {
+        _connect(object_to_connect, object_to_connect_to);
+      } else {
+        _connect(object_to_connect_to, object_to_connect);
+      }
     }
-    for(const auto connection : connections){
-        merge_connections(object_to_connect_to, subgraph, connection, visited);
+    for (const auto connection : connections) {
+      merge_connections(object_to_connect_to, subgraph, connection, visited);
     }
   }
 
