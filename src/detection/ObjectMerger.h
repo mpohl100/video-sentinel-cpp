@@ -36,6 +36,8 @@ public:
     return connections;
   }
 
+  size_t width() const { return _adj.width(); }
+
 private:
   matrix::Matrix<int> _adj;
 };
@@ -95,14 +97,15 @@ private:
     }
     std::sort(subgraph.begin(), subgraph.end());
     std::shared_ptr<Object> merged_object = get_object_by_index(subgraph[0]);
-    merge_connections(merged_object, subgraph, subgraph[0]);
+    std::vector<int> visited(graph.width(), 0);
+    merge_connections(merged_object, subgraph, subgraph[0], visited);
   }
   
   void merge_connections(std::shared_ptr<Object> object_to_connect_to, std::vector<int> subgraph, int index, std::vector<int>& visited){
-    if(std::find(visitied.begin(), visited.end(), index) != visited.end()){
+    if(visited[index] == 1){
         return;
     }
-    visited.push_back(index);
+    visited[index] = 1;
     const auto connections = _graph.get_connections(index);
     for(const auto connection : connections){
         const auto object_to_connect = get_object_by_index(connection);
