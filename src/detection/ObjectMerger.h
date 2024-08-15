@@ -9,6 +9,18 @@
 
 namespace od {
 
+// Function to perform a Depth-First Search (DFS) to explore all vertices connected to vertex `v`
+inline void DFS(int v, const matrix::Matrix<int>& adjMatrix, std::vector<bool>& visited, std::vector<int>& subgraph) {
+    visited[v] = true;
+    subgraph.push_back(v);  // Add vertex `v` to the current subgraph
+    
+    for (int i = 0; i < adjMatrix.width(); i++) {
+        if (adjMatrix.get(v, i) == 1 && !visited[i]) {  // If there's an edge and vertex `i` is not visited
+            DFS(i, adjMatrix, visited, subgraph);
+        }
+    }
+}
+
 class Graph {
 public:
   Graph() = default;
@@ -24,7 +36,21 @@ public:
     _adj.get(v, u) = 1;
   }
 
-  std::vector<std::vector<int>> find_subgraphs() const {}
+  std::vector<std::vector<int>> find_subgraphs() const {
+    int n = _adj.width();
+    std::vector<bool> visited(n, false);
+    std::vector<std::vector<int>> subgraphs;
+
+    for (int i = 0; i < n; i++) {
+        if (!visited[i]) {
+            std::vector<int> subgraph;
+            DFS(i, _adj, visited, subgraph);
+            subgraphs.push_back(subgraph);
+        }
+    }
+
+    return subgraphs;
+  }
 
   std::vector<int> get_connections(size_t index) const {
     std::vector<int> connections;
@@ -99,6 +125,7 @@ private:
     std::shared_ptr<Object> merged_object = get_object_by_index(subgraph[0]);
     std::vector<int> visited(_graph.width(), 0);
     merge_connections(merged_object, subgraph, subgraph[0], visited);
+    return merged_object;
   }
 
   void merge_connections(std::shared_ptr<Object> object_to_connect_to,
