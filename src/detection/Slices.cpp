@@ -1,5 +1,6 @@
 #include "Slices.h"
 #include "Object.h"
+#include "ObjectsPerRectangle.h"
 
 #include "math2d/math2d.h"
 

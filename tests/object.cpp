@@ -1,6 +1,8 @@
 #include <catch2/catch_all.hpp>
 
 #include "detection/Object.h"
+#include "detection/ObjectsPerRectangle.h"
+
 #include "math2d/math2d.h"
 
 #include <iostream>
