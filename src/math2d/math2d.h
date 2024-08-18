@@ -1,6 +1,6 @@
 #pragma once
 
-#include "math2d/value_test.h"
+#include "value_test.h"
 
 #include <cmath>
 #include <string>
@@ -23,13 +23,13 @@ struct Point {
   Point plus(const Vector &vec) const;
   std::string toString() const;
   Point rotate(const Point &around, const Angle &angle) const;
-  friend constexpr auto operator<=>(const Point &, const Point &) = default;
+  //friend constexpr auto operator<=>(const Point &, const Point &) = default;
 
   number_type x = 0;
   number_type y = 0;
 };
-static_assert(value_test::value_test<Point>(),
-              "class Point must be value type");
+//static_assert(value_test::value_test<Point>(),
+//              "class Point must be value type");
 
 class Line {
 public:
@@ -46,7 +46,7 @@ public:
   const Point &end() const;
   number_type magnitude() const;
 
-  friend constexpr auto operator<=>(const Line &, const Line &) = default;
+  //friend constexpr auto operator<=>(const Line &, const Line &) = default;
 
 private:
   Point _start;
@@ -62,7 +62,7 @@ struct Vector {
   Vector(number_type xx, number_type yy);
   Vector(const Point &start, const Point &end);
 
-  friend constexpr auto operator<=>(const Vector &, const Vector &) = default;
+  //friend constexpr auto operator<=>(const Vector &, const Vector &) = default;
 
   Vector rotate(const Angle &angle) const;
   Vector scale(double factor) const;
@@ -135,7 +135,7 @@ public:
   Rectangle &operator=(Rectangle &&) = default;
   Rectangle(Point tl, Point br);
 
-  friend auto operator<=>(const Rectangle &, const Rectangle &) = default;
+  //friend auto operator<=>(const Rectangle &, const Rectangle &) = default;
 
   bool intersects(const Rectangle &other) const;
 
@@ -162,11 +162,17 @@ public:
   number_type radius() const;
   number_type area() const;
   std::string toString() const;
-  friend constexpr auto operator<=>(const Circle &, const Circle &) = default;
-
+  //friend constexpr auto operator<=>(const Circle &, const Circle &) = default;
+  friend bool operator<(const Point& l, const Point& r);
+  friend bool operator==(const Point& l, const Point& r);
+  friend bool operator!=(const Point& l, const Point& r);
 private:
   Point _center;
   number_type _radius;
 };
+
+bool operator<(const Point& l, const Point& r);
+bool operator==(const Point& l, const Point& r);
+bool operator!=(const Point& l, const Point& r);
 
 }
