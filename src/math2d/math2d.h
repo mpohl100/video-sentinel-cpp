@@ -24,6 +24,9 @@ struct Point {
   std::string toString() const;
   Point rotate(const Point &around, const Angle &angle) const;
   //friend constexpr auto operator<=>(const Point &, const Point &) = default;
+  friend bool operator<(const Point& l, const Point& r);
+  friend bool operator==(const Point& l, const Point& r);
+  friend bool operator!=(const Point& l, const Point& r);
 
   number_type x = 0;
   number_type y = 0;
@@ -47,6 +50,9 @@ public:
   number_type magnitude() const;
 
   //friend constexpr auto operator<=>(const Line &, const Line &) = default;
+  friend bool operator<(const Line& l, const Line& r);
+  friend bool operator==(const Line& l, const Line& r);
+  friend bool operator!=(const Line& l, const Line& r);
 
 private:
   Point _start;
@@ -136,6 +142,9 @@ public:
   Rectangle(Point tl, Point br);
 
   //friend auto operator<=>(const Rectangle &, const Rectangle &) = default;
+  friend bool operator<(const Rectangle& l, const Rectangle& r);
+  friend bool operator==(const Rectangle& l, const Rectangle& r);
+  friend bool operator!=(const Rectangle& l, const Rectangle& r);
 
   bool intersects(const Rectangle &other) const;
 
@@ -163,9 +172,6 @@ public:
   number_type area() const;
   std::string toString() const;
   //friend constexpr auto operator<=>(const Circle &, const Circle &) = default;
-  friend bool operator<(const Point& l, const Point& r);
-  friend bool operator==(const Point& l, const Point& r);
-  friend bool operator!=(const Point& l, const Point& r);
 private:
   Point _center;
   number_type _radius;
@@ -174,5 +180,13 @@ private:
 bool operator<(const Point& l, const Point& r);
 bool operator==(const Point& l, const Point& r);
 bool operator!=(const Point& l, const Point& r);
+
+bool operator<(const Line& l, const Line& r);
+bool operator==(const Line& l, const Line& r);
+bool operator!=(const Line& l, const Line& r);
+
+bool operator<(const Rectangle& l, const Rectangle& r);
+bool operator==(const Rectangle& l, const Rectangle& r);
+bool operator!=(const Rectangle& l, const Rectangle& r);
 
 }
