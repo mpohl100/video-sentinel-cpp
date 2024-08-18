@@ -1,4 +1,4 @@
-#include "math2d/math2d.h"
+#include "math2d.h"
 
 #include <cmath>
 #include <string>
@@ -42,6 +42,21 @@ Point Point::plus(const Vector &vec) const {
 
 std::string Point::toString() const {
   return "Point{x: " + std::to_string(x) + "; y: " + std::to_string(y) + "}";
+}
+
+bool operator<(const Point& l, const Point& r){
+    if(l.x != r.x){
+        return l.x < r.x;
+    }
+    return l.y < r.y;
+}
+
+bool operator==(const Point& l, const Point& r){
+    return !(l < r) && !(r < l);
+}
+
+bool operator!=(const Point& l, const Point& r){
+    return !(l == r);
 }
 
 Line::Line(Point start, Point end) : _start(start), _end(end) {}
