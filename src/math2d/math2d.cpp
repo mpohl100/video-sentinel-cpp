@@ -99,6 +99,24 @@ double Line::magnitude() const {
                    std::pow(_end.y - _start.y, 2));
 }
 
+bool operator<(const Line& l, const Line& r)
+{
+  if (l.start() != r.start()) {
+    return l.start() < r.start();
+  }
+  return l.end() < r.end();
+}
+
+bool operator==(const Line& l, const Line& r)
+{
+  return !(l < r) && !(r < l);
+}
+
+bool operator!=(const Line& l, const Line& r)
+{
+  return !(l == r);
+}
+
 Rectangle::Rectangle(Point tl, Point br) : _lines() {
   _lines.reserve(4);
   _lines.emplace_back(tl, Point(br.x, tl.y));
@@ -129,6 +147,22 @@ std::string Rectangle::toString() const
 {
     return "Rectangle{top_left: " + _lines[0].start().toString() +
            "; bottom_right: " + _lines[1].end().toString() + "}";
+}
+
+
+bool operator<(const Rectangle& l, const Rectangle& r)
+{
+    return l.lines() < r.lines();
+}
+
+bool operator==(const Rectangle& l, const Rectangle& r)
+{
+  return !(l < r) && !(r < l);
+}
+
+bool operator!=(const Rectangle& l, const Rectangle& r)
+{
+  return !(l == r);
 }
 
 
