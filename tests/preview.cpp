@@ -36,7 +36,7 @@ TEST_CASE("Preview", "[preview]") {
       video_preview.update_calculation_status();
       const auto frame_calculation_status =
           video_preview.get_frame_calculation_status();
-      std::cout << "Frame status: " << frame_calculation_status << std::endl;
+      std::cout << "Frame status: " << preview::to_string(frame_calculation_status) << std::endl;
       if (frame_calculation_status ==
               preview::FrameCalculationStatus::NOT_STARTED ||
           frame_calculation_status == preview::FrameCalculationStatus::DONE) {
