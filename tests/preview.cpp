@@ -6,9 +6,9 @@
 
 namespace {
 
-TEST_CASE("Webcam", "[webcam]") {
+TEST_CASE("Preview", "[preview]") {
 
-  SECTION("WebcamProcessFrame") {
+  SECTION("PreviewProcessesFrameAfterPreviousFrameIsDone") {
     int rings = 1;
     int gradient_threshold = 20;
     const auto path = "../video/BillardTakeoff.mp4";
@@ -28,18 +28,31 @@ TEST_CASE("Webcam", "[webcam]") {
       int retflag;
       webcam::read_image_data(cap, imgOriginal, retflag);
 
-      const auto is_calculation_done = video_preview.is_new_frame_ready();
-      if (is_calculation_done) {
-        const auto rectangles = video_preview.get_all_rectangles();
-        CHECK(rectangles.size() > 500);
-        did_frame_get_ready_at_least_once = true;
-      } else {
+      if (retflag == 2) {
+        CHECK(false);
+        break;
+      }
+
+      video_preview.update_calculation_status();
+      const auto frame_calculation_status =
+          video_preview.get_frame_calculation_status();
+      std::cout << "Frame status: " << frame_calculation_status << std::endl;
+      if (frame_calculation_status ==
+              preview::FrameCalculationStatus::NOT_STARTED ||
+          frame_calculation_status == preview::FrameCalculationStatus::DONE) {
         video_preview.set_mat(
             imgOriginal,
             od::Rectangle{0, 0, imgOriginal.cols, imgOriginal.rows}, rings,
             gradient_threshold);
+        std::cout << "Frame set" << std::endl;
+        if (frame_calculation_status == preview::FrameCalculationStatus::DONE) {
+          const auto rectangles = video_preview.get_all_rectangles();
+          CHECK(rectangles.size() > 500);
+          did_frame_get_ready_at_least_once = true;
+          std::cout << "Frame done" << std::endl;
+        }
       }
-      std::this_thread::sleep_for(std::chrono::milliseconds(1000/30));
+      std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 30));
     }
     CHECK(did_frame_get_ready_at_least_once);
   }
