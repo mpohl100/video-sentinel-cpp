@@ -48,7 +48,7 @@ if(ENABLE_CLANG_TIDY)
     set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
     add_custom_target(run_clang_tidy
         COMMAND ${CMAKE_COMMAND} -E echo "Running clang-tidy for all libraries and targets..."
-        COMMAND bash -c "find ${CMAKE_SOURCE_DIR} -name '*.cpp' -exec clang-tidy -p ${CMAKE_BINARY_DIR} -checks=google {} +"
+        COMMAND find ${CMAKE_SOURCE_DIR} -name '*.cpp' | xargs clang-tidy -p ${CMAKE_BINARY_DIR} -checks=google 2>&1
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMENT "Running clang-tidy checks for all libraries and executables"
     )
