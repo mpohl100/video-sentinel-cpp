@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     wget \
     clang \
+    clang-tidy \
  && rm -rf /var/lib/apt/lists/*
 
 # Install Conan

@@ -14,8 +14,8 @@ class VideoSentinelConan(ConanFile):
         "clara/1.1.5",
         "opencv/4.5.5"
     ]
-    options = {"coverage": [True, False]}
-    default_options = {"coverage": False}
+    options = {"coverage": [True, False], "clang_tidy": [True, False]}
+    default_options = {"coverage": False, "clang_tidy": False}
 
     def configure(self):
         print("try doing nothing")
@@ -37,10 +37,14 @@ class VideoSentinelConan(ConanFile):
 
     def build(self):
         coverage = getattr(self.options, "coverage", False)
+        clang_tidy = getattr(self.options, "clang_tidy", False)
 
         if coverage:
             self.output.info("Building with coverage flags...")
             self._build_with_coverage()
+        elif clang_tidy:
+            self.output.info("Building with clang-tidy flags...")
+            self._build_with_clang_tidy()
         else:
             self.output.info("Building without coverage flags...")
             self._build_without_coverage()
@@ -49,6 +53,14 @@ class VideoSentinelConan(ConanFile):
         cmake = CMake(self)
         vars = {
             "ENABLE_COVERAGE": "true",
+        }
+        cmake.configure(vars)
+        cmake.build()
+
+    def _build_with_clang_tidy(self):
+        cmake = CMake(self)
+        vars = {
+            "ENABLE_CLANG_TIDY": "true",
         }
         cmake.configure(vars)
         cmake.build()

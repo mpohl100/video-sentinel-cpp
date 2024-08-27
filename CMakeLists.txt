@@ -41,6 +41,19 @@ if(ENABLE_COVERAGE)
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 endif()
 
+if(ENABLE_CLANG_TIDY)
+    message("clang_tidy enabled")
+    set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=*")
+    # Enable the generation of compile_commands.json
+    set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+    add_custom_target(run_clang_tidy
+        COMMAND ${CMAKE_COMMAND} -E echo "Running clang-tidy for all libraries and targets..."
+        COMMAND find ${CMAKE_SOURCE_DIR} -name "*.cpp" | xargs clang-tidy -p ${CMAKE_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Running clang-tidy checks for all libraries and executables"
+    )
+endif()
+
 enable_testing()
 
 add_subdirectory(src)
