@@ -413,4 +413,7 @@ void establishing_shot_slices(AllRectangles &ret, const cv::Mat &contours,
 void establishing_shot_objects(ObjectsPerRectangle &ret,
                                const cv::Mat &contours,
                                const Rectangle &rectangle);
+
+std::vector<std::shared_ptr<Object>> deduce_objects(Slices &slices);
+
 } // namespace od
