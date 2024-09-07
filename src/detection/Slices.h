@@ -15,21 +15,21 @@ struct Slice {
   math2d::Point start = math2d::Point{0, 0};
   math2d::Point end = math2d::Point{0, 0};
 
-  //friend constexpr auto operator<=>(const Slice &lhs,
-  //                                  const Slice &rhs) = default;
-  friend inline bool operator<(const Slice& l, const Slice& r){
-      if(l.start != r.start){
-          return l.start < r.start;
-      }
-      return l.end < r.end;
+  // friend constexpr auto operator<=>(const Slice &lhs,
+  //                                   const Slice &rhs) = default;
+  friend inline bool operator<(const Slice &l, const Slice &r) {
+    if (l.start != r.start) {
+      return l.start < r.start;
+    }
+    return l.end < r.end;
   }
 
-  friend inline bool operator==(const Slice& l, const Slice& r){
-      return !(l < r) && !(r < l);
+  friend inline bool operator==(const Slice &l, const Slice &r) {
+    return !(l < r) && !(r < l);
   }
 
-  friend inline bool operator!=(const Slice& l, const Slice& r){
-      return !(l == r);
+  friend inline bool operator!=(const Slice &l, const Slice &r) {
+    return !(l == r);
   }
 
   bool touches(const Slice &other) const {
@@ -55,17 +55,19 @@ struct Slice {
 struct AnnotatedSlice {
   Slice slice;
   size_t line_number = 0;
-  //friend constexpr auto operator<=>(const AnnotatedSlice &lhs,
-  //                                  const AnnotatedSlice &rhs) = default;
-  friend inline bool operator<(const AnnotatedSlice& l, const AnnotatedSlice& r){
-      if(l.slice != r.slice){
-          return l.slice < r.slice;
-      }
-      return l.line_number < r.line_number;
+  // friend constexpr auto operator<=>(const AnnotatedSlice &lhs,
+  //                                   const AnnotatedSlice &rhs) = default;
+  friend inline bool operator<(const AnnotatedSlice &l,
+                               const AnnotatedSlice &r) {
+    if (l.slice != r.slice) {
+      return l.slice < r.slice;
+    }
+    return l.line_number < r.line_number;
   }
 
-  friend inline bool operator==(const AnnotatedSlice& l, const AnnotatedSlice& r){
-      return !(l < r) && !(r < l);
+  friend inline bool operator==(const AnnotatedSlice &l,
+                                const AnnotatedSlice &r) {
+    return !(l < r) && !(r < l);
   }
 };
 
@@ -180,17 +182,43 @@ struct Slices {
     return std::nullopt;
   }
 
-  std::optional<SliceLine>
-  get_touching_slices(const SliceLine &slices_of_object) {
+  enum class Direction { UP, DOWN };
+
+  Direction invert_direction(Direction direction) {
+    if (direction == Direction::UP) {
+      return Direction::DOWN;
+    }
+    return Direction::UP;
+  }
+
+  struct TouchingSlicesReturnValue{
+    std::optional<SliceLine> slice_line;
+    std::optional<size_t> line_number = 0;
+    bool added_slices = false;
+  };
+
+  TouchingSlicesReturnValue
+  get_touching_slices(const SliceLine &slices_of_object, Direction direction) {
     if (slices_of_object.line().empty()) {
       throw std::runtime_error("slices_of_object is empty");
     }
     const auto last_slice = slices_of_object.line().back();
     const auto line_number = slices_of_object.line_number();
-    if (get_index(line_number) == slices.size() - 1) {
-      return std::nullopt;
+    auto next_line_index = 0u;
+    
+    if (direction == Direction::DOWN) {
+      if (get_index(line_number) == slices.size() - 1) {
+        return TouchingSlicesReturnValue{std::nullopt, std::nullopt, false};
+      }
+      next_line_index = get_index(line_number + 1);
     }
-    const auto next_line_index = get_index(line_number + 1);
+    else{
+      if (line_number == 0) {
+        return TouchingSlicesReturnValue{std::nullopt, std::nullopt, false};
+      }
+      next_line_index = get_index(line_number - 1);
+    }
+
     auto &next_line = slices[next_line_index];
     std::vector<AnnotatedSlice> ret;
     for (const auto &annotatedSlice : slices_of_object.line()) {
@@ -208,10 +236,11 @@ struct Slices {
                         ret.begin(), ret.end(),
                         std::back_inserter(cleared_next_line));
     slices[next_line_index] = SliceLine{cleared_next_line, line_number + 1};
+    auto did_insert_lines = !cleared_next_line.empty();
     if (!ret.empty()) {
-      return SliceLine{ret};
+      return TouchingSlicesReturnValue{ret, (direction == Direction::DOWN) ? line_number + 1 : line_number - 1, did_insert_lines};
     }
-    return std::nullopt;
+    return TouchingSlicesReturnValue{std::nullopt, (direction == Direction::DOWN) ? line_number + 1 : line_number - 1, did_insert_lines};
   }
 
   Rectangle to_rectangle() const {
