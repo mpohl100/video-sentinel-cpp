@@ -182,6 +182,22 @@ struct Slices {
     return std::nullopt;
   }
 
+  void add_slice_line(const SliceLine &slice_line) {
+    if (slices.empty()) {
+      slices.push_back(slice_line);
+      return;
+    }
+    const auto line_number = slice_line.line_number();
+    auto exisiting_slice_line = std::find_if(slices.begin(), slices.end(), [line_number](const auto &slice_line){
+      return slice_line.line_number() == line_number;
+    });
+    if(exisiting_slice_line != slices.end()){
+      exisiting_slice_line->add_slices(slice_line.line());
+      return;
+    }
+    throw std::runtime_error("Cannot append slice line");
+  }
+
   enum class Direction { UP, DOWN };
 
   Direction invert_direction(Direction direction) {
