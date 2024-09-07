@@ -1,3 +1,5 @@
+#pragma once
+
 #include "detection/Detection.h"
 #include "detection/Object.h"
 #include "detection/AllObjects.h"
