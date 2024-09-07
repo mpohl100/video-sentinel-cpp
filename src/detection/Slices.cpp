@@ -59,7 +59,7 @@ std::vector<std::shared_ptr<Object>> deduce_objects(Slices &slices) {
   std::vector<std::shared_ptr<Object>> objects;
   while (slices.contains_slices()) {
     const auto first_slice = slices.get_first_slice();
-    if(!first_slice.has_value()) {
+    if (!first_slice.has_value()) {
       break;
     }
     std::vector<AnnotatedSlice> current_slices;
@@ -67,13 +67,19 @@ std::vector<std::shared_ptr<Object>> deduce_objects(Slices &slices) {
     auto current_object = std::make_shared<Object>(Slices{
         math2d::Point{first_slice->slice.start.x, first_slice->slice.start.y}});
     current_object->slices.slices.push_back(current_slices);
-    while (!current_slices.empty()) {
-      const auto new_current_slices = slices.get_touching_slices(current_slices);
-      if(!new_current_slices.has_value()) {
-        break;
+    auto last_pass_has_added_slices = true;
+    while (last_pass_has_added_slices) {
+      auto direction = Slices::Direction::DOWN;
+      while (!current_slices.empty()) {
+        const auto new_current_slices =
+            slices.get_touching_slices(current_slices, direction);
+        if (!new_current_slices.slice_line.has_value()) {
+          break;
+        }
+        current_object->slices.slices.push_back(*new_current_slices.slice_line);
+        current_slices = new_current_slices.slice_line->line();
       }
-      current_object->slices.slices.push_back(*new_current_slices);
-      current_slices = new_current_slices->line();
+      direction = slices.invert_direction(direction);
     }
     objects.push_back(current_object);
   }
@@ -152,7 +158,7 @@ void establishing_shot_objects(ObjectsPerRectangle &ret,
   }
   auto objects = deduce_objects(slices);
   ret.set_rectangle(rectangle);
-  for (const auto& object : objects) {
+  for (const auto &object : objects) {
     ret.insert_object(object);
   }
 }
