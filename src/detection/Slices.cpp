@@ -71,27 +71,37 @@ std::vector<std::shared_ptr<Object>> deduce_objects(Slices &slices) {
     while (last_pass_has_added_slices) {
       bool is_first_pass = true;
       auto direction = Slices::Direction::DOWN;
-      if(!is_first_pass){
-        if(direction == Slices::Direction::DOWN){
-          current_slices = current_object->slices.get_top_line();
-        }
-        else{
-          current_slices = current_object->slices.get_bottom_line();
+      if (!is_first_pass) {
+        if (direction == Slices::Direction::DOWN) {
+          current_slices = current_object->slices.get_top_line().line();
+        } else {
+          current_slices = current_object->slices.get_bottom_line().line();
         }
       }
-      while ((is_first_pass && !current_slices.empty())) {
+      size_t top_line_number =
+          current_object->slices.get_top_line().line_number();
+      size_t bottom_line_number =
+          current_object->slices.get_bottom_line().line_number();
+      auto out_of_previous_bounds = false;
+
+      while (true) {
         const auto new_current_slices =
             slices.get_touching_slices(current_slices, direction);
-        
-        if(new_current_slices.added_slices){
+
+        if (new_current_slices.added_slices) {
           last_pass_has_added_slices = true;
         }
 
-        if (is_first_pass && !new_current_slices.slice_line.has_value()) {
+        if (is_first_pass && !new_current_slices.slice_line.has_value() ||
+            (!is_first_pass && out_of_previous_bounds &&
+             !new_current_slices.slice_line.has_value())) {
           break;
         }
         current_object->slices.add_slice_line(*new_current_slices.slice_line);
         current_slices = new_current_slices.slice_line->line();
+        out_of_previous_bounds =
+            top_line_number > new_current_slices.line_number &&
+            new_current_slices.line_number < bottom_line_number;
       }
       is_first_pass = false;
       direction = slices.invert_direction(direction);
