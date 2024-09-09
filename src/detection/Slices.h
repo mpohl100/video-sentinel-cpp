@@ -234,21 +234,25 @@ struct Slices {
     const auto last_slice = slices_of_object.line().back();
     const auto line_number = slices_of_object.line_number();
     auto next_line_index = 0u;
+    auto next_line_number = 0u;
     
     if (direction == Direction::DOWN) {
       if (get_index(line_number) == slices.size() - 1) {
         return TouchingSlicesReturnValue{std::nullopt, std::nullopt, false};
       }
       next_line_index = get_index(line_number + 1);
+      next_line_number = line_number + 1;
     }
     else{
       if (line_number == 0) {
         return TouchingSlicesReturnValue{std::nullopt, std::nullopt, false};
       }
       next_line_index = get_index(line_number - 1);
+      next_line_number = line_number - 1;
     }
 
     auto &next_line = slices[next_line_index];
+    auto nb_slices_in_next_line = next_line.line().size();
     std::vector<AnnotatedSlice> ret;
     for (const auto &annotatedSlice : slices_of_object.line()) {
       for (const auto &slice : next_line.line()) {
@@ -264,12 +268,12 @@ struct Slices {
     std::set_difference(next_line.line().begin(), next_line.line().end(),
                         ret.begin(), ret.end(),
                         std::back_inserter(cleared_next_line));
-    slices[next_line_index] = SliceLine{cleared_next_line, line_number + 1};
-    auto did_insert_lines = !cleared_next_line.empty();
+    slices[next_line_index] = SliceLine{cleared_next_line, next_line_number};
+    auto did_insert_lines = nb_slices_in_next_line < cleared_next_line.size();
     if (!ret.empty()) {
-      return TouchingSlicesReturnValue{ret, (direction == Direction::DOWN) ? line_number + 1 : line_number - 1, did_insert_lines};
+      return TouchingSlicesReturnValue{ret, next_line_number, did_insert_lines};
     }
-    return TouchingSlicesReturnValue{std::nullopt, (direction == Direction::DOWN) ? line_number + 1 : line_number - 1, did_insert_lines};
+    return TouchingSlicesReturnValue{std::nullopt, next_line_number, did_insert_lines};
   }
 
   SliceLine get_top_line() const{
