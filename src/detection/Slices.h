@@ -241,62 +241,6 @@ struct Slices {
     return Direction::UP;
   }
 
-  struct TouchingSlicesReturnValue {
-    std::optional<SliceLine> slice_line;
-    std::optional<size_t> line_number = 0;
-    bool added_slices = false;
-  };
-
-  TouchingSlicesReturnValue
-  get_touching_slices(const SliceLine &slices_of_object, Direction direction) {
-    if (slices_of_object.line().empty()) {
-      throw std::runtime_error("slices_of_object is empty");
-    }
-    const auto last_slice = slices_of_object.line().back();
-    const auto line_number = slices_of_object.line_number();
-    auto next_line_index = 0u;
-    auto next_line_number = 0u;
-
-    if (direction == Direction::DOWN) {
-      if (get_index(line_number) == slices.size() - 1) {
-        return TouchingSlicesReturnValue{std::nullopt, std::nullopt, false};
-      }
-      next_line_index = get_index(line_number + 1);
-      next_line_number = line_number + 1;
-    } else {
-      if (line_number == 0) {
-        return TouchingSlicesReturnValue{std::nullopt, std::nullopt, false};
-      }
-      next_line_index = get_index(line_number - 1);
-      next_line_number = line_number - 1;
-    }
-
-    auto &next_line = slices[next_line_index];
-    auto nb_slices_in_next_line = next_line.line().size();
-    std::vector<AnnotatedSlice> ret;
-    for (const auto &annotatedSlice : slices_of_object.line()) {
-      for (const auto &slice : next_line.line()) {
-        if (annotatedSlice.slice.touches_with_tolerance(slice.slice)) {
-          ret.push_back(slice);
-        }
-      }
-    }
-    const auto last = std::unique(ret.begin(), ret.end());
-    ret.erase(last, ret.end());
-    std::sort(ret.begin(), ret.end());
-    std::vector<AnnotatedSlice> cleared_next_line;
-    std::set_difference(next_line.line().begin(), next_line.line().end(),
-                        ret.begin(), ret.end(),
-                        std::back_inserter(cleared_next_line));
-    slices[next_line_index] = SliceLine{cleared_next_line, next_line_number};
-    auto did_insert_lines = !ret.empty();
-    if (!ret.empty()) {
-      return TouchingSlicesReturnValue{ret, next_line_number, did_insert_lines};
-    }
-    return TouchingSlicesReturnValue{std::nullopt, next_line_number,
-                                     did_insert_lines};
-  }
-
   SliceLine get_top_line() const {
     if (slices.empty()) {
       return SliceLine{{}, 0};
@@ -447,10 +391,12 @@ private:
       // get all touching slices in the next line
       auto touching_slices =
           image_slices.extract_touching_slices(current_line, Direction::DOWN);
-      if (!touching_slices.line().empty()) {
+      if (!touching_slices.empty()) {
         were_slices_added = true;
       }
-      add_slice_line(touching_slices);
+      if (!touching_slices.empty()) {
+        add_slice_line(touching_slices);
+      }
       index++;
     }
     return were_slices_added;
@@ -466,7 +412,7 @@ private:
       throw std::runtime_error(
           "slices are empty while trying to add image slices down");
     }
-    size_t index = slices.size() - 1;
+    int index = slices.size() - 1;
     bool were_slices_added = false;
     while (index >= 0) {
       // get the line one is currently interested in
@@ -474,11 +420,13 @@ private:
       // get all touching slices in the next line
       auto touching_slices =
           image_slices.extract_touching_slices(current_line, Direction::DOWN);
-      if (!touching_slices.line().empty()) {
+      if (!touching_slices.empty()) {
         were_slices_added = true;
       }
       size_t current_size = slices.size();
-      add_slice_line(touching_slices);
+      if (!touching_slices.empty()) {
+        add_slice_line(touching_slices);
+      }
       size_t new_size = slices.size();
       index--;
       // if the size of the slices has increased, one has prepended a line which
@@ -509,8 +457,8 @@ private:
   }
 
   struct ExtractedSlicesResult {
-    SliceLine touching_slices;
-    SliceLine remaining_slices;
+    std::vector<AnnotatedSlice> touching_slices;
+    std::vector<AnnotatedSlice> remaining_slices;
   };
 
   ExtractedSlicesResult extract_slices(const SliceLine &prev,
@@ -550,22 +498,24 @@ private:
     slices[index] = line;
   }
 
-  SliceLine extract_touching_slices(const SliceLine &prev,
-                                    Direction direction) {
+  std::vector<AnnotatedSlice> extract_touching_slices(const SliceLine &prev,
+                                                      Direction direction) {
     // pre conditions
     if (slices.empty()) {
-      return SliceLine{{}, 0};
+      return {};
     }
 
     if (prev.line().empty()) {
-      throw SliceLine{{}, 0};
+      return {};
     }
     SliceLine next = get_next_slice_line(direction, prev);
     if (next.line().empty()) {
-      return SliceLine{{}, 0};
+      return {};
     }
     auto extracted_slices = extract_slices(prev, next);
-    set_remaining_slices(extracted_slices.remaining_slices);
+    if (!extracted_slices.remaining_slices.empty()) {
+      set_remaining_slices(extracted_slices.remaining_slices);
+    }
     return extracted_slices.touching_slices;
   }
 
