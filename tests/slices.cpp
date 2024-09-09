@@ -19,6 +19,11 @@ TEST_CASE("Slices", "[slices]") {
     auto slice_line = od::SliceLine{std::vector<od::AnnotatedSlice>{slice}, 0};
     slices.slices.push_back(slice_line);
 
+    // construct second line
+    auto second_slice = od::AnnotatedSlice{od::Slice{math2d::Point{0, 1}, math2d::Point{10, 1}}, 1};
+    auto second_slice_line = od::SliceLine{std::vector<od::AnnotatedSlice>{second_slice}, 1};
+    slices.slices.push_back(second_slice_line);
+
     // Act
     auto objects = od::deduce_objects(slices);
 

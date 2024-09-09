@@ -101,7 +101,7 @@ struct SliceLine {
   void add_slices(const std::vector<AnnotatedSlice> &slices) {
     for (const auto &slice : slices) {
       if (slice.line_number != line_number()) {
-        throw std::runtime_error("line number mismatch (slice: " + std::to_string(slice.line_number) + "; line: " + std::to_string(line_number()));
+        throw std::runtime_error("line number mismatch (slice: " + std::to_string(slice.line_number) + "; line: " + std::to_string(line_number()) + ")");
       }
     }
     _line.insert(_line.end(), slices.begin(), slices.end());
@@ -199,16 +199,21 @@ struct Slices {
       return;
     }
     const auto line_number = slice_line.line_number();
-    const auto first_slice_number = slices.front().line_number();
-    const auto index = line_number - first_slice_number;
-    if(index >= slices.size()){
+    const auto first_line_number = slices.front().line_number();
+    const auto last_line_number = slices.back().line_number();
+    if(line_number == first_line_number - 1){
+      slices.insert(slices.begin(), slice_line);
+    }
+    else if(line_number == last_line_number + 1){
       slices.push_back(slice_line);
-      return;
     }
-    if(index < 0){
-      throw std::runtime_error("Cannot add slice line with negative index");
+    else if(first_line_number <= line_number && line_number <= last_line_number){
+      const auto index = line_number - first_line_number;
+      slices[index].add_slices(slice_line.line());
     }
-    slices[index].add_slices(slice_line.line());
+    else{
+      throw std::runtime_error("can not add line number " + std::to_string(line_number) + " to slices");
+    }
   }
 
   enum class Direction { UP, DOWN };
