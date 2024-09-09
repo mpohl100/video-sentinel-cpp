@@ -55,6 +55,24 @@ Slices deduce_slices(const cv::Mat &contours, const Rectangle &rectangle) {
   return slices;
 }
 
+std::shared_ptr<Object> deduce_object(const AnnotatedSlice &first_slice,
+                                      Slices &image_slices) {
+  auto object_slices = Slices{first_slice.slice.start};
+  // insert the next slice
+  object_slices.slices.push_back(
+      SliceLine{std::vector<AnnotatedSlice>{first_slice},
+                static_cast<size_t>(first_slice.slice.start.y)});
+  // the first direction one iterates is from top to bottom
+  auto direction = Slices::Direction::DOWN;
+  bool increased_object_slices = false;
+  do {
+    increased_object_slices =
+        object_slices.try_add_image_slices(image_slices, direction);
+    direction = object_slices.invert_direction(direction);
+  } while (increased_object_slices);
+  return std::make_shared<Object>(object_slices);
+}
+
 std::vector<std::shared_ptr<Object>> deduce_objects(Slices &slices) {
   std::vector<std::shared_ptr<Object>> objects;
   while (slices.contains_slices()) {
@@ -63,61 +81,7 @@ std::vector<std::shared_ptr<Object>> deduce_objects(Slices &slices) {
     if (!first_slice.has_value()) {
       break;
     }
-    std::vector<AnnotatedSlice> current_slices;
-    current_slices.push_back(*first_slice);
-    auto current_object = std::make_shared<Object>(Slices{
-        math2d::Point{first_slice->slice.start.x, first_slice->slice.start.y}});
-    current_object->slices.slices.push_back(current_slices);
-    bool is_first_pass = true;
-    auto direction = Slices::Direction::DOWN;
-    std::set<Slices::Direction> passed_directions;
-    while (true) {
-      passed_directions.insert(direction);
-      std::cout << "Starting new pass" << std::endl;
-      if (!is_first_pass) {
-        if (direction == Slices::Direction::DOWN) {
-          current_slices = current_object->slices.get_top_line().line();
-        } else {
-          current_slices = current_object->slices.get_bottom_line().line();
-        }
-      }
-      size_t top_line_number =
-          current_object->slices.get_top_line().line_number();
-      size_t bottom_line_number =
-          current_object->slices.get_bottom_line().line_number();
-      auto out_of_previous_bounds = false;
-      auto last_pass_has_added_slices = false;
-      while (true) {
-        const auto new_current_slices =
-            slices.get_touching_slices(current_slices, direction);
-
-        if (new_current_slices.added_slices) {
-          last_pass_has_added_slices = true;
-        }
-
-        if (is_first_pass && !new_current_slices.slice_line.has_value() ||
-            (!is_first_pass && out_of_previous_bounds &&
-             !new_current_slices.slice_line.has_value())) {
-          break;
-        }
-        std::cout << "new_current_slices.line_number: "
-                  << *new_current_slices.line_number << " added "
-                  << new_current_slices.slice_line->line().size() << " slices"
-                  << std::endl;
-        current_object->slices.add_slice_line(*new_current_slices.slice_line);
-        current_slices = new_current_slices.slice_line->line();
-        out_of_previous_bounds =
-            top_line_number > new_current_slices.line_number &&
-            new_current_slices.line_number < bottom_line_number;
-      }
-      if(!last_pass_has_added_slices && passed_directions.size() == 2){
-        break;
-      }
-      is_first_pass = false;
-      std::cout << "finished pass" << std::endl;
-      direction = slices.invert_direction(direction);
-    }
-    objects.push_back(current_object);
+    objects.push_back(deduce_object(first_slice.value(), slices));
   }
   return objects;
 }
