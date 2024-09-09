@@ -83,7 +83,7 @@ std::vector<std::shared_ptr<Object>> deduce_objects(Slices &slices) {
       size_t bottom_line_number =
           current_object->slices.get_bottom_line().line_number();
       auto out_of_previous_bounds = false;
-
+      last_pass_has_added_slices = false;
       while (true) {
         const auto new_current_slices =
             slices.get_touching_slices(current_slices, direction);
