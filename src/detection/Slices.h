@@ -6,6 +6,7 @@
 
 #include <optional>
 #include <vector>
+#include <iostream>
 
 namespace od {
 
@@ -397,6 +398,8 @@ private:
       if (!touching_slices.empty()) {
         add_slice_line(touching_slices);
       }
+      std::cout << "Moving down index: " << index << std::endl;
+      std::cout << "Added " << touching_slices.size() << " slices" << std::endl;
       index++;
     }
     return were_slices_added;
@@ -412,28 +415,24 @@ private:
       throw std::runtime_error(
           "slices are empty while trying to add image slices down");
     }
-    int index = slices.size() - 1;
+    size_t index = 0;
     bool were_slices_added = false;
-    while (index >= 0) {
+    while (index < slices.size()) {
       // get the line one is currently interested in
-      auto &current_line = slices[index];
+      auto &current_line = slices[slices.size() - 1 - index];
       // get all touching slices in the next line
       auto touching_slices =
           image_slices.extract_touching_slices(current_line, Direction::DOWN);
       if (!touching_slices.empty()) {
         were_slices_added = true;
       }
-      size_t current_size = slices.size();
       if (!touching_slices.empty()) {
         add_slice_line(touching_slices);
       }
-      size_t new_size = slices.size();
-      index--;
-      // if the size of the slices has increased, one has prepended a line which
-      // one also needs to analyze
-      if (new_size > current_size) {
-        index = 0;
-      }
+      std::cout << "Moving up index: " << index << std::endl;
+      std::cout << "Added " << touching_slices.size() << " slices " << std::endl;
+
+      index++;
     }
     return were_slices_added;
   }
