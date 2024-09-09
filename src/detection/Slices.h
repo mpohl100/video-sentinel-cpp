@@ -97,6 +97,16 @@ struct SliceLine {
   size_t line_number() const { return _line_number; }
   const std::vector<AnnotatedSlice> &line() const { return _line; }
 
+  void add_slices(const std::vector<AnnotatedSlice> &slices) {
+    for (const auto &slice : slices) {
+      if (slice.line_number != line_number()) {
+        throw std::runtime_error("line number mismatch");
+      }
+    }
+    _line.insert(_line.end(), slices.begin(), slices.end());
+     std::sort(_line.begin(), _line.end());
+  }
+
   void merge_right(const SliceLine &other) {
     // if the linenumbers mismatch, throw
     if (line_number() != other.line_number()) {
@@ -188,14 +198,16 @@ struct Slices {
       return;
     }
     const auto line_number = slice_line.line_number();
-    auto exisiting_slice_line = std::find_if(slices.begin(), slices.end(), [line_number](const auto &slice_line){
-      return slice_line.line_number() == line_number;
-    });
-    if(exisiting_slice_line != slices.end()){
-      exisiting_slice_line->add_slices(slice_line.line());
+    const auto first_slice_number = slices.front().line_number();
+    const auto index = line_number - first_slice_number;
+    if(index >= slices.size()){
+      slices.push_back(slice_line);
       return;
     }
-    throw std::runtime_error("Cannot append slice line");
+    if(index < 0){
+      throw std::runtime_error("Cannot add slice line with negative index");
+    }
+    slices[index].add_slices(slice_line.line());
   }
 
   enum class Direction { UP, DOWN };
@@ -257,6 +269,20 @@ struct Slices {
       return TouchingSlicesReturnValue{ret, (direction == Direction::DOWN) ? line_number + 1 : line_number - 1, did_insert_lines};
     }
     return TouchingSlicesReturnValue{std::nullopt, (direction == Direction::DOWN) ? line_number + 1 : line_number - 1, did_insert_lines};
+  }
+
+  std::vector<AnnotatedSlice> get_top_line() const{
+    if (slices.empty()) {
+      return {};
+    }
+    return slices.front().line();
+  }
+
+  std::vector<AnnotatedSlice> get_bottom_line() const{
+    if (slices.empty()) {
+      return {};
+    }
+    return slices.back().line();
   }
 
   Rectangle to_rectangle() const {
