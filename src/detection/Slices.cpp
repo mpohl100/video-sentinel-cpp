@@ -69,17 +69,31 @@ std::vector<std::shared_ptr<Object>> deduce_objects(Slices &slices) {
     current_object->slices.slices.push_back(current_slices);
     auto last_pass_has_added_slices = true;
     while (last_pass_has_added_slices) {
+      bool is_first_pass = true;
       auto direction = Slices::Direction::DOWN;
-      while (!current_slices.empty()) {
+      if(!is_first_pass){
+        if(direction == Slices::Direction::DOWN){
+          current_slices = current_object->slices.get_top_line();
+        }
+        else{
+          current_slices = current_object->slices.get_bottom_line();
+        }
+      }
+      while ((is_first_pass && !current_slices.empty())) {
         const auto new_current_slices =
             slices.get_touching_slices(current_slices, direction);
-        last_pass_has_added_slices = new_current_slices.added_slices;
-        if (!new_current_slices.slice_line.has_value()) {
+        
+        if(new_current_slices.added_slices){
+          last_pass_has_added_slices = true;
+        }
+
+        if (is_first_pass && !new_current_slices.slice_line.has_value()) {
           break;
         }
         current_object->slices.add_slice_line(*new_current_slices.slice_line);
         current_slices = new_current_slices.slice_line->line();
       }
+      is_first_pass = false;
       direction = slices.invert_direction(direction);
     }
     objects.push_back(current_object);
