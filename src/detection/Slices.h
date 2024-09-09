@@ -90,7 +90,7 @@ struct SliceLine {
       : _line{std::move(line)}, _line_number{line_number} {
     for (const auto &slice : _line) {
       if (slice.line_number != line_number) {
-        throw std::runtime_error("line number mismatch");
+        throw std::runtime_error("line number mismatch (slice: " + std::to_string(slice.line_number) + "; line: " + std::to_string(line_number) + ")");
       }
     }
   }
@@ -101,7 +101,7 @@ struct SliceLine {
   void add_slices(const std::vector<AnnotatedSlice> &slices) {
     for (const auto &slice : slices) {
       if (slice.line_number != line_number()) {
-        throw std::runtime_error("line number mismatch");
+        throw std::runtime_error("line number mismatch (slice: " + std::to_string(slice.line_number) + "; line: " + std::to_string(line_number()));
       }
     }
     _line.insert(_line.end(), slices.begin(), slices.end());
@@ -269,7 +269,7 @@ struct Slices {
                         ret.begin(), ret.end(),
                         std::back_inserter(cleared_next_line));
     slices[next_line_index] = SliceLine{cleared_next_line, next_line_number};
-    auto did_insert_lines = nb_slices_in_next_line < cleared_next_line.size();
+    auto did_insert_lines = !ret.empty();
     if (!ret.empty()) {
       return TouchingSlicesReturnValue{ret, next_line_number, did_insert_lines};
     }

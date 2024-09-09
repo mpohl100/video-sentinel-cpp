@@ -68,8 +68,9 @@ std::vector<std::shared_ptr<Object>> deduce_objects(Slices &slices) {
         math2d::Point{first_slice->slice.start.x, first_slice->slice.start.y}});
     current_object->slices.slices.push_back(current_slices);
     auto last_pass_has_added_slices = true;
+    bool is_first_pass = true;
     while (last_pass_has_added_slices) {
-      bool is_first_pass = true;
+      std::cout << "Starting new pass" << std::endl;
       auto direction = Slices::Direction::DOWN;
       if (!is_first_pass) {
         if (direction == Slices::Direction::DOWN) {
@@ -97,6 +98,10 @@ std::vector<std::shared_ptr<Object>> deduce_objects(Slices &slices) {
              !new_current_slices.slice_line.has_value())) {
           break;
         }
+        std::cout << "new_current_slices.line_number: "
+                  << *new_current_slices.line_number << " added "
+                  << new_current_slices.slice_line->line().size() << " slices"
+                  << std::endl;
         current_object->slices.add_slice_line(*new_current_slices.slice_line);
         current_slices = new_current_slices.slice_line->line();
         out_of_previous_bounds =
@@ -104,6 +109,7 @@ std::vector<std::shared_ptr<Object>> deduce_objects(Slices &slices) {
             new_current_slices.line_number < bottom_line_number;
       }
       is_first_pass = false;
+      std::cout << "finished pass" << std::endl;
       direction = slices.invert_direction(direction);
     }
     objects.push_back(current_object);
