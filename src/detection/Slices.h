@@ -10,6 +10,7 @@
 namespace od {
 
 struct ObjectsPerRectangle;
+struct Object;
 
 struct Slice {
   math2d::Point start = math2d::Point{0, 0};
@@ -271,18 +272,18 @@ struct Slices {
     return TouchingSlicesReturnValue{std::nullopt, (direction == Direction::DOWN) ? line_number + 1 : line_number - 1, did_insert_lines};
   }
 
-  std::vector<AnnotatedSlice> get_top_line() const{
+  SliceLine get_top_line() const{
     if (slices.empty()) {
-      return {};
+      return SliceLine{{}, 0};
     }
-    return slices.front().line();
+    return slices.front();
   }
 
-  std::vector<AnnotatedSlice> get_bottom_line() const{
+  SliceLine get_bottom_line() const{
     if (slices.empty()) {
-      return {};
+      return SliceLine{{}, 0};
     }
-    return slices.back().line();
+    return slices.back();
   }
 
   Rectangle to_rectangle() const {
