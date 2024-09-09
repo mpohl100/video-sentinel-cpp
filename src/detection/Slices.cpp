@@ -58,6 +58,7 @@ Slices deduce_slices(const cv::Mat &contours, const Rectangle &rectangle) {
 std::vector<std::shared_ptr<Object>> deduce_objects(Slices &slices) {
   std::vector<std::shared_ptr<Object>> objects;
   while (slices.contains_slices()) {
+    std::cout << "Starting new object" << std::endl;
     const auto first_slice = slices.get_first_slice();
     if (!first_slice.has_value()) {
       break;
@@ -67,11 +68,12 @@ std::vector<std::shared_ptr<Object>> deduce_objects(Slices &slices) {
     auto current_object = std::make_shared<Object>(Slices{
         math2d::Point{first_slice->slice.start.x, first_slice->slice.start.y}});
     current_object->slices.slices.push_back(current_slices);
-    auto last_pass_has_added_slices = true;
     bool is_first_pass = true;
-    while (last_pass_has_added_slices) {
+    auto direction = Slices::Direction::DOWN;
+    std::set<Slices::Direction> passed_directions;
+    while (true) {
+      passed_directions.insert(direction);
       std::cout << "Starting new pass" << std::endl;
-      auto direction = Slices::Direction::DOWN;
       if (!is_first_pass) {
         if (direction == Slices::Direction::DOWN) {
           current_slices = current_object->slices.get_top_line().line();
@@ -84,7 +86,7 @@ std::vector<std::shared_ptr<Object>> deduce_objects(Slices &slices) {
       size_t bottom_line_number =
           current_object->slices.get_bottom_line().line_number();
       auto out_of_previous_bounds = false;
-      last_pass_has_added_slices = false;
+      auto last_pass_has_added_slices = false;
       while (true) {
         const auto new_current_slices =
             slices.get_touching_slices(current_slices, direction);
@@ -107,6 +109,9 @@ std::vector<std::shared_ptr<Object>> deduce_objects(Slices &slices) {
         out_of_previous_bounds =
             top_line_number > new_current_slices.line_number &&
             new_current_slices.line_number < bottom_line_number;
+      }
+      if(!last_pass_has_added_slices && passed_directions.size() == 2){
+        break;
       }
       is_first_pass = false;
       std::cout << "finished pass" << std::endl;
