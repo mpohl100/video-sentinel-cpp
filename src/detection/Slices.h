@@ -6,7 +6,6 @@
 
 #include <optional>
 #include <vector>
-#include <iostream>
 
 namespace od {
 
@@ -409,8 +408,6 @@ private:
       if (!touching_slices.empty()) {
         add_slice_line(touching_slices);
       }
-      std::cout << "Moving down index: " << index << std::endl;
-      std::cout << "Added " << touching_slices.size() << " slices" << std::endl;
       index++;
     }
     return were_slices_added;
@@ -440,9 +437,6 @@ private:
       if (!touching_slices.empty()) {
         add_slice_line(touching_slices);
       }
-      std::cout << "Moving up index: " << index << std::endl;
-      std::cout << "Added " << touching_slices.size() << " slices " << std::endl;
-
       index++;
     }
     return were_slices_added;
@@ -531,7 +525,7 @@ private:
       return {};
     }
     auto extracted_slices = extract_slices(prev, next);
-    set_remaining_slices(extracted_slices.remaining_slices, prev.line_number());
+    set_remaining_slices(extracted_slices.remaining_slices, next.line_number());
     return extracted_slices.touching_slices;
   }
 
