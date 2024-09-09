@@ -56,8 +56,7 @@ Slices deduce_slices(const cv::Mat &contours, const Rectangle &rectangle) {
 }
 
 std::shared_ptr<Object> deduce_object(const AnnotatedSlice &first_slice,
-                                      Slices &image_slices) {
-  std::cout << "Image slices: " << image_slices.to_string() << std::endl; 
+                                      Slices &image_slices) { 
   auto object_slices = Slices{first_slice.slice.start};
   // insert the next slice
   object_slices.slices.push_back(
@@ -77,7 +76,6 @@ std::shared_ptr<Object> deduce_object(const AnnotatedSlice &first_slice,
 std::vector<std::shared_ptr<Object>> deduce_objects(Slices &slices) {
   std::vector<std::shared_ptr<Object>> objects;
   while (slices.contains_slices()) {
-    std::cout << "Starting new object" << std::endl;
     const auto first_slice = slices.get_first_slice();
     if (!first_slice.has_value()) {
       break;
