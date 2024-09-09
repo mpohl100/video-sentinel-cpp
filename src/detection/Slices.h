@@ -256,7 +256,7 @@ struct Slices {
     std::vector<AnnotatedSlice> ret;
     for (const auto &annotatedSlice : slices_of_object.line()) {
       for (const auto &slice : next_line.line()) {
-        if (annotatedSlice.slice.touches(slice.slice)) {
+        if (annotatedSlice.slice.touches_with_tolerance(slice.slice)) {
           ret.push_back(slice);
         }
       }
