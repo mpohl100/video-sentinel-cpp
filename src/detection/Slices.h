@@ -5,6 +5,7 @@
 #include "opencv2/core/mat.hpp"
 
 #include <optional>
+#include <string>
 #include <vector>
 
 namespace od {
@@ -182,7 +183,7 @@ struct Slices {
   std::string to_string(){
     std::string ret = "Slices{";
     for(const auto &slice_line : slices){
-      ret += slice_line.line_number() + ": ";
+      ret += std::to_string(slice_line.line_number()) + ": ";
       for(const auto &slice : slice_line.line()){
         ret += slice.slice.start.toString() + " -> " + slice.slice.end.toString() + "; ";
       }

@@ -30,9 +30,9 @@ inline std::string to_string(FrameCalculationStatus status) {
 struct VideoPreview {
   VideoPreview() = default;
   VideoPreview(const VideoPreview &) = delete;
-  VideoPreview(VideoPreview &&) = default;
+  VideoPreview(VideoPreview &&) = delete;
   VideoPreview &operator=(const VideoPreview &) = delete;
-  VideoPreview &operator=(VideoPreview &&) = default;
+  VideoPreview &operator=(VideoPreview &&) = delete;
 
   ~VideoPreview() {
     if (_frame_calculation_status == FrameCalculationStatus::IN_PROGRESS) {
