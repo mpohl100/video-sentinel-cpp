@@ -88,7 +88,7 @@ inline void detect_edges(cv::Mat& ret, cv::Mat const &bgrImg, const od::Rectangl
       int sum = 0;
       int degrees = 0;
       for (int color = 0; color <= 2; color++) {
-        auto ret = gradient<detectionType, 20>(
+        auto ret = gradient<detectionType, 0>(
             imgUpper[j - 1][color], imgUpper[j][color], imgUpper[j + 1][color],
             imgCenter[j - 1][color], imgCenter[j][color],
             imgCenter[j + 1][color], imgLower[j - 1][color], imgLower[j][color],
