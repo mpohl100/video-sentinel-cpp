@@ -75,7 +75,7 @@ void smooth_angles(cv::Mat &result, cv::Mat const &angles, int rings,
 
       switch (nb_buckets) {
       case 0: {
-        throw std::runtime_error("No buckets found");
+        // do nothing
         break;
       }
       case 1: {
