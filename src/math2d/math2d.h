@@ -1,7 +1,5 @@
 #pragma once
 
-#include "value_test.h"
-
 #include <cmath>
 #include <string>
 #include <vector>

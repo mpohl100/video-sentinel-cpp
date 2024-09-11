@@ -1,5 +1,6 @@
 #include "math2d.h"
 
+#include <algorithm>
 #include <cmath>
 #include <string>
 
