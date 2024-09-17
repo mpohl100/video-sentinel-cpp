@@ -29,7 +29,7 @@ inline auto gradient(int tl, int tc, int tr, int cl, int cc, int cr, int bl,
   float grad_cl_cr = cr - cl;
   float grad_bl_tr = tr - bl;
   float grad_bc_tc = tc - bc;
-  float sqrt2 = std::sqrt(2.0);
+  float sqrt2 = 1.0 / std::sqrt(2.0);
   float grad_x = grad_cl_cr + grad_tl_br * sqrt2 + grad_bl_tr * sqrt2;
   float grad_y = -grad_bc_tc + grad_tl_br * sqrt2 - grad_bl_tr * sqrt2;
   float grad_total = std::sqrt(grad_x * grad_x + grad_y * grad_y);
