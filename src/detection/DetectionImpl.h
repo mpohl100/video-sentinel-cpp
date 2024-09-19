@@ -68,44 +68,59 @@ inline auto gradient(int tl, int tc, int tr, int cl, int cc, int cr, int bl,
  * super high descent and a black pixel means a planar surface
  */
 template <DetectionType detectionType>
-inline void detect_edges(cv::Mat& ret, cv::Mat const &bgrImg, const od::Rectangle& rectangle){
-  if(ret.rows != bgrImg.rows || ret.cols != bgrImg.cols){
+inline void detect_edges(cv::Mat &ret, cv::Mat const &bgrImg,
+                         const od::Rectangle &rectangle) {
+  if (ret.rows != bgrImg.rows || ret.cols != bgrImg.cols) {
     throw std::runtime_error("uninitialized ret mat");
   }
+
+  auto roiRect =
+      cv::Rect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+
+  roiRect = roiRect & cv::Rect(0, 0, bgrImg.cols, bgrImg.rows);
+
+  cv::Mat roi = bgrImg(roiRect);
+  // Convert the BGR image to Grayscale in the region of interest
+  cv::Mat grayImage;
+  cv::cvtColor(roi, grayImage, cv::COLOR_BGR2GRAY);
+
   cv::Vec3b *retCenter;
-  const cv::Vec3b *imgUpper;
-  const cv::Vec3b *imgCenter;
-  const cv::Vec3b *imgLower;
-  for (int i = od::row_min(1, rectangle); i < od::row_max(bgrImg.rows - 1, rectangle); ++i) {
+  for (int i = od::row_min(1, rectangle);
+       i < od::row_max(bgrImg.rows - 1, rectangle); ++i) {
     if constexpr (detectionType == DetectionType::Gradient ||
-                  detectionType == DetectionType::Angle)
+                  detectionType == DetectionType::Angle) {
       retCenter = ret.ptr<cv::Vec3b>(i);
-    imgUpper = bgrImg.ptr<cv::Vec3b>(i - 1);
-    imgCenter = bgrImg.ptr<cv::Vec3b>(i);
-    imgLower = bgrImg.ptr<cv::Vec3b>(i + 1);
-    for (int j = od::col_min(1, rectangle); j < od::col_max(bgrImg.cols - 1, rectangle); ++j) {
-      int max = 0;
-      int sum = 0;
+    }
+    for (int j = od::col_min(1, rectangle);
+         j < od::col_max(bgrImg.cols - 1, rectangle); ++j) {
       int degrees = 0;
-      for (int color = 0; color <= 2; color++) {
-        auto ret = gradient<detectionType, 0>(
-            imgUpper[j - 1][color], imgUpper[j][color], imgUpper[j + 1][color],
-            imgCenter[j - 1][color], imgCenter[j][color],
-            imgCenter[j + 1][color], imgLower[j - 1][color], imgLower[j][color],
-            imgLower[j + 1][color]);
-        int grad_c = 0;
-        if constexpr (detectionType == DetectionType::Edge) {
-          grad_c = ret;
-        } else {
-          grad_c = ret.first;
-          degrees = ret.second;
-        }
-        max = grad_c > max ? grad_c : max;
-        sum += grad_c;
+      auto ret_val = gradient<detectionType, 0>(
+          static_cast<int>(
+              grayImage.at<uchar>(-rectangle.y + i - 1, -rectangle.x + j - 1)),
+          static_cast<int>(
+              grayImage.at<uchar>(-rectangle.y + i - 1, -rectangle.x + j)),
+          static_cast<int>(
+              grayImage.at<uchar>(-rectangle.y + i - 1, -rectangle.x + j + 1)),
+          static_cast<int>(
+              grayImage.at<uchar>(-rectangle.y + i, -rectangle.x + j - 1)),
+          static_cast<int>(
+              grayImage.at<uchar>(-rectangle.y + i, -rectangle.x + j)),
+          static_cast<int>(
+              grayImage.at<uchar>(-rectangle.y + i, -rectangle.x + j + 1)),
+          static_cast<int>(
+              grayImage.at<uchar>(-rectangle.y + i + 1, -rectangle.x + j - 1)),
+          static_cast<int>(
+              grayImage.at<uchar>(-rectangle.y + i + 1, -rectangle.x + j)),
+          static_cast<int>(
+              grayImage.at<uchar>(-rectangle.y + i + 1, -rectangle.x + j + 1)));
+      int grad_c = 0;
+      if constexpr (detectionType == DetectionType::Edge) {
+        grad_c = ret_val;
+      } else {
+        grad_c = ret_val.first;
+        degrees = ret_val.second;
       }
-      float val = float(max) / float(sum);
-      val = std::sqrt(val);
-      val *= max;
+      auto val = float(grad_c);
 
       if constexpr (detectionType == DetectionType::Edge) {
         ret.at<uchar>(i, j) = int(val);
