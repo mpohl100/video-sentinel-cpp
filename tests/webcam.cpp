@@ -14,7 +14,7 @@ TEST_CASE("Webcam", "[webcam]") {
   SECTION("WebcamProcessFrame") {
     par::Executor executor(4);
     int rings = 1;
-    int gradient_threshold = 20;
+    int gradient_threshold = 15;
     const auto path = "../video/BillardTakeoff.mp4";
 
     auto cap = cv::VideoCapture{path};
@@ -47,7 +47,7 @@ TEST_CASE("Webcam", "[webcam]") {
   SECTION("WebcamProcessFrameQuadView") {
     par::Executor executor(4);
     int rings = 1;
-    int gradient_threshold = 20;
+    int gradient_threshold = 15;
     const auto path = "../video/BillardTakeoff.mp4";
 
     auto cap = cv::VideoCapture{path};
@@ -76,7 +76,7 @@ TEST_CASE("Webcam", "[webcam]") {
   SECTION("WebcamProcessFrameManyTasks") {
     par::Executor executor(4);
     int rings = 1;
-    int gradient_threshold = 20;
+    int gradient_threshold = 15;
     const auto path = "../video/BillardTakeoff.mp4";
 
     auto cap = cv::VideoCapture{path};
@@ -105,7 +105,7 @@ TEST_CASE("Webcam", "[webcam]") {
   SECTION("WebcamProcessFrameMergeObjects") {
     par::Executor executor(4);
     int rings = 1;
-    int gradient_threshold = 20;
+    int gradient_threshold = 15;
     const auto path = "../video/BillardTakeoff.mp4";
 
     auto cap = cv::VideoCapture{path};

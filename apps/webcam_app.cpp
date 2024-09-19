@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
 
   int number_webcam = 0;
   int rings = 1;
-  int gradient_threshold = 20;
+  int gradient_threshold = 15;
   int rectangle_tl_x = 0;
   int rectangle_tl_y = 0;
   int rectangle_width = -1;
