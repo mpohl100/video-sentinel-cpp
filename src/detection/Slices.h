@@ -40,18 +40,6 @@ struct Slice {
            (other.start.x >= start.x && other.start.x <= end.x) ||
            (other.end.x >= start.x && other.end.x <= end.x);
   }
-
-  bool touches_with_tolerance(const Slice &other) const {
-    constexpr int tolerance = 1;
-    return (start.x >= (other.start.x - tolerance) &&
-            start.x <= (other.end.x + tolerance)) ||
-           (end.x >= (other.start.x - tolerance) &&
-            end.x <= (other.end.x + tolerance)) ||
-           (other.start.x >= (start.x - tolerance) &&
-            other.start.x <= (end.x + tolerance)) ||
-           (other.end.x >= (start.x - tolerance) &&
-            other.end.x <= (end.x + tolerance));
-  }
 };
 
 struct AnnotatedSlice {
@@ -141,7 +129,7 @@ struct SliceLine {
     }
     for (const auto &top_slice : line()) {
       for (const auto &bottom_slice : bottom.line()) {
-        if (top_slice.slice.touches_with_tolerance(bottom_slice.slice)) {
+        if (top_slice.slice.touches(bottom_slice.slice)) {
           return true;
         }
       }
@@ -480,7 +468,7 @@ private:
     std::vector<AnnotatedSlice> remaining_slices;
     for (const auto &prev_slice : prev.line()) {
       for (const auto &next_slice : next.line()) {
-        if (prev_slice.slice.touches_with_tolerance(next_slice.slice)) {
+        if (prev_slice.slice.touches(next_slice.slice)) {
           touching_slices.push_back(next_slice);
         }
       }

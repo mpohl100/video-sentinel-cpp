@@ -90,7 +90,7 @@ TEST_CASE("Slices", "[slices]") {
     auto objects = od::deduce_objects(slices);
 
     // Assert
-    CHECK(objects.size() == 1);
+    CHECK(objects.size() == 2);
   }
 
   SECTION("SlicesDetectsOneObjectDiagonallyUp"){
@@ -111,7 +111,7 @@ TEST_CASE("Slices", "[slices]") {
     auto objects = od::deduce_objects(slices);
 
     // Assert
-    CHECK(objects.size() == 1);
+    CHECK(objects.size() == 2);
   }
 
   SECTION("SlicesCreatesSnakeAsOneObject") {

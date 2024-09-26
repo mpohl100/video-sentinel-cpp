@@ -5,7 +5,6 @@
     },
     "include": [
         "/workspaces/video-sentinel-cpp/build/Debug/generators/CMakePresets.json",
-        "/workspaces/video-sentinel-cpp/build/Release/generators/CMakePresets.json",
-        "build/Debug/generators/CMakePresets.json"
+        "/workspaces/video-sentinel-cpp/build/Release/generators/CMakePresets.json"
     ]
 }
