@@ -84,35 +84,35 @@ inline void detect_edges(cv::Mat &ret, cv::Mat const &bgrImg,
   cv::Mat grayImage;
   cv::cvtColor(roi, grayImage, cv::COLOR_BGR2GRAY);
 
+  const auto get_checked = [grayImage](int i, int j){
+    if(i < 0 || i >= grayImage.rows || j < 0 || j >= grayImage.cols){
+      throw std::runtime_error("Index out of bounds i:" + std::to_string(i) + "; j:" + std::to_string(j) + "; rows:" + std::to_string(grayImage.rows) + "; cols:" + std::to_string(grayImage.cols));
+    }
+    return static_cast<int>(grayImage.at<uchar>(i, j));
+  };
+
   cv::Vec3b *retCenter;
+  int y = 1;
   for (int i = roiRect.y + 1;
-       i < roiRect.y + roiRect.height - 2; ++i) {
+       i < roiRect.y + roiRect.height - 1; ++i) {
     if constexpr (detectionType == DetectionType::Gradient ||
                   detectionType == DetectionType::Angle) {
       retCenter = ret.ptr<cv::Vec3b>(i);
     }
+    int x = 1;
     for (int j = roiRect.x + 1;
-         j < roiRect.x + roiRect.width - 2; ++j) {
+         j < roiRect.x + roiRect.width - 1; ++j) {
       int degrees = 0;
       auto ret_val = gradient<detectionType, 0>(
-          static_cast<int>(
-              grayImage.at<uchar>(-(roiRect.y + 1) + i - 1, -(roiRect.x + 1) + j - 1)),
-          static_cast<int>(
-              grayImage.at<uchar>(-(roiRect.y + 1) + i - 1, -(roiRect.x + 1) + j)),
-          static_cast<int>(
-              grayImage.at<uchar>(-(roiRect.y + 1) + i - 1, -(roiRect.x + 1) + j + 1)),
-          static_cast<int>(
-              grayImage.at<uchar>(-(roiRect.y + 1) + i, -(roiRect.x + 1) + j - 1)),
-          static_cast<int>(
-              grayImage.at<uchar>(-(roiRect.y + 1) + i, -(roiRect.x + 1) + j)),
-          static_cast<int>(
-              grayImage.at<uchar>(-(roiRect.y + 1) + i, -(roiRect.x + 1) + j + 1)),
-          static_cast<int>(
-              grayImage.at<uchar>(-(roiRect.y + 1) + i + 1, -(roiRect.x + 1) + j - 1)),
-          static_cast<int>(
-              grayImage.at<uchar>(-(roiRect.y + 1) + i + 1, -(roiRect.x + 1) + j)),
-          static_cast<int>(
-              grayImage.at<uchar>(-(roiRect.y + 1) + i + 1, -(roiRect.x + 1) + j + 1)));
+          get_checked(y - 1, x - 1),
+          get_checked(y - 1, x),
+          get_checked(y - 1, x + 1),
+          get_checked(y, x - 1),
+          get_checked(y, x),
+          get_checked(y, x + 1),
+          get_checked(y + 1, x - 1),
+          get_checked(y + 1, x),
+          get_checked(y + 1, x + 1));
       int grad_c = 0;
       if constexpr (detectionType == DetectionType::Edge) {
         grad_c = ret_val;
@@ -149,7 +149,9 @@ inline void detect_edges(cv::Mat &ret, cv::Mat const &bgrImg,
           }
         }
       }
+      x++;
     }
+    y++;
   }
 }
 }; // namespace detail
