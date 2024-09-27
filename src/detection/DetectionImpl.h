@@ -77,9 +77,7 @@ inline void detect_edges(cv::Mat &ret, cv::Mat const &bgrImg,
   auto roiRect =
       cv::Rect(rectangle.x - 1, rectangle.y - 1, rectangle.width + 3, rectangle.height + 3);
 
-  std::cout << "roiRect before: " << roiRect << '\n';
   roiRect = roiRect & cv::Rect(0, 0, bgrImg.cols, bgrImg.rows);
-  std::cout << "roiRect after: " << roiRect << '\n';
 
   cv::Mat roi = bgrImg(roiRect);
   // Convert the BGR image to Grayscale in the region of interest

@@ -23,25 +23,9 @@ struct Object {
   Object(const Slices &slices) : slices{slices} {}
 
   bool try_merge_right(Object &other) {
-    bool do_log = false;
-    if (get_bounding_box().to_math2d_rectangle().area() > 100 &&
-        other.get_bounding_box().to_math2d_rectangle().area() > 100) {
-      do_log = true;
-      std::cout << "Encountered two bigger rectangles";
-    }
     if (slices.touching_right(other.slices)) {
       slices.merge_right(other.slices);
-      if (do_log) {
-        std::cout << "Merged right: " << slices.to_rectangle().to_string()
-                  << " with " << other.slices.to_rectangle().to_string()
-                  << std::endl;
-      }
       return true;
-    }
-    if (do_log) {
-      std::cout << "Did not merge right: " << slices.to_rectangle().to_string()
-                << " with " << other.slices.to_rectangle().to_string()
-                << std::endl;
     }
     return false;
   }
