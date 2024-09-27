@@ -75,9 +75,11 @@ inline void detect_edges(cv::Mat &ret, cv::Mat const &bgrImg,
   }
 
   auto roiRect =
-      cv::Rect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+      cv::Rect(rectangle.x - 1, rectangle.y - 1, rectangle.width + 3, rectangle.height + 3);
 
+  std::cout << "roiRect before: " << roiRect << '\n';
   roiRect = roiRect & cv::Rect(0, 0, bgrImg.cols, bgrImg.rows);
+  std::cout << "roiRect after: " << roiRect << '\n';
 
   cv::Mat roi = bgrImg(roiRect);
   // Convert the BGR image to Grayscale in the region of interest
@@ -85,34 +87,34 @@ inline void detect_edges(cv::Mat &ret, cv::Mat const &bgrImg,
   cv::cvtColor(roi, grayImage, cv::COLOR_BGR2GRAY);
 
   cv::Vec3b *retCenter;
-  for (int i = od::row_min(1, rectangle);
-       i < od::row_max(bgrImg.rows - 1, rectangle); ++i) {
+  for (int i = roiRect.y + 1;
+       i < roiRect.y + roiRect.height - 2; ++i) {
     if constexpr (detectionType == DetectionType::Gradient ||
                   detectionType == DetectionType::Angle) {
       retCenter = ret.ptr<cv::Vec3b>(i);
     }
-    for (int j = od::col_min(1, rectangle);
-         j < od::col_max(bgrImg.cols - 1, rectangle); ++j) {
+    for (int j = roiRect.x + 1;
+         j < roiRect.x + roiRect.width - 2; ++j) {
       int degrees = 0;
       auto ret_val = gradient<detectionType, 0>(
           static_cast<int>(
-              grayImage.at<uchar>(-rectangle.y + i - 1, -rectangle.x + j - 1)),
+              grayImage.at<uchar>(-(roiRect.y + 1) + i - 1, -(roiRect.x + 1) + j - 1)),
           static_cast<int>(
-              grayImage.at<uchar>(-rectangle.y + i - 1, -rectangle.x + j)),
+              grayImage.at<uchar>(-(roiRect.y + 1) + i - 1, -(roiRect.x + 1) + j)),
           static_cast<int>(
-              grayImage.at<uchar>(-rectangle.y + i - 1, -rectangle.x + j + 1)),
+              grayImage.at<uchar>(-(roiRect.y + 1) + i - 1, -(roiRect.x + 1) + j + 1)),
           static_cast<int>(
-              grayImage.at<uchar>(-rectangle.y + i, -rectangle.x + j - 1)),
+              grayImage.at<uchar>(-(roiRect.y + 1) + i, -(roiRect.x + 1) + j - 1)),
           static_cast<int>(
-              grayImage.at<uchar>(-rectangle.y + i, -rectangle.x + j)),
+              grayImage.at<uchar>(-(roiRect.y + 1) + i, -(roiRect.x + 1) + j)),
           static_cast<int>(
-              grayImage.at<uchar>(-rectangle.y + i, -rectangle.x + j + 1)),
+              grayImage.at<uchar>(-(roiRect.y + 1) + i, -(roiRect.x + 1) + j + 1)),
           static_cast<int>(
-              grayImage.at<uchar>(-rectangle.y + i + 1, -rectangle.x + j - 1)),
+              grayImage.at<uchar>(-(roiRect.y + 1) + i + 1, -(roiRect.x + 1) + j - 1)),
           static_cast<int>(
-              grayImage.at<uchar>(-rectangle.y + i + 1, -rectangle.x + j)),
+              grayImage.at<uchar>(-(roiRect.y + 1) + i + 1, -(roiRect.x + 1) + j)),
           static_cast<int>(
-              grayImage.at<uchar>(-rectangle.y + i + 1, -rectangle.x + j + 1)));
+              grayImage.at<uchar>(-(roiRect.y + 1) + i + 1, -(roiRect.x + 1) + j + 1)));
       int grad_c = 0;
       if constexpr (detectionType == DetectionType::Edge) {
         grad_c = ret_val;
