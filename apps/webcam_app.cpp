@@ -10,7 +10,7 @@
 #include <iostream>
 #include <stdexcept>
 
-#define SINGLE_THREADED 1
+#define SINGLE_THREADED 0
 
 int main(int argc, char **argv) {
   using namespace clara;
