@@ -23,6 +23,7 @@ int main(int argc, char **argv) {
   int rectangle_width = -1;
   int rectangle_height = -1;
   std::string path = "";
+  bool short_run = false;
   bool help = false;
   auto cli =
       Opt(number_webcam, "number_webcam")["-n"]["--number-webcam"](
@@ -40,6 +41,7 @@ int main(int argc, char **argv) {
           "rectangle_width")["-w"]["--rectangle-width"]("The rectangle width") |
       Opt(rectangle_height, "rectangle_height")["-h"]["--rectangle-height"](
           "The rectangle height") |
+      Opt(short_run)["-s"]["--short-run"]("Run a short run") |
       Help(help);
 
   auto result = cli.parse(Args(argc, argv));
@@ -142,6 +144,10 @@ int main(int argc, char **argv) {
     collectorGradientResult.feed(imgGradientResult);
 
     std::cout << "Frame " << ++i << " processed!" << std::endl;
+
+    if(short_run && i > 10) {
+      break;
+    }
 
     if (cv::waitKey(30) == 27) // wait for 'esc' key press for 30ms. If 'esc'
                                // key is pressed, break loop
