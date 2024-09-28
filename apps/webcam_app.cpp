@@ -106,7 +106,7 @@ int main(int argc, char **argv) {
     executor.run(flow);
     executor.wait_for(flow);
 #else
-    auto frame_data = webcam::process_frame_merge_objects(
+    auto frame_data = webcam::process_frame_with_parallel_gradient(
         imgOriginal, rectangle, executor, rings, gradient_threshold);
 #endif
 
