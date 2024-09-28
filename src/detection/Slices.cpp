@@ -66,11 +66,13 @@ std::shared_ptr<Object> deduce_object(const AnnotatedSlice &first_slice,
   // the first direction one iterates is from top to bottom
   auto direction = Slices::Direction::DOWN;
   bool increased_object_slices = false;
+  int i = 0;
   do {
     increased_object_slices =
         object_slices.try_add_image_slices(image_slices, direction);
     direction = object_slices.invert_direction(direction);
-  } while (increased_object_slices);
+    i++;
+  } while (increased_object_slices || i < 2);
   return std::make_shared<Object>(object_slices);
 }
 
