@@ -79,7 +79,7 @@ public:
   ObjectMerger(
       std::vector<std::shared_ptr<Object>> primary_objects,
       std::vector<std::shared_ptr<Object>> secondary_objects,
-      std::function<void(std::shared_ptr<Object>, std::shared_ptr<Object>)>
+      std::function<std::shared_ptr<Object>(std::shared_ptr<Object>, std::shared_ptr<Object>)>
           connect,
       std::function<bool(std::shared_ptr<Object>, std::shared_ptr<Object>)>
           is_connected)
@@ -100,7 +100,7 @@ public:
 private:
   std::vector<std::shared_ptr<Object>> _primary_objects;
   std::vector<std::shared_ptr<Object>> _secondary_objects;
-  std::function<void(std::shared_ptr<Object>, std::shared_ptr<Object>)>
+  std::function<std::shared_ptr<Object>(std::shared_ptr<Object>, std::shared_ptr<Object>)>
       _connect;
   std::function<bool(std::shared_ptr<Object>, std::shared_ptr<Object>)>
       _is_connected;
@@ -139,9 +139,9 @@ private:
     for (const auto connection : connections) {
       const auto object_to_connect = get_object_by_index(connection);
       if (is_primary_by_index(connection)) {
-        _connect(object_to_connect, object_to_connect_to);
+        object_to_connect_to = _connect(object_to_connect, object_to_connect_to);
       } else {
-        _connect(object_to_connect_to, object_to_connect);
+        object_to_connect_to = _connect(object_to_connect_to, object_to_connect);
       }
     }
     for (const auto connection : connections) {
