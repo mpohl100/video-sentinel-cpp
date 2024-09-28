@@ -59,6 +59,7 @@ struct ObjectsPerRectangle {
         objects_touching_right, other.objects_touching_left,
         [](std::shared_ptr<Object> object1, std::shared_ptr<Object> object2) {
           object1->try_merge_right(*object2);
+          return object1;
         },
         [](const std::shared_ptr<Object> &object1,
            const std::shared_ptr<Object> &object2) {
@@ -104,6 +105,7 @@ struct ObjectsPerRectangle {
         objects_touching_down, other.objects_touching_up,
         [](std::shared_ptr<Object> object1, std::shared_ptr<Object> object2) {
           object1->try_merge_down(*object2);
+          return object1;
         },
         [](const std::shared_ptr<Object> &object1,
            const std::shared_ptr<Object> &object2) {
