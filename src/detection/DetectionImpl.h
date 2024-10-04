@@ -82,7 +82,7 @@ inline void detect_edges(cv::Mat &ret, cv::Mat const &bgrImg,
   cv::Mat roi = bgrImg(roiRect);
   // Convert the BGR image to Grayscale in the region of interest
   cv::Mat grayImage;
-  cv::cvtColor(roi, grayImage, cv::COLOR_BGR2GRAY);
+  cv::cvtColor(roi, grayImage, cv::COLOR_RGB2GRAY);
 
   const auto get_checked = [grayImage](int i, int j){
     if(i < 0 || i >= grayImage.rows || j < 0 || j >= grayImage.cols){
