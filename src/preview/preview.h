@@ -36,7 +36,7 @@ struct VideoPreview {
 
   ~VideoPreview() {
     if (_frame_calculation_status == FrameCalculationStatus::IN_PROGRESS) {
-      _executor.wait_for(_current_task);
+      _executor.wait_for(_current_task_graph);
     }
   }
 
@@ -44,7 +44,7 @@ struct VideoPreview {
 
   void update_calculation_status() {
     bool is_done =
-        _executor.wait_for(_current_task, std::chrono::microseconds(0));
+        _executor.wait_for(_current_task_graph, std::chrono::microseconds(0));
     if (is_done) {
       std::unique_lock<std::mutex> lock(_processed_mutex);
       _processed_frame_data = std::move(_current_frame_data);
@@ -73,10 +73,10 @@ struct VideoPreview {
     _rectangles_query_status = RectanglesQueryStatus::NOT_REQUESTED;
     _current_original = mat.clone();
     _current_frame_data = webcam::FrameData{_current_original};
-    _current_task =
-        webcam::process_frame(_current_frame_data, _current_original, rectangle,
-                              rings, gradient_threshold);
-    _executor.run(_current_task);
+    _current_task_graph =
+        webcam::process_frame_with_parallel_gradient(_current_frame_data, _current_original, rectangle,
+                              rings, gradient_threshold, 128);
+    _executor.run(_current_task_graph);
   }
 
 private:
@@ -84,7 +84,7 @@ private:
   cv::Mat _current_original;
   webcam::FrameData _current_frame_data;
   webcam::FrameData _processed_frame_data;
-  par::Task _current_task;
+  par::TaskGraph _current_task_graph;
   FrameCalculationStatus _frame_calculation_status =
       FrameCalculationStatus::NOT_STARTED;
   RectanglesQueryStatus _rectangles_query_status =
