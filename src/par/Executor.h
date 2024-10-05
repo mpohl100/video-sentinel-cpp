@@ -1,6 +1,7 @@
 #pragma once
 
 #include "par/Task.h"
+#include "par/TaskGraph.h"
 
 #include <algorithm>
 #include <chrono>
@@ -42,6 +43,14 @@ public:
     _queued_tasks.push_back({task, start_time});
   }
 
+  void run_in(TaskGraph task_graph, std::chrono::microseconds start_difference){
+    for(const auto& task : task_graph.get_tasks()){
+      if(does_not_know(task)){
+        run_in(task, start_difference);
+      }
+    }
+  }
+
   void run(Task task) {
 #if DO_LOG
     std::cout << "Executor::run()" << std::endl;
@@ -49,6 +58,14 @@ public:
     std::unique_lock<std::mutex> lock(*_mutex);
     const auto now = std::chrono::high_resolution_clock::now();
     _queued_tasks.push_back({task, now});
+  }
+
+  void run(TaskGraph task_graph){
+    for(const auto& task : task_graph.get_tasks()){
+      if(does_not_know(task)){
+        run(task);
+      }
+    }
   }
 
   bool erase_work_from_finished(Task work, bool do_lock = true) {
@@ -90,6 +107,10 @@ public:
 #endif
   }
 
+  void wait_for(TaskGraph task_graph){
+    wait_for(task_graph.get_tasks().front());
+  }
+
   bool wait_for(Task work, std::chrono::microseconds timeout) {
 #if DO_LOG
     std::cout << "Executor::wait_for(timeout)" << std::endl;
@@ -111,6 +132,10 @@ public:
     }
     // should never be reached
     return false;
+  }
+
+  bool wait_for(TaskGraph task_graph, std::chrono::microseconds timeout){
+    return wait_for(task_graph.get_tasks().front(), timeout);
   }
 
   bool does_not_know(Task work) {
