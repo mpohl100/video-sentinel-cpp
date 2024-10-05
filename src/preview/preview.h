@@ -7,8 +7,8 @@
 #include <iostream>
 #include <mutex>
 #include <optional>
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace preview {
 
@@ -73,9 +73,9 @@ struct VideoPreview {
     _rectangles_query_status = RectanglesQueryStatus::NOT_REQUESTED;
     _current_original = mat.clone();
     _current_frame_data = webcam::FrameData{_current_original};
-    _current_task_graph =
-        webcam::process_frame_with_parallel_gradient(_current_frame_data, _current_original, rectangle,
-                              rings, gradient_threshold, 128);
+    _current_task_graph = webcam::process_frame_with_parallel_gradient(
+        _current_frame_data, _current_original, rectangle, rings,
+        gradient_threshold, 128);
     _executor.run(_current_task_graph);
   }
 

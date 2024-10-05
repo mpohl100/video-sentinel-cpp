@@ -496,7 +496,7 @@ par::TaskGraph process_frame_with_parallel_gradient(
   }
 
   // merge all objects
-  auto calc = par::Calculation{[&]() {
+  const auto calcAllRectangles = [&, rectangle]() {
     if constexpr (debug) {
       std::cout << "calculating all rectangles" << std::endl;
     }
@@ -505,13 +505,15 @@ par::TaskGraph process_frame_with_parallel_gradient(
     if constexpr (debug) {
       std::cout << "all rectangles processed" << std::endl;
     }
-  }};
+  };
+
+  auto calc = par::Calculation(calcAllRectangles);
   auto objects_task = calc.make_task();
-  for(auto task : gradient_tasks){
+  for (auto &task : gradient_tasks) {
     objects_task.succeed(task);
   }
 
-  for(auto task : smoothing_tasks){
+  for (auto &task : smoothing_tasks) {
     objects_task.succeed(task);
   }
 

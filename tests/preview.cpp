@@ -20,7 +20,7 @@ TEST_CASE("Preview", "[preview]") {
     }
     CHECK(cap.isOpened());
 
-    auto video_preview = preview::VideoPreview{1};
+    auto video_preview = preview::VideoPreview{4};
     bool did_frame_get_ready_at_least_once = false;
     for (size_t i = 0; i < 100; i++) {
       std::cout << "Frame nr " << i << std::endl;
