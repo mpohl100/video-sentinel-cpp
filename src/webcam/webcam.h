@@ -72,11 +72,9 @@ FrameData process_frame_merge_objects(const cv::Mat &imgOriginal,
                                       int gradient_threshold,
                                       int nb_pixels_per_tile = 100);
 
-FrameData process_frame_with_parallel_gradient(const cv::Mat &imgOriginal,
-                                               const od::Rectangle &rectangle,
-                                               par::Executor &executor,
-                                               int rings,
-                                               int gradient_threshold,
-                                               int nb_pixels_per_tile = 100);
+par::TaskGraph process_frame_with_parallel_gradient(
+    FrameData &frame_data, const cv::Mat &imgOriginal,
+    const od::Rectangle &rectangle, int rings, int gradient_threshold,
+    int nb_pixels_per_tile = 100);
 
 } // namespace webcam

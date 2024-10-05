@@ -106,8 +106,11 @@ int main(int argc, char **argv) {
     executor.run(flow);
     executor.wait_for(flow);
 #else
-    auto frame_data = webcam::process_frame_with_parallel_gradient(
-        imgOriginal, rectangle, executor, rings, gradient_threshold);
+    auto frame_data = webcam::FrameData{imgOriginal};
+    auto frame_task_graph = webcam::process_frame_with_parallel_gradient(
+        frame_data, imgOriginal, rectangle, rings, gradient_threshold, 128);
+    executor.run(frame_task_graph);
+    executor.wait_for(frame_task_graph);
 #endif
 
     // draw all rectangles on copy of imgOriginal

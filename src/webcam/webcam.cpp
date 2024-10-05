@@ -422,14 +422,11 @@ FrameData process_frame_merge_objects(const cv::Mat &imgOriginal,
   return frame_data;
 }
 
-FrameData process_frame_with_parallel_gradient(const cv::Mat &imgOriginal,
-                                               const od::Rectangle &rectangle,
-                                               par::Executor &executor,
-                                               int rings,
-                                               int gradient_threshold,
-                                               int nb_pixels_per_tile) {
+par::TaskGraph process_frame_with_parallel_gradient(
+    FrameData &frame_data, const cv::Mat &imgOriginal,
+    const od::Rectangle &rectangle, int rings, int gradient_threshold,
+    int nb_pixels_per_tile) {
   constexpr auto debug = false;
-  auto frame_data = FrameData{imgOriginal};
   const auto rectangles =
       split_rectangle_into_parts(rectangle, nb_pixels_per_tile);
   std::vector<par::Task> gradient_tasks;
@@ -490,31 +487,37 @@ FrameData process_frame_with_parallel_gradient(const cv::Mat &imgOriginal,
   }
 
   // kick off tasks
+  auto task_graph = par::TaskGraph{};
   for (auto &gradient_task : gradient_tasks) {
-    executor.run(gradient_task);
+    task_graph.add_task(gradient_task);
   }
   for (auto &smoothing_task : smoothing_tasks) {
-    executor.run(smoothing_task);
-  }
-
-  for (auto &gradient_task : gradient_tasks) {
-    executor.wait_for(gradient_task);
-  }
-  for (auto &smoothing_task : smoothing_tasks) {
-    executor.wait_for(smoothing_task);
+    task_graph.add_task(smoothing_task);
   }
 
   // merge all objects
-  if constexpr (debug) {
-    std::cout << "calculating all rectangles" << std::endl;
-  }
-  od::establishing_shot_slices(frame_data.all_rectangles,
-                               frame_data.smoothed_contours_mat, rectangle);
-  if constexpr (debug) {
-    std::cout << "all rectangles processed" << std::endl;
+  auto calc = par::Calculation{[&]() {
+    if constexpr (debug) {
+      std::cout << "calculating all rectangles" << std::endl;
+    }
+    od::establishing_shot_slices(frame_data.all_rectangles,
+                                 frame_data.smoothed_contours_mat, rectangle);
+    if constexpr (debug) {
+      std::cout << "all rectangles processed" << std::endl;
+    }
+  }};
+  auto objects_task = calc.make_task();
+  for(auto task : gradient_tasks){
+    objects_task.succeed(task);
   }
 
-  return frame_data;
+  for(auto task : smoothing_tasks){
+    objects_task.succeed(task);
+  }
+
+  task_graph.add_task(objects_task);
+
+  return task_graph;
 }
 
 } // namespace webcam

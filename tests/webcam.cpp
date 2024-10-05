@@ -156,8 +156,11 @@ TEST_CASE("Webcam", "[webcam]") {
 
     const auto rectangle =
         od::Rectangle{0, 0, imgOriginal.cols, imgOriginal.rows};
-    const auto frame_data = webcam::process_frame_with_parallel_gradient(
-        imgOriginal, rectangle, executor, rings, gradient_threshold);
+    auto frame_data = webcam::FrameData{imgOriginal};
+    auto frame_task_graph = webcam::process_frame_with_parallel_gradient(
+        frame_data, imgOriginal, rectangle, rings, gradient_threshold);
+    executor.run(frame_task_graph);
+    executor.wait_for(frame_task_graph);
 
     CHECK(frame_data.all_rectangles.rectangles.size() > 500);
   }
