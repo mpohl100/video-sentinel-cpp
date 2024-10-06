@@ -1,6 +1,6 @@
 #include "detection/Detection.h"
-#include "webcam/webcam.h"
 #include "par/parallel.h"
+#include "webcam/webcam.h"
 
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
@@ -41,8 +41,7 @@ int main(int argc, char **argv) {
           "rectangle_width")["-w"]["--rectangle-width"]("The rectangle width") |
       Opt(rectangle_height, "rectangle_height")["-h"]["--rectangle-height"](
           "The rectangle height") |
-      Opt(short_run)["-s"]["--short-run"]("Run a short run") |
-      Help(help);
+      Opt(short_run)["-s"]["--short-run"]("Run a short run") | Help(help);
 
   auto result = cli.parse(Args(argc, argv));
   if (!result) {
@@ -76,6 +75,8 @@ int main(int argc, char **argv) {
   auto collectorResult = webcam::VideoCollector{path, "result", cap};
   auto collectorGradientResult =
       webcam::VideoCollector{path, "result_gradient", cap};
+  auto collectorSmoothingResult =
+      webcam::VideoCollector{path, "result_smoothing", cap};
 
   std::string original = "Original";
   std::string threshold = "Thresholded Image";
@@ -102,7 +103,8 @@ int main(int argc, char **argv) {
     }
 #if SINGLE_THREADED == 1
     auto frame_data = webcam::FrameData{imgOriginal};
-    auto flow = webcam::process_frame(frame_data, imgOriginal, rectangle, rings, gradient_threshold);
+    auto flow = webcam::process_frame(frame_data, imgOriginal, rectangle, rings,
+                                      gradient_threshold);
     executor.run(flow);
     executor.wait_for(flow);
 #else
@@ -135,6 +137,17 @@ int main(int argc, char **argv) {
       const auto cv_rectangle = cv::Rect{rectX, rectY, rectWidth, rectHeight};
       cv::rectangle(imgGradientResult, cv_rectangle, cv::Scalar(0, 255, 0), 2);
     }
+
+    auto imgSmoothingResult = frame_data.smoothed_contours_mat.clone();
+    for (const auto &rectangle : frame_data.all_rectangles.rectangles) {
+      int rectX = std::max(0, rectangle.x + 3);
+      int rectY = std::max(0, rectangle.y + 3);
+      int rectWidth = rectangle.width - 6;
+      int rectHeight = rectangle.height - 6;
+      const auto cv_rectangle = cv::Rect{rectX, rectY, rectWidth, rectHeight};
+      cv::rectangle(imgSmoothingResult, cv_rectangle, cv::Scalar(0, 0, 255), 1);
+    }
+
     // imshow(threshold, contours);   // show the thresholded image
     // imshow(original, imgOriginal); // show the original image
     // imshow(smoothed_angles, smoothed_contours_mat);   // the smoothed
@@ -145,10 +158,11 @@ int main(int argc, char **argv) {
     collectorSmoothed.feed(frame_data.smoothed_contours_mat);
     collectorResult.feed(imgOriginalResult);
     collectorGradientResult.feed(imgGradientResult);
+    collectorSmoothingResult.feed(imgSmoothingResult);
 
     std::cout << "Frame " << ++i << " processed!" << std::endl;
 
-    if(short_run && i > 10) {
+    if (short_run && i > 10) {
       break;
     }
 
