@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
     }
 #if SINGLE_THREADED == 1
     auto frame_data = webcam::FrameData{imgOriginal};
-    auto flow = webcam::process_frame_single_loop(frame_data, imgOriginal)                                   gradient_threshold);
+    auto flow = webcam::process_frame_single_loop(frame_data, imgOriginal);
     executor.run(flow);
     executor.wait_for(flow);
 #else

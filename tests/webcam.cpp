@@ -44,6 +44,39 @@ TEST_CASE("Webcam", "[webcam]") {
     CHECK(frame_data.all_rectangles.rectangles.size() > 500);
   }
 
+SECTION("WebcamProcessFrameSingleLoop") {
+    par::Executor executor(4);
+    int rings = 1;
+    int gradient_threshold = 15;
+    const auto path = "../video/BillardTakeoff.mp4";
+
+    auto cap = cv::VideoCapture{path};
+    if (!cap.isOpened()) {
+      std::cout << "!!! Input video could not be opened" << std::endl;
+      throw std::runtime_error("Cannot open input video");
+    }
+    CHECK(cap.isOpened());
+
+    cv::Mat imgOriginal;
+    int retflag = -1;
+    webcam::read_image_data(cap, imgOriginal, retflag);
+
+    CHECK(retflag != 2);
+    if (retflag == 2) {
+      return;
+    }
+
+    const auto rectangle =
+        od::Rectangle{0, 0, imgOriginal.cols, imgOriginal.rows};
+    auto frame_data = webcam::FrameData{imgOriginal};
+    auto flow = webcam::process_frame_single_loop(frame_data, imgOriginal);
+    executor.run(flow);
+    executor.wait_for(flow);
+
+    CHECK(frame_data.all_rectangles.rectangles.size() > 500);
+  }
+
+
   SECTION("WebcamProcessFrameQuadView") {
     par::Executor executor(4);
     int rings = 1;
