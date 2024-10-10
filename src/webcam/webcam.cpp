@@ -102,6 +102,16 @@ par::Task process_frame(FrameData &frame_data, const cv::Mat &imgOriginal,
   return create_flow(rectangle);
 }
 
+par::Task process_frame_single_loop(FrameData &frame_data,
+                                    const cv::Mat &imgOriginal) {
+  const auto lambda = [&]() {
+    od::establishing_shot_single_loop(
+        frame_data.all_rectangles, imgOriginal,
+        od::Rectangle{0, 0, imgOriginal.cols, imgOriginal.rows});
+  };
+  return par::Calculation{lambda}.make_task();
+}
+
 std::vector<od::Rectangle> split_rectangle(const od::Rectangle &rectangle,
                                            int nb_splits) {
   const auto width = rectangle.width;

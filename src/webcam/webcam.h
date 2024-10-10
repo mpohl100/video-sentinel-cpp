@@ -55,6 +55,9 @@ par::Task process_frame(FrameData &frameData, const cv::Mat &imgOriginal,
                         const od::Rectangle &rectangle, int rings,
                         int gradient_threshold);
 
+par::Task process_frame_single_loop(FrameData &frameData,
+                                    const cv::Mat &imgOriginal);
+
 FrameData process_frame_quadview(const cv::Mat &imgOriginal,
                                  const od::Rectangle &rectangle,
                                  par::Executor &executor, int rings,
