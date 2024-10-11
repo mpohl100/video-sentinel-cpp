@@ -6,6 +6,8 @@
 
 #include "Rectangle.h"
 
+#include "opencv2/imgproc.hpp"
+
 #include <algorithm>
 #include <iostream>
 #include <mutex>
@@ -26,7 +28,7 @@ int compute_smoothed_gradient(const cv::Mat &grayImage, int row, int col) {
     int bl = static_cast<int>(grayImage.at<uchar>(r + 1, c - 1));
     int bc = static_cast<int>(grayImage.at<uchar>(r + 1, c));
     int br = static_cast<int>(grayImage.at<uchar>(r + 1, c + 1));
-    constexpr float sqrt2 = 1.0 / std::sqrt(2.0);
+    float sqrt2 = 1.0 / std::sqrt(2.0);
     float grad_tl_br = br - tl;
     float grad_cl_cr = cr - cl;
     float grad_bl_tr = tr - bl;
@@ -42,7 +44,7 @@ int compute_smoothed_gradient(const cv::Mat &grayImage, int row, int col) {
         degrees *= -1.0;
       int degrees_ret = int(degrees);
 
-      return {static_cast<int>(grad_total), degrees_ret};
+      //return {static_cast<int>(grad_total), degrees_ret};
     }
     return static_cast<int>(grad_total);
   };
@@ -64,7 +66,7 @@ int compute_smoothed_gradient(const cv::Mat &grayImage, int row, int col) {
   return sumLen / 9; 
 }
 
-Slices deduce_slices_single_loop(const cv::Mat &rgbImage) {
+Slices deduce_slices_single_loop(const cv::Mat &rgbImage, const Rectangle &rectangle) {
   auto slices =
       Slices{math2d::Point{static_cast<math2d::number_type>(rectangle.x),
                            static_cast<math2d::number_type>(rectangle.y)}};
@@ -74,7 +76,7 @@ Slices deduce_slices_single_loop(const cv::Mat &rgbImage) {
   cv::cvtColor(rgbImage, grayImage, cv::COLOR_RGB2GRAY);
 
   std::optional<AnnotatedSlice> current_slice = std::nullopt;
-  for (int y = 2; y < grayImage.rows - 1; ++y) {
+  for (int y = 2; y < grayImage.rows - 2; ++y) {
     auto current_line = std::vector<AnnotatedSlice>{};
     const auto emplace_current_slice = [&]() {
       if (current_slice.has_value()) {
@@ -262,7 +264,7 @@ void establishing_shot_single_loop(AllRectangles &ret, const cv::Mat &rgbImage,
     std::cout << "establishing_shot_slices" << std::endl;
     std::cout << "deducing slices ..." << std::endl;
   }
-  auto slices = deduce_slices_single_loop(rgbImage);
+  auto slices = deduce_slices_single_loop(rgbImage, rectangle);
   if constexpr (debug) {
     std::cout << "slices: " << std::endl;
     for (const auto &slice_line : slices.slices) {
