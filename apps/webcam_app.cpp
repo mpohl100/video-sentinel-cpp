@@ -153,11 +153,11 @@ int main(int argc, char **argv) {
     // contours imshow(smoothed_gradient, smoothed_gradient_mat); // the
     // smoothed gradient
 
-    collectorEdges.feed(frame_data.gradient);
-    collectorSmoothed.feed(frame_data.smoothed_contours_mat);
+    //collectorEdges.feed(frame_data.gradient);
+    //collectorSmoothed.feed(frame_data.smoothed_contours_mat);
     collectorResult.feed(imgOriginalResult);
-    collectorGradientResult.feed(imgGradientResult);
-    collectorSmoothingResult.feed(imgSmoothingResult);
+    //collectorGradientResult.feed(imgGradientResult);
+    //collectorSmoothingResult.feed(imgSmoothingResult);
 
     std::cout << "Frame " << ++i << " processed!" << std::endl;
 
