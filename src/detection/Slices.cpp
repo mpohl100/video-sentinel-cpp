@@ -44,7 +44,7 @@ int compute_smoothed_gradient(const cv::Mat &grayImage, int row, int col) {
         degrees *= -1.0;
       int degrees_ret = int(degrees);
 
-      //return {static_cast<int>(grad_total), degrees_ret};
+      // return {static_cast<int>(grad_total), degrees_ret};
     }
     return static_cast<int>(grad_total);
   };
@@ -63,10 +63,11 @@ int compute_smoothed_gradient(const cv::Mat &grayImage, int row, int col) {
   for (int i = 0; i < gradients.size(); i++) {
     sumLen += gradients[i];
   }
-  return sumLen / 9; 
+  return sumLen / 9;
 }
 
-Slices deduce_slices_single_loop(const cv::Mat &rgbImage, const Rectangle &rectangle) {
+Slices deduce_slices_single_loop(const cv::Mat &rgbImage,
+                                 const Rectangle &rectangle) {
   auto slices =
       Slices{math2d::Point{static_cast<math2d::number_type>(rectangle.x),
                            static_cast<math2d::number_type>(rectangle.y)}};
@@ -76,7 +77,7 @@ Slices deduce_slices_single_loop(const cv::Mat &rgbImage, const Rectangle &recta
   cv::cvtColor(rgbImage, grayImage, cv::COLOR_RGB2GRAY);
 
   std::optional<AnnotatedSlice> current_slice = std::nullopt;
-  for (int y = 2; y < grayImage.rows - 2; ++y) {
+  for (int y = rectangle.y + 2; y < rectangle.y + rectangle.height - 2; ++y) {
     auto current_line = std::vector<AnnotatedSlice>{};
     const auto emplace_current_slice = [&]() {
       if (current_slice.has_value()) {
@@ -84,7 +85,7 @@ Slices deduce_slices_single_loop(const cv::Mat &rgbImage, const Rectangle &recta
         current_slice = std::nullopt;
       }
     };
-    for (int x = 2; x < grayImage.cols - 2; ++x) {
+    for (int x = rectangle.x + 2; x < rectangle.x + rectangle.width - 2; ++x) {
       const auto gradient_value = compute_smoothed_gradient(grayImage, y, x);
       const auto point = math2d::Point{static_cast<math2d::number_type>(x),
                                        static_cast<math2d::number_type>(y)};
@@ -258,7 +259,7 @@ void establishing_shot_objects(ObjectsPerRectangle &ret,
 }
 
 void establishing_shot_single_loop(AllRectangles &ret, const cv::Mat &rgbImage,
-                              const Rectangle &rectangle) {
+                                   const Rectangle &rectangle) {
   constexpr auto debug = false;
   if constexpr (debug) {
     std::cout << "establishing_shot_slices" << std::endl;
@@ -292,5 +293,35 @@ void establishing_shot_single_loop(AllRectangles &ret, const cv::Mat &rgbImage,
                         all_rectangles.rectangles.end());
 }
 
+ObjectsPerRectangle establishing_shot_rectangles(const cv::Mat &rgbImage,
+                                                 const Rectangle &rectangle) {
+  constexpr auto debug = false;
+  if constexpr (debug) {
+    std::cout << "establishing_shot_slices" << std::endl;
+    std::cout << "deducing slices ..." << std::endl;
+  }
+  auto slices = deduce_slices_single_loop(rgbImage, rectangle);
+  if constexpr (debug) {
+    std::cout << "slices: " << std::endl;
+    for (const auto &slice_line : slices.slices) {
+      for (const auto &slice : slice_line.line()) {
+        std::cout << slice.slice.start.toString() << " "
+                  << slice.slice.end.toString() << " | ";
+      }
+      std::cout << std::endl;
+    }
+    std::cout << "deducing objects ..." << std::endl;
+  }
+  const auto objects = deduce_objects(slices);
+  
+  auto objects_per_rectangle = ObjectsPerRectangle{};
+  objects_per_rectangle.set_rectangle(
+      Rectangle{rectangle.x + 2, rectangle.y + 2, rectangle.width - 4,
+                rectangle.height - 4});
+  for (const auto &object : objects) {
+    objects_per_rectangle.insert_object(object);
+  }
+  return objects_per_rectangle;
+}
 
 } // namespace od
