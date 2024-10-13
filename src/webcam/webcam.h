@@ -58,10 +58,9 @@ par::Task process_frame(FrameData &frameData, const cv::Mat &imgOriginal,
 par::Task process_frame_single_loop(FrameData &frameData,
                                     const cv::Mat &imgOriginal);
 
-FrameData process_frame_quadview(const cv::Mat &imgOriginal,
-                                 const od::Rectangle &rectangle,
-                                 par::Executor &executor, int rings,
-                                 int gradient_threshold, int nb_splits = 2);
+par::TaskGraph process_frame_quadview(FrameData &frame_data,
+                                      const cv::Mat &imgOriginal,
+                                      const od::Rectangle &rectangle);
 
 FrameData process_frame_merged(const cv::Mat &imgOriginal,
                                const od::Rectangle &rectangle,

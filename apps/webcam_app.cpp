@@ -10,7 +10,7 @@
 #include <iostream>
 #include <stdexcept>
 
-#define SINGLE_THREADED 1
+#define SINGLE_THREADED 0
 
 int main(int argc, char **argv) {
   using namespace clara;
@@ -108,8 +108,8 @@ int main(int argc, char **argv) {
     executor.wait_for(flow);
 #else
     auto frame_data = webcam::FrameData{imgOriginal};
-    auto frame_task_graph = webcam::process_frame_with_parallel_gradient(
-        frame_data, imgOriginal, rectangle, rings, gradient_threshold, 128);
+    auto frame_task_graph = webcam::process_frame_quadview(
+        frame_data, imgOriginal, rectangle);
     executor.run(frame_task_graph);
     executor.wait_for(frame_task_graph);
 #endif

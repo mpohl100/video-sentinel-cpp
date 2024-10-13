@@ -101,8 +101,9 @@ SECTION("WebcamProcessFrameSingleLoop") {
 
     const auto rectangle =
         od::Rectangle{0, 0, imgOriginal.cols, imgOriginal.rows};
-    const auto frame_data = webcam::process_frame_quadview(
-        imgOriginal, rectangle, executor, rings, gradient_threshold);
+    auto frame_data = webcam::FrameData{imgOriginal};
+    const auto taskgraph = webcam::process_frame_quadview(
+        frame_data, imgOriginal, rectangle);
 
     CHECK(frame_data.all_rectangles.rectangles.size() > 500);
   }
