@@ -131,26 +131,78 @@ std::vector<od::Rectangle> split_rectangle(const od::Rectangle &rectangle,
   return rectangles;
 }
 
-FrameData process_frame_quadview(const cv::Mat &imgOriginal,
-                                 const od::Rectangle &rectangle,
-                                 par::Executor &executor, int rings,
-                                 int gradient_threshold, int nb_splits) {
-  auto frame_data = FrameData{imgOriginal};
-  const auto rectangles = split_rectangle(rectangle, nb_splits);
-  std::vector<par::Task> flows;
-  for (const auto &rect : rectangles) {
-    flows.emplace_back(process_frame(frame_data, imgOriginal, rect, rings,
-                                     gradient_threshold));
+par::TaskGraph process_frame_quadview(FrameData &frame_data,
+                                      const cv::Mat &imgOriginal,
+                                      const od::Rectangle &rectangle) {
+  const auto rectangles = split_rectangle(rectangle, 2);
+  std::vector<par::Task> deduce_tasks;
+
+  const auto expand_if_necessary = [](const od::Rectangle &rectangle,
+                                      const cv::Mat &imgOriginal) {
+    int x = rectangle.x - 2 >= 0 ? rectangle.x - 2 : 0;
+    int y = rectangle.y - 2 >= 0 ? rectangle.y - 2 : 0;
+    int width = rectangle.x + rectangle.width + 4 > imgOriginal.cols
+                    ? imgOriginal.cols
+                    : rectangle.width + 4;
+    int height = rectangle.y + rectangle.height + 4 > imgOriginal.rows
+                     ? imgOriginal.rows
+                     : rectangle.height + 4;
+    return od::Rectangle{x, y, width, height};
+  };
+
+  // allocate objects per rectangle
+  frame_data.all_objects = od::AllObjects{2, 2};
+  size_t rectangle_counter = 0;
+  // construct deduction tasks
+  for (size_t row = 0; row < 2; ++row) {
+    for (size_t col = 0; col < 2; ++col) {
+      const auto lambda = [&, row, col]() {
+        auto objects_per_rectangle = od::establishing_shot_rectangles(
+            imgOriginal, expand_if_necessary(rectangles[rectangle_counter], imgOriginal));
+        frame_data.all_objects.get(row, col) = objects_per_rectangle;
+      };
+      deduce_tasks.emplace_back(par::Calculation{lambda}.make_task());
+      rectangle_counter++;
+    }
   }
-  std::cout << "kicking off all tasks" << std::endl;
-  for (auto &flow : flows) {
-    std::cout << "kicking off task" << std::endl;
-    executor.run(flow);
+
+  // construct tasks to merge everything
+  const auto merge_first_row = [&]() {
+    auto first_row = frame_data.all_objects.get(0, 0);
+    first_row.append_right(frame_data.all_objects.get(0, 1));
+    frame_data.all_objects.get(0, 0) = first_row;
+  };
+  const auto merge_second_row = [&]() {
+    auto second_row = frame_data.all_objects.get(1, 0);
+    second_row.append_right(frame_data.all_objects.get(1, 1));
+    frame_data.all_objects.get(1, 0) = second_row;
+  };
+  const auto merge_rows = [&]() {
+    auto first_row = frame_data.all_objects.get(0, 0);
+    first_row.append_down(frame_data.all_objects.get(1, 0));
+    frame_data.result_objects = first_row;
+  };
+  auto merge_first_row_task =
+      par::Calculation{merge_first_row}.make_task();
+  auto merge_second_row_task =
+      par::Calculation{merge_second_row}.make_task();
+  auto merge_rows_task = par::Calculation{merge_rows}.make_task();
+  for (auto &task : deduce_tasks) {
+    merge_first_row_task.succeed(task);
+    merge_second_row_task.succeed(task);
   }
-  for (auto &flow : flows) {
-    executor.wait_for(flow);
+  merge_rows_task.succeed(merge_first_row_task);
+  merge_rows_task.succeed(merge_second_row_task);
+
+  auto taskgraph = par::TaskGraph{};
+  for (auto &task : deduce_tasks) {
+    taskgraph.add_task(task);
   }
-  return frame_data;
+  taskgraph.add_task(merge_first_row_task);
+  taskgraph.add_task(merge_second_row_task);
+  taskgraph.add_task(merge_rows_task);
+
+  return taskgraph;
 }
 
 od::Rectangle expand_rectangle(const od::Rectangle &rectangle, int rings) {
