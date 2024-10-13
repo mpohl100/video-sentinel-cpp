@@ -104,6 +104,8 @@ SECTION("WebcamProcessFrameSingleLoop") {
     auto frame_data = webcam::FrameData{imgOriginal};
     const auto taskgraph = webcam::process_frame_quadview(
         frame_data, imgOriginal, rectangle);
+    executor.run(taskgraph);
+    executor.wait_for(taskgraph);
 
     CHECK(frame_data.all_rectangles.rectangles.size() > 500);
   }
