@@ -141,11 +141,11 @@ par::TaskGraph process_frame_quadview(FrameData &frame_data,
                                       const cv::Mat &imgOriginal) {
     int x = rectangle.x - 2 >= 0 ? rectangle.x - 2 : 0;
     int y = rectangle.y - 2 >= 0 ? rectangle.y - 2 : 0;
-    int width = rectangle.x + rectangle.width + 2 > imgOriginal.cols
-                    ? imgOriginal.cols
+    int width = rectangle.x + rectangle.width + 2 >= imgOriginal.cols
+                    ? imgOriginal.cols - rectangle.x
                     : rectangle.width + 2;
-    int height = rectangle.y + rectangle.height + 2 > imgOriginal.rows
-                     ? imgOriginal.rows
+    int height = rectangle.y + rectangle.height + 2 >= imgOriginal.rows
+                     ? imgOriginal.rows - rectangle.y
                      : rectangle.height + 2;
     return od::Rectangle{x, y, width, height};
   };
