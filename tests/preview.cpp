@@ -11,7 +11,7 @@ TEST_CASE("Preview", "[preview]") {
   SECTION("PreviewProcessesFrameAfterPreviousFrameIsDone") {
     int rings = 1;
     int gradient_threshold = 20;
-    const auto path = "../video/BillardTakeoff.mp4";
+    const auto path = std::string(CMAKE_SRC_DIR) + "/video/BillardTakeoff.mp4";
 
     auto cap = cv::VideoCapture{path};
     if (!cap.isOpened()) {
