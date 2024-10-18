@@ -15,7 +15,7 @@ TEST_CASE("Webcam", "[webcam]") {
     par::Executor executor(4);
     int rings = 1;
     int gradient_threshold = 15;
-    const auto path = "../video/BillardTakeoff.mp4";
+    const auto path = std::string(CMAKE_SRC_DIR) + "video/BillardTakeoff.mp4";
 
     auto cap = cv::VideoCapture{path};
     if (!cap.isOpened()) {
@@ -48,7 +48,7 @@ SECTION("WebcamProcessFrameSingleLoop") {
     par::Executor executor(4);
     int rings = 1;
     int gradient_threshold = 15;
-    const auto path = "../video/BillardTakeoff.mp4";
+    const auto path = std::string(CMAKE_SRC_DIR) + "video/BillardTakeoff.mp4";
 
     auto cap = cv::VideoCapture{path};
     if (!cap.isOpened()) {
@@ -81,7 +81,7 @@ SECTION("WebcamProcessFrameSingleLoop") {
     par::Executor executor(4);
     int rings = 1;
     int gradient_threshold = 15;
-    const auto path = "../video/BillardTakeoff.mp4";
+    const auto path = std::string(CMAKE_SRC_DIR) + "video/BillardTakeoff.mp4";
 
     auto cap = cv::VideoCapture{path};
     if (!cap.isOpened()) {
@@ -113,7 +113,7 @@ SECTION("WebcamProcessFrameSingleLoop") {
     par::Executor executor(4);
     int rings = 1;
     int gradient_threshold = 15;
-    const auto path = "../video/BillardTakeoff.mp4";
+    const auto path = std::string(CMAKE_SRC_DIR) + "video/BillardTakeoff.mp4";
 
     auto cap = cv::VideoCapture{path};
     if (!cap.isOpened()) {
@@ -142,7 +142,7 @@ SECTION("WebcamProcessFrameSingleLoop") {
     par::Executor executor(4);
     int rings = 1;
     int gradient_threshold = 15;
-    const auto path = "../video/BillardTakeoff.mp4";
+    const auto path = std::string(CMAKE_SRC_DIR) + "video/BillardTakeoff.mp4";
 
     auto cap = cv::VideoCapture{path};
     if (!cap.isOpened()) {
@@ -172,7 +172,7 @@ SECTION("WebcamProcessFrameSingleLoop") {
     par::Executor executor(4);
     int rings = 1;
     int gradient_threshold = 15;
-    const auto path = "../video/BillardTakeoff.mp4";
+    const auto path = std::string(CMAKE_SRC_DIR) + "video/BillardTakeoff.mp4";
 
     auto cap = cv::VideoCapture{path};
     if (!cap.isOpened()) {
