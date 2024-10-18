@@ -22,6 +22,8 @@ struct Object {
   Object &operator=(Object &&) = default;
   Object(const Slices &slices) : slices{slices} {}
 
+  std::string to_string() const { return slices.to_string(); }
+
   bool try_merge_right(Object &other) {
     if (slices.touching_right(other.slices)) {
       slices.merge_right(other.slices);
@@ -30,10 +32,21 @@ struct Object {
     return false;
   }
 
-  bool try_merge_down(Object &other) {
+  bool try_merge_down(Object &other, bool debug = false) {
+    if (debug) {
+      std::cout << "try_merge_down" << std::endl;
+      std::cout << "this: " << slices.to_string() << std::endl;
+      std::cout << "other: " << other.slices.to_string() << std::endl;
+    }
     if (slices.touching_down(other.slices)) {
-      slices.merge_down(other.slices);
+      slices.merge_down(other.slices, debug);
+      if (debug) {
+        std::cout << "merged: " << slices.to_string() << std::endl;
+      }
       return true;
+    }
+    if (debug) {
+      std::cout << "not merged" << std::endl;
     }
     return false;
   }
