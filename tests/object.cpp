@@ -202,15 +202,24 @@ TEST_CASE("Object", "[object]") {
     const auto slices4 = get_test_slices(start4, end4);
     auto right_object = od::Object{slices4};
 
-    CHECK(top_object.try_merge_down(left_object, true));
-    std::cout << "After first merge down" << std::endl;
-    std::cout << top_object.to_string() << std::endl;
-    CHECK(top_object.try_merge_down(right_object, true));
-    std::cout << "After second merge down" << std::endl;
-    std::cout << top_object.to_string() << std::endl;
-    CHECK(top_object.try_merge_down(middle_object, true));
-    std::cout << "After third merge down" << std::endl;
-    std::cout << top_object.to_string() << std::endl;
+    CHECK(top_object.try_merge_down(left_object));
+    //std::cout << "After first merge down" << std::endl;
+    //std::cout << top_object.to_string() << std::endl;
+    CHECK(top_object.try_merge_down(right_object));
+    //std::cout << "After second merge down" << std::endl;
+    //std::cout << top_object.to_string() << std::endl;
+    CHECK(top_object.try_merge_down(middle_object));
+    //std::cout << "After third merge down" << std::endl;
+    //std::cout << top_object.to_string() << std::endl;
+    CHECK_FALSE(top_object.try_merge_down(middle_object));
+    //std::cout << "After fourth merge down" << std::endl;
+    //std::cout << top_object.to_string() << std::endl;
+    CHECK_FALSE(top_object.try_merge_down(left_object));
+    //std::cout << "After fifth merge down" << std::endl;
+    //std::cout << top_object.to_string() << std::endl;
+    CHECK_FALSE(top_object.try_merge_down(right_object));
+    //std::cout << "After sixth merge down" << std::endl;
+    //std::cout << top_object.to_string() << std::endl;
   }
   SECTION("ObjectsPerRectangleObjectInCorrectTouchingCaches") {
     const auto start = math2d::Point{0, 1};
