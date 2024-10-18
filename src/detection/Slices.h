@@ -4,6 +4,7 @@
 
 #include "opencv2/core/mat.hpp"
 
+#include <iostream>
 #include <optional>
 #include <string>
 #include <vector>
@@ -85,6 +86,15 @@ struct SliceLine {
                                  ")");
       }
     }
+  }
+
+  std::string to_string() const{
+    std::string ret = "SliceLine{";
+    for(const auto &slice : _line){
+      ret += slice.slice.start.toString() + " -> " + slice.slice.end.toString() + "; ";
+    }
+    ret += "}";
+    return ret;
   }
 
   size_t line_number() const { return _line_number; }
@@ -226,13 +236,14 @@ struct Slices {
   Slices &operator=(Slices &&) = default;
   Slices(math2d::Point top_left) : top_left{top_left} {}
 
-  std::string to_string(){
+  std::string to_string() const{
     std::string ret = "Slices{";
     for(const auto &slice_line : slices){
       ret += std::to_string(slice_line.line_number()) + ": ";
       for(const auto &slice : slice_line.line()){
         ret += slice.slice.start.toString() + " -> " + slice.slice.end.toString() + "; ";
       }
+      ret += "\n";
     }
     return ret;
   }
@@ -423,24 +434,42 @@ struct Slices {
     return true;
   }
 
-  void merge_down(Slices &other) {
+  void merge_down(Slices &other, bool debug) {
     if (!touching_down(other)) {
+      if(debug){
+        std::cout << "not touching down" << std::endl;
+      }
       return;
     }
-    merge_anywhere(other);
+    if(debug){
+      std::cout << "touching down" << std::endl;
+    }
+    merge_anywhere(other, debug);
   }
 
 private:
-  void merge_anywhere(const Slices& other){
+  void merge_anywhere(const Slices& other, bool debug){
     for(const auto& other_line : other.slices){
       auto this_line = get_line_by_number(other_line.line_number());
       if(this_line.has_value()){
         this_line->add_slices(other_line.line());
+        if(debug){
+          std::cout << "after adding slices (exisiting line): " + this_line->to_string();
+        }
         this_line->merge_adjacent_slices();
+        if(debug){
+          std::cout << "after merging slices (exisiting line): " + this_line->to_string();
+        }
       } else {
         add_slice_line(other_line);
         auto this_line = get_line_by_number(other_line.line_number());
+        if(debug){
+          std::cout << "after adding slices (new line): " + this_line->to_string();
+        }
         this_line->merge_adjacent_slices();
+        if(debug){
+          std::cout << "after merging slices (new line): " + this_line->to_string();
+        }
       }
     }
   }
