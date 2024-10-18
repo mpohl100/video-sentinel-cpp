@@ -88,10 +88,11 @@ struct SliceLine {
     }
   }
 
-  std::string to_string() const{
+  std::string to_string() const {
     std::string ret = "SliceLine{";
-    for(const auto &slice : _line){
-      ret += slice.slice.start.toString() + " -> " + slice.slice.end.toString() + "; ";
+    for (const auto &slice : _line) {
+      ret += slice.slice.start.toString() + " -> " +
+             slice.slice.end.toString() + "; ";
     }
     ret += "}";
     return ret;
@@ -196,20 +197,20 @@ struct SliceLine {
         _line.begin(), _line.end(), [other_right](const auto &slice) {
           return slice.slice.end.x < other_right;
         });
-    if(std::distance(first_it, last_it) == 1){
+    if (std::distance(first_it, last_it) == 1) {
       return true;
     }
     return other.touches_from_within(*this);
   }
 
-  void merge_adjacent_slices(){
-    if(_line.size() < 2){
+  void merge_adjacent_slices() {
+    if (_line.size() < 2) {
       return;
     }
     std::vector<AnnotatedSlice> new_line;
     new_line.push_back(_line.front());
-    for(size_t i = 1; i < _line.size(); ++i){
-      if(new_line.back().slice.end.x == _line[i].slice.start.x){
+    for (size_t i = 1; i < _line.size(); ++i) {
+      if (new_line.back().slice.end.x == _line[i].slice.start.x - 1) {
         new_line.back().slice.end.x = _line[i].slice.end.x;
       } else {
         new_line.push_back(_line[i]);
@@ -236,12 +237,13 @@ struct Slices {
   Slices &operator=(Slices &&) = default;
   Slices(math2d::Point top_left) : top_left{top_left} {}
 
-  std::string to_string() const{
+  std::string to_string() const {
     std::string ret = "Slices{";
-    for(const auto &slice_line : slices){
+    for (const auto &slice_line : slices) {
       ret += std::to_string(slice_line.line_number()) + ": ";
-      for(const auto &slice : slice_line.line()){
-        ret += slice.slice.start.toString() + " -> " + slice.slice.end.toString() + "; ";
+      for (const auto &slice : slice_line.line()) {
+        ret += slice.slice.start.toString() + " -> " +
+               slice.slice.end.toString() + "; ";
       }
       ret += "\n";
     }
@@ -297,6 +299,7 @@ struct Slices {
                line_number <= last_line_number) {
       const auto index = line_number - first_line_number;
       slices[index].add_slices(slice_line.line());
+      slices[index].merge_adjacent_slices();
     } else {
       throw std::runtime_error("can not add line number " +
                                std::to_string(line_number) + " to slices");
@@ -424,8 +427,7 @@ struct Slices {
       if (!this_line.has_value()) {
         break;
       }
-      if (this_line->overlaps_in_any_way(
-              other.slices[index])) {
+      if (this_line->overlaps_in_any_way(other.slices[index])) {
         return false;
       }
       ++current_line_number;
@@ -436,44 +438,24 @@ struct Slices {
 
   void merge_down(Slices &other, bool debug) {
     if (!touching_down(other)) {
-      if(debug){
+      if (debug) {
         std::cout << "not touching down" << std::endl;
       }
       return;
     }
-    if(debug){
+    if (debug) {
       std::cout << "touching down" << std::endl;
     }
     merge_anywhere(other, debug);
   }
 
 private:
-  void merge_anywhere(const Slices& other, bool debug){
-    if(debug){
+  void merge_anywhere(const Slices &other, bool debug) {
+    if (debug) {
       std::cout << "other num lines: " << other.slices.size() << std::endl;
     }
-    for(const auto& other_line : other.slices){
-      auto this_line = get_line_by_number(other_line.line_number());
-      if(this_line.has_value()){
-        this_line->add_slices(other_line.line());
-        if(debug){
-          std::cout << "after adding slices (exisiting line): " + this_line->to_string();
-        }
-        this_line->merge_adjacent_slices();
-        if(debug){
-          std::cout << "after merging slices (exisiting line): " + this_line->to_string();
-        }
-      } else {
-        add_slice_line(other_line);
-        this_line = get_line_by_number(other_line.line_number());
-        if(debug){
-          std::cout << "after adding slices (new line): " + this_line->to_string();
-        }
-        this_line->merge_adjacent_slices();
-        if(debug){
-          std::cout << "after merging slices (new line): " + this_line->to_string();
-        }
-      }
+    for (const auto &other_line : other.slices) {
+      add_slice_line(other_line);
     }
   }
 
@@ -544,7 +526,7 @@ private:
         return SliceLine{{}, 0};
       }
       const auto index = line_number - first_line_number;
-      if(index >= 0 && index < slices.size()){
+      if (index >= 0 && index < slices.size()) {
         return slices[index];
       }
       return SliceLine{{}, line_number};
@@ -554,7 +536,7 @@ private:
         return SliceLine{{}, 0};
       }
       const auto index = line_number - first_line_number;
-      if(index >= 0 && index < slices.size()){
+      if (index >= 0 && index < slices.size()) {
         return slices[index];
       }
       return SliceLine{{}, line_number};
@@ -593,7 +575,8 @@ private:
     return ExtractedSlicesResult{touching_slices, remaining_slices};
   }
 
-  void set_remaining_slices(std::vector<AnnotatedSlice> line, size_t line_number) {
+  void set_remaining_slices(std::vector<AnnotatedSlice> line,
+                            size_t line_number) {
     const auto first_line_number = slices.front().line_number();
     const auto index = line_number - first_line_number;
     if (line.empty()) {
@@ -710,6 +693,6 @@ void establishing_shot_single_loop(AllRectangles &ret, const cv::Mat &rgbImage,
                                    const Rectangle &rectangle);
 
 ObjectsPerRectangle establishing_shot_rectangles(const cv::Mat &rgbImage,
-                                   const Rectangle &rectangle);
+                                                 const Rectangle &rectangle);
 
 } // namespace od
