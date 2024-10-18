@@ -170,6 +170,34 @@ TEST_CASE("Object", "[object]") {
     CHECK_FALSE(second_object.try_merge_down(object3));
     CHECK_FALSE(second_object.try_merge_right(object3));
   }
+  SECTION("ObjectMergingDownHappensMultipleTimes"){
+    const auto start = math2d::Point{10, 1};
+    const auto end = math2d::Point{40, 10};
+    const auto slices = get_test_slices(start, end);
+    auto top_object = od::Object{slices};
+
+    const auto start2 = math2d::Point{10, 11};
+    const auto end2 = math2d::Point{20, 20};
+    const auto slices2 = get_test_slices(start2, end2);
+    auto left_object = od::Object{slices2};
+
+    const auto start3 = math2d::Point{21, 11};
+    const auto end3 = math2d::Point{30, 20};
+    const auto slices3 = get_test_slices(start3, end3);
+    auto middle_object = od::Object{slices3}; 
+
+    const auto start4 = math2d::Point{31, 11};
+    const auto end4 = math2d::Point{40, 20};
+    const auto slices4 = get_test_slices(start4, end4);
+    auto right_object = od::Object{slices4};
+
+    CHECK(top_object.try_merge_down(left_object));
+    CHECK(top_object.try_merge_down(right_object));
+    CHECK(top_object.try_merge_down(middle_object));
+    CHECK_FALSE(top_object.try_merge_down(left_object));
+    CHECK_FALSE(top_object.try_merge_down(right_object));
+    CHECK_FALSE(top_object.try_merge_down(middle_object));
+  }
   SECTION("ObjectsPerRectangleObjectInCorrectTouchingCaches"){
     const auto start = math2d::Point{0, 1};
     const auto end = math2d::Point{10, 3};

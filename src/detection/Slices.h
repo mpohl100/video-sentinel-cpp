@@ -150,6 +150,25 @@ struct SliceLine {
     return false;
   }
 
+  bool overlaps_in_any_way(const SliceLine &other) const {
+    if (_line.empty() || other.line().empty()) {
+      return false;
+    }
+    const auto shrink = [](const Slice &slice) {
+      return Slice{math2d::Point{slice.start.x + 1, slice.start.y},
+                   math2d::Point{slice.end.x - 1, slice.end.y}};
+    };
+    for (const auto &top_slice : line()) {
+      for (const auto &bottom_slice : other.line()) {
+        if (top_slice.slice.touches(shrink(bottom_slice.slice)) ||
+            bottom_slice.slice.touches(shrink(top_slice.slice))) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   bool touches_from_within(const SliceLine &other) const {
     if (_line.empty()) {
       return false;
@@ -171,6 +190,22 @@ struct SliceLine {
       return true;
     }
     return other.touches_from_within(*this);
+  }
+
+  void merge_adjacent_slices(){
+    if(_line.size() < 2){
+      return;
+    }
+    std::vector<AnnotatedSlice> new_line;
+    new_line.push_back(_line.front());
+    for(size_t i = 1; i < _line.size(); ++i){
+      if(new_line.back().slice.end.x == _line[i].slice.start.x){
+        new_line.back().slice.end.x = _line[i].slice.end.x;
+      } else {
+        new_line.push_back(_line[i]);
+      }
+    }
+    _line = std::move(new_line);
   }
 
   void pop_back() { _line.pop_back(); }
@@ -378,7 +413,7 @@ struct Slices {
       if (!this_line.has_value()) {
         break;
       }
-      if (!this_line->touches_rightmost_slice_or_is_nextto_it(
+      if (this_line->overlaps_in_any_way(
               other.slices[index])) {
         return false;
       }
@@ -392,10 +427,24 @@ struct Slices {
     if (!touching_down(other)) {
       return;
     }
-    merge_right(other);
+    merge_anywhere(other);
   }
 
 private:
+  void merge_anywhere(const Slices& other){
+    for(const auto& other_line : other.slices){
+      auto this_line = get_line_by_number(other_line.line_number());
+      if(this_line.has_value()){
+        this_line->add_slices(other_line.line());
+        this_line->merge_adjacent_slices();
+      } else {
+        add_slice_line(other_line);
+        auto this_line = get_line_by_number(other_line.line_number());
+        this_line->merge_adjacent_slices();
+      }
+    }
+  }
+
   bool add_image_slices_down(Slices &image_slices) {
     // pre conditions
     // if the image slices are empty nothing to do
