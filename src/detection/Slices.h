@@ -150,6 +150,29 @@ struct SliceLine {
     return false;
   }
 
+  bool touches_from_within(const SliceLine &other) const {
+    if (_line.empty()) {
+      return false;
+    }
+    if (other.line().empty()) {
+      return false;
+    }
+    int other_left = other.line().front().slice.start.x;
+    int other_right = other.line().back().slice.end.x;
+    const auto first_it = std::find_if(
+        _line.begin(), _line.end(), [other_left](const auto &slice) {
+          return slice.slice.start.x >= other_left;
+        });
+    const auto last_it = std::find_if_not(
+        _line.begin(), _line.end(), [other_right](const auto &slice) {
+          return slice.slice.end.x < other_right;
+        });
+    if(std::distance(first_it, last_it) == 1){
+      return true;
+    }
+    return other.touches_from_within(*this);
+  }
+
   void pop_back() { _line.pop_back(); }
 
 private:
