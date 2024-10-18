@@ -449,6 +449,9 @@ struct Slices {
 
 private:
   void merge_anywhere(const Slices& other, bool debug){
+    if(debug){
+      std::cout << "other num lines: " << other.slices.size() << std::endl;
+    }
     for(const auto& other_line : other.slices){
       auto this_line = get_line_by_number(other_line.line_number());
       if(this_line.has_value()){
@@ -462,7 +465,7 @@ private:
         }
       } else {
         add_slice_line(other_line);
-        auto this_line = get_line_by_number(other_line.line_number());
+        this_line = get_line_by_number(other_line.line_number());
         if(debug){
           std::cout << "after adding slices (new line): " + this_line->to_string();
         }
