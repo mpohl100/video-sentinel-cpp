@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ObjectTrace.h"
+#include "Draw.h"
 #include "detection/Object.h"
 #include "math2d/math2d.h"
 
@@ -44,15 +44,13 @@ struct Trace {
 
 private:
   void calculate() {
+    _ratio_lines.clear();
+    _ratio_lines.reserve(_skeleton.size());
     for (const auto &line : _skeleton) {
-      const auto num_pixlels_on_line = 0;
-      const auto count_pixels =
-          [&num_pixlels_on_line]([[maybe_unused]] const math2d::Point &point) {
-            num_pixlels_on_line++;
-          };
-      draw_line(line, count_pixels);
+      const auto pixels = draw_line(line);
+      const auto num_pixlels_on_line = pixels.size();
 
-      const auto interpret_pixel = std::vector<Ratio> ratios;
+      std::vector<Ratio> ratios;
       std::optional<Ratio> current_ratio = std::nullopt;
       int count = 0;
       [this, current_ratio](const math2d::Point &point) {
@@ -72,7 +70,10 @@ private:
         }
         count++:
       };
-      draw_line(line, interpret_pixel);
+      for(const auto& pixel: pixels) {
+        interpret_pixel(pixel);
+      }
+      _ratio_lines.push_back(RatioLine{line, ratios});
     }
   }
 
