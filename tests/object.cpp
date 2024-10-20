@@ -38,42 +38,42 @@ TEST_CASE("Object", "[object]") {
 
     const auto rectangle_all =
         od::Rectangle{start, math2d::Point{end.x + 1, end.y + 1}};
-    CHECK(object.slices.touching_right(rectangle_all));
-    CHECK(object.slices.touching_down(rectangle_all));
-    CHECK(object.slices.touching_left(rectangle_all));
-    CHECK(object.slices.touching_up(rectangle_all));
+    CHECK(object.get_slices().touching_right(rectangle_all));
+    CHECK(object.get_slices().touching_down(rectangle_all));
+    CHECK(object.get_slices().touching_left(rectangle_all));
+    CHECK(object.get_slices().touching_up(rectangle_all));
 
     const auto rectangle_left =
         od::Rectangle{math2d::Point{start.x, start.y - 1},
                       math2d::Point{end.x + 2, start.y + 2}};
-    CHECK(object.slices.touching_left(rectangle_left));
-    CHECK_FALSE(object.slices.touching_right(rectangle_left));
-    CHECK_FALSE(object.slices.touching_down(rectangle_left));
-    CHECK_FALSE(object.slices.touching_up(rectangle_left));
+    CHECK(object.get_slices().touching_left(rectangle_left));
+    CHECK_FALSE(object.get_slices().touching_right(rectangle_left));
+    CHECK_FALSE(object.get_slices().touching_down(rectangle_left));
+    CHECK_FALSE(object.get_slices().touching_up(rectangle_left));
 
     const auto rectangle_right =
         od::Rectangle{math2d::Point{start.x - 1, start.y - 1},
                       math2d::Point{end.x + 1, start.y + 2}};
-    CHECK(object.slices.touching_right(rectangle_right));
-    CHECK_FALSE(object.slices.touching_left(rectangle_right));
-    CHECK_FALSE(object.slices.touching_down(rectangle_right));
-    CHECK_FALSE(object.slices.touching_up(rectangle_right));
+    CHECK(object.get_slices().touching_right(rectangle_right));
+    CHECK_FALSE(object.get_slices().touching_left(rectangle_right));
+    CHECK_FALSE(object.get_slices().touching_down(rectangle_right));
+    CHECK_FALSE(object.get_slices().touching_up(rectangle_right));
 
     const auto rectangle_up =
         od::Rectangle{math2d::Point{start.x - 1, start.y},
                       math2d::Point{end.x + 2, start.y + 2}};
-    CHECK(object.slices.touching_up(rectangle_up));
-    CHECK_FALSE(object.slices.touching_left(rectangle_up));
-    CHECK_FALSE(object.slices.touching_down(rectangle_up));
-    CHECK_FALSE(object.slices.touching_right(rectangle_up));
+    CHECK(object.get_slices().touching_up(rectangle_up));
+    CHECK_FALSE(object.get_slices().touching_left(rectangle_up));
+    CHECK_FALSE(object.get_slices().touching_down(rectangle_up));
+    CHECK_FALSE(object.get_slices().touching_right(rectangle_up));
 
     const auto rectangle_down =
         od::Rectangle{math2d::Point{start.x - 1, start.y - 1},
                       math2d::Point{end.x + 2, start.y + 1}};
-    CHECK(object.slices.touching_down(rectangle_down));
-    CHECK_FALSE(object.slices.touching_left(rectangle_down));
-    CHECK_FALSE(object.slices.touching_up(rectangle_down));
-    CHECK_FALSE(object.slices.touching_right(rectangle_down));
+    CHECK(object.get_slices().touching_down(rectangle_down));
+    CHECK_FALSE(object.get_slices().touching_left(rectangle_down));
+    CHECK_FALSE(object.get_slices().touching_up(rectangle_down));
+    CHECK_FALSE(object.get_slices().touching_right(rectangle_down));
   }
   SECTION("ObjectTouchingRightObject") {
     const auto start = math2d::Point{0, 1};
@@ -225,7 +225,7 @@ TEST_CASE("Object", "[object]") {
     const auto start = math2d::Point{0, 1};
     const auto end = math2d::Point{10, 3};
     const auto slices = get_test_slices(start, end);
-    auto object = std::make_shared<od::Object>(slices);
+    auto object = od::Object(slices);
 
     // test fitting rectangle touches everything
     auto objects_per_rectangle = od::ObjectsPerRectangle{};
@@ -334,9 +334,9 @@ TEST_CASE("Object", "[object]") {
     auto objects_per_rectangle_left = od::ObjectsPerRectangle{};
     objects_per_rectangle_left.set_rectangle(rectangle_left);
 
-    auto inside_object_left = std::make_shared<od::Object>(
+    auto inside_object_left = od::Object(
         get_test_slices(math2d::Point{1, 1}, math2d::Point{2, 2}));
-    auto touching_object_right = std::make_shared<od::Object>(
+    auto touching_object_right = od::Object(
         get_test_slices(math2d::Point{4, 1}, math2d::Point{9, 4}));
     objects_per_rectangle_left.insert_object(inside_object_left);
     objects_per_rectangle_left.insert_object(touching_object_right);
@@ -352,9 +352,9 @@ TEST_CASE("Object", "[object]") {
     auto objects_per_rectangle_right = od::ObjectsPerRectangle{};
     objects_per_rectangle_right.set_rectangle(rectangle_right);
 
-    auto inside_object_right = std::make_shared<od::Object>(
+    auto inside_object_right = od::Object(
         get_test_slices(math2d::Point{15, 1}, math2d::Point{16, 2}));
-    auto touching_object_left = std::make_shared<od::Object>(
+    auto touching_object_left = od::Object(
         get_test_slices(math2d::Point{10, 1}, math2d::Point{14, 4}));
     objects_per_rectangle_right.insert_object(inside_object_right);
     objects_per_rectangle_right.insert_object(touching_object_left);
@@ -382,9 +382,9 @@ TEST_CASE("Object", "[object]") {
     auto objects_per_rectangle_left = od::ObjectsPerRectangle{};
     objects_per_rectangle_left.set_rectangle(rectangle_left);
 
-    auto inside_object_left = std::make_shared<od::Object>(
+    auto inside_object_left = od::Object(
         get_test_slices(math2d::Point{1, 1}, math2d::Point{2, 2}));
-    auto touching_object_right = std::make_shared<od::Object>(
+    auto touching_object_right = od::Object(
         get_test_slices(math2d::Point{4, 1}, math2d::Point{9, 4}));
     objects_per_rectangle_left.insert_object(inside_object_left);
     objects_per_rectangle_left.insert_object(touching_object_right);
@@ -400,9 +400,9 @@ TEST_CASE("Object", "[object]") {
     auto objects_per_rectangle_right = od::ObjectsPerRectangle{};
     objects_per_rectangle_right.set_rectangle(rectangle_right);
 
-    auto inside_object_right = std::make_shared<od::Object>(
+    auto inside_object_right = od::Object(
         get_test_slices(math2d::Point{15, 1}, math2d::Point{16, 2}));
-    auto touching_object_left_candidate = std::make_shared<od::Object>(
+    auto touching_object_left_candidate = od::Object(
         get_test_slices(math2d::Point{11, 1}, math2d::Point{14, 4}));
     objects_per_rectangle_right.insert_object(inside_object_right);
     objects_per_rectangle_right.insert_object(touching_object_left_candidate);
@@ -430,9 +430,9 @@ TEST_CASE("Object", "[object]") {
     auto objects_per_rectangle_left = od::ObjectsPerRectangle{};
     objects_per_rectangle_left.set_rectangle(rectangle_left);
 
-    auto inside_object_left = std::make_shared<od::Object>(
+    auto inside_object_left = od::Object(
         get_test_slices(math2d::Point{1, 1}, math2d::Point{2, 2}));
-    auto touching_object_right_candidate = std::make_shared<od::Object>(
+    auto touching_object_right_candidate = od::Object(
         get_test_slices(math2d::Point{4, 1}, math2d::Point{8, 4}));
     objects_per_rectangle_left.insert_object(inside_object_left);
     objects_per_rectangle_left.insert_object(touching_object_right_candidate);
@@ -448,9 +448,9 @@ TEST_CASE("Object", "[object]") {
     auto objects_per_rectangle_right = od::ObjectsPerRectangle{};
     objects_per_rectangle_right.set_rectangle(rectangle_right);
 
-    auto inside_object_right = std::make_shared<od::Object>(
+    auto inside_object_right = od::Object(
         get_test_slices(math2d::Point{15, 1}, math2d::Point{16, 2}));
-    auto touching_object_left = std::make_shared<od::Object>(
+    auto touching_object_left = od::Object(
         get_test_slices(math2d::Point{10, 1}, math2d::Point{14, 4}));
     objects_per_rectangle_right.insert_object(inside_object_right);
     objects_per_rectangle_right.insert_object(touching_object_left);
@@ -478,9 +478,9 @@ TEST_CASE("Object", "[object]") {
     auto objects_per_rectangle_up = od::ObjectsPerRectangle{};
     objects_per_rectangle_up.set_rectangle(rectangle_up);
 
-    auto inside_object = std::make_shared<od::Object>(
+    auto inside_object = od::Object(
         get_test_slices(math2d::Point{1, 1}, math2d::Point{2, 2}));
-    auto touching_object_down = std::make_shared<od::Object>(
+    auto touching_object_down = od::Object(
         get_test_slices(math2d::Point{4, 4}, math2d::Point{8, 9}));
     objects_per_rectangle_up.insert_object(inside_object);
     objects_per_rectangle_up.insert_object(touching_object_down);
@@ -496,9 +496,9 @@ TEST_CASE("Object", "[object]") {
     auto objects_per_rectangle_down = od::ObjectsPerRectangle{};
     objects_per_rectangle_down.set_rectangle(rectangle_down);
 
-    auto inside_object_down = std::make_shared<od::Object>(
+    auto inside_object_down = od::Object(
         get_test_slices(math2d::Point{1, 15}, math2d::Point{2, 16}));
-    auto touching_object_up = std::make_shared<od::Object>(
+    auto touching_object_up = od::Object(
         get_test_slices(math2d::Point{4, 10}, math2d::Point{8, 14}));
     objects_per_rectangle_down.insert_object(inside_object_down);
     objects_per_rectangle_down.insert_object(touching_object_up);
@@ -526,9 +526,9 @@ TEST_CASE("Object", "[object]") {
     auto objects_per_rectangle_up = od::ObjectsPerRectangle{};
     objects_per_rectangle_up.set_rectangle(rectangle_up);
 
-    auto inside_object = std::make_shared<od::Object>(
+    auto inside_object = od::Object(
         get_test_slices(math2d::Point{1, 1}, math2d::Point{2, 2}));
-    auto touching_object_down_candidate = std::make_shared<od::Object>(
+    auto touching_object_down_candidate = od::Object(
         get_test_slices(math2d::Point{4, 4}, math2d::Point{8, 8}));
     objects_per_rectangle_up.insert_object(inside_object);
     objects_per_rectangle_up.insert_object(touching_object_down_candidate);
@@ -544,9 +544,9 @@ TEST_CASE("Object", "[object]") {
     auto objects_per_rectangle_down = od::ObjectsPerRectangle{};
     objects_per_rectangle_down.set_rectangle(rectangle_down);
 
-    auto inside_object_down = std::make_shared<od::Object>(
+    auto inside_object_down = od::Object(
         get_test_slices(math2d::Point{1, 15}, math2d::Point{2, 16}));
-    auto touching_object_up = std::make_shared<od::Object>(
+    auto touching_object_up = od::Object(
         get_test_slices(math2d::Point{4, 10}, math2d::Point{8, 14}));
     objects_per_rectangle_down.insert_object(inside_object_down);
     objects_per_rectangle_down.insert_object(touching_object_up);
@@ -574,9 +574,9 @@ TEST_CASE("Object", "[object]") {
     auto objects_per_rectangle_up = od::ObjectsPerRectangle{};
     objects_per_rectangle_up.set_rectangle(rectangle_up);
 
-    auto inside_object = std::make_shared<od::Object>(
+    auto inside_object = od::Object(
         get_test_slices(math2d::Point{1, 1}, math2d::Point{2, 2}));
-    auto touching_object_down = std::make_shared<od::Object>(
+    auto touching_object_down = od::Object(
         get_test_slices(math2d::Point{4, 4}, math2d::Point{8, 9}));
     objects_per_rectangle_up.insert_object(inside_object);
     objects_per_rectangle_up.insert_object(touching_object_down);
@@ -592,9 +592,9 @@ TEST_CASE("Object", "[object]") {
     auto objects_per_rectangle_down = od::ObjectsPerRectangle{};
     objects_per_rectangle_down.set_rectangle(rectangle_down);
 
-    auto inside_object_down = std::make_shared<od::Object>(
+    auto inside_object_down = od::Object(
         get_test_slices(math2d::Point{1, 15}, math2d::Point{2, 16}));
-    auto touching_object_up_candidate = std::make_shared<od::Object>(
+    auto touching_object_up_candidate = od::Object(
         get_test_slices(math2d::Point{4, 11}, math2d::Point{8, 14}));
     objects_per_rectangle_down.insert_object(inside_object_down);
     objects_per_rectangle_down.insert_object(touching_object_up_candidate);
@@ -622,7 +622,7 @@ TEST_CASE("Object", "[object]") {
     auto objects_per_rectangle_up = od::ObjectsPerRectangle{};
     objects_per_rectangle_up.set_rectangle(rectangle_up);
 
-    auto touching_object_down = std::make_shared<od::Object>(
+    auto touching_object_down = od::Object(
         get_test_slices(math2d::Point{1, 1}, math2d::Point{98, 99}));
     objects_per_rectangle_up.insert_object(touching_object_down);
     CHECK(objects_per_rectangle_up.get_objects().size() == 1);
@@ -636,11 +636,11 @@ TEST_CASE("Object", "[object]") {
     auto objects_per_rectangle_down = od::ObjectsPerRectangle{};
     objects_per_rectangle_down.set_rectangle(rectangle_down);
 
-    auto touching_object_up = std::make_shared<od::Object>(
+    auto touching_object_up = od::Object(
         get_test_slices(math2d::Point{1, 100}, math2d::Point{49, 150}));
     objects_per_rectangle_down.insert_object(touching_object_up);
 
-    auto touching_object_up_2 = std::make_shared<od::Object>(
+    auto touching_object_up_2 = od::Object(
         get_test_slices(math2d::Point{51, 100}, math2d::Point{98, 150}));
     objects_per_rectangle_down.insert_object(touching_object_up_2);
 
@@ -664,7 +664,7 @@ TEST_CASE("Object", "[object]") {
     auto objects_per_rectangle = od::ObjectsPerRectangle{};
     objects_per_rectangle.set_rectangle(rectangle);
 
-    auto touching_object_down = std::make_shared<od::Object>(
+    auto touching_object_down = od::Object(
         get_test_slices(math2d::Point{1, 1}, math2d::Point{98, 99}));
     objects_per_rectangle.insert_object(touching_object_down);
 
@@ -679,10 +679,10 @@ TEST_CASE("Object", "[object]") {
     auto down_objects_per_rectangle = od::ObjectsPerRectangle{};
     down_objects_per_rectangle.set_rectangle(down_rectangle);
 
-    const auto touching_object_up_1 = std::make_shared<od::Object>(
+    const auto touching_object_up_1 = od::Object(
         get_test_slices(math2d::Point{1, 100}, math2d::Point{49, 150}));
     down_objects_per_rectangle.insert_object(touching_object_up_1);
-    const auto touching_object_up_2 = std::make_shared<od::Object>(
+    const auto touching_object_up_2 = od::Object(
         get_test_slices(math2d::Point{51, 100}, math2d::Point{98, 150}));
     down_objects_per_rectangle.insert_object(touching_object_up_2);
 
