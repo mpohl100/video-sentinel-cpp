@@ -38,7 +38,7 @@ private:
   }
 
   void deduce() {
-    const auto rect = _obj->get_bounding_box().to_math2d_rectangle();
+    const auto rect = _obj.get_bounding_box().to_math2d_rectangle();
     const auto center_of_mass = rect.center();
     const auto radius = math2d::Vector{rect.get_top_left(), rect.center()}.magnitude();
     const auto skeleton = get_skeleton(center_of_mass, radius, 30);

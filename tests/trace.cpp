@@ -33,14 +33,14 @@ TEST_CASE("Trace", "[trace]") {
       CHECK(objects.size() == 2);
       std::sort(objects.begin(), objects.end(),
                 [](const auto &lhs, const auto &rhs) {
-                  return lhs->get_bounding_box().to_math2d_rectangle().area() <
-                         rhs->get_bounding_box().to_math2d_rectangle().area();
+                  return lhs.get_bounding_box().to_math2d_rectangle().area() <
+                         rhs.get_bounding_box().to_math2d_rectangle().area();
                 });
       return objects[0];
     };
     auto img0 = create_image_with_square(0);
     auto obj0 = deduce_object(img0);
-    CHECK(obj0->get_bounding_box().to_math2d_rectangle().area() == 100);
+    CHECK(obj0.get_bounding_box().to_math2d_rectangle().area() == 100);
     auto object0_trace = deduct::ObjectTrace{obj0}.get_trace();
     CHECK(object0_trace.get_ratios().size() == 6);
   }

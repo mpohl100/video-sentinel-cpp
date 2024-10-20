@@ -64,7 +64,7 @@ private:
                                     num_pixels_on_line,
                                     &ratios](const math2d::Point &point) {
         double progress = static_cast<double>(count) / num_pixels_on_line;
-        bool does_contain = _obj->contains_point(point);
+        bool does_contain = _obj.contains_point(point);
         if (current_ratio.has_value()) {
           if (does_contain) {
             current_ratio = Ratio{current_ratio->from(), progress};
