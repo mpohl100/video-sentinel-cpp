@@ -70,7 +70,7 @@ private:
         }
         count++:
       };
-      for(const auto& pixel: pixels) {
+      for (const auto &pixel : pixels) {
         interpret_pixel(pixel);
       }
       _ratio_lines.push_back(RatioLine{line, ratios});
