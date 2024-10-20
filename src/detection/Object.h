@@ -107,7 +107,8 @@ private:
   friend bool operator==(const Object &l, const Object &r);
 };
 
-bool operator==(const Object &l, const Object &r) {
+inline bool operator==(const Object &l, const Object &r) {
   return l.object == r.object;
+}
 
 } // namespace od
