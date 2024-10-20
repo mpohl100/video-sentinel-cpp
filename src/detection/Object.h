@@ -61,6 +61,10 @@ struct Object {
 
   od::Rectangle get_bounding_box() const { return slices.to_rectangle(); }
 
+  bool contains_point(const math2d::Point &point) const {
+    return slices.contains_point(point);
+  }
+
   Slices slices;
 };
 
