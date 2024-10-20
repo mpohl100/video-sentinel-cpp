@@ -166,7 +166,7 @@ Object deduce_object(const AnnotatedSlice &first_slice,
     direction = object_slices.invert_direction(direction);
     i++;
   } while (increased_object_slices || i < 2);
-  return std::make_shared<Object>(object_slices);
+  return Object{object_slices};
 }
 
 std::vector<Object> deduce_objects(Slices &slices) {
@@ -185,7 +185,7 @@ AllRectangles
 deduce_rectangles(const ObjectsPerRectangle &objects_per_rectangle) {
   AllRectangles ret;
   for (const auto &object : objects_per_rectangle.get_objects()) {
-    auto rectangle = object->slices.to_rectangle();
+    auto rectangle = object.get_slices().to_rectangle();
     const auto expanded_rectangle =
         Rectangle{rectangle.x - 5, rectangle.y - 5, rectangle.width + 10,
                   rectangle.height + 10};

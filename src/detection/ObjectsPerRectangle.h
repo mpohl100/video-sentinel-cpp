@@ -58,12 +58,12 @@ struct ObjectsPerRectangle {
     auto object_merger = od::ObjectMerger{
         objects_touching_right, other.objects_touching_left,
         [](Object object1, Object object2) {
-          object1->try_merge_right(*object2);
+          object1.try_merge_right(object2);
           return object1;
         },
         [](const Object &object1,
            const Object &object2) {
-          return object1->touching_right(*object2);
+          return object1.touching_right(object2);
         }};
     auto merged_objects = object_merger.connect_all_objects();
 
@@ -104,12 +104,12 @@ struct ObjectsPerRectangle {
     auto object_merger = od::ObjectMerger{
         objects_touching_down, other.objects_touching_up,
         [](Object object1, Object object2) {
-          object1->try_merge_down(*object2);
+          object1.try_merge_down(object2);
           return object1;
         },
         [](const Object &object1,
            const Object &object2) {
-          return object1->touching_down(*object2);
+          return object1.touching_down(object2);
         }};
     auto merged_objects = object_merger.connect_all_objects();
 
@@ -130,16 +130,16 @@ struct ObjectsPerRectangle {
 
   void insert_object(Object object) {
     objects.push_back(object);
-    if (object->slices.touching_right(rectangle)) {
+    if (object.get_slices().touching_right(rectangle)) {
       objects_touching_right.push_back(object);
     }
-    if (object->slices.touching_left(rectangle)) {
+    if (object.get_slices().touching_left(rectangle)) {
       objects_touching_left.push_back(object);
     }
-    if (object->slices.touching_down(rectangle)) {
+    if (object.get_slices().touching_down(rectangle)) {
       objects_touching_down.push_back(object);
     }
-    if (object->slices.touching_up(rectangle)) {
+    if (object.get_slices().touching_up(rectangle)) {
       objects_touching_up.push_back(object);
     }
   }
@@ -159,7 +159,7 @@ private:
          const ObjectsPerRectangle &other) {
     std::vector<Object> new_objects;
     // first add all objects that are not touching the right side
-    const auto touching_objects_this = get_touching_objects_this(*this);
+    auto touching_objects_this = get_touching_objects_this(*this);
     for (auto object : get_objects(*this)) {
       if (std::find(touching_objects_this.begin(), touching_objects_this.end(),
                     object) == touching_objects_this.end()) {
@@ -180,7 +180,7 @@ private:
       std::vector<size_t> indexes_to_remove;
       size_t i = 0;
       for (auto other_object : touching_objects_other) {
-        const auto merged = object->try_merge_right(*other_object);
+        const auto merged = object.try_merge_right(other_object);
         if (merged) {
           indexes_to_remove.push_back(i);
         }
