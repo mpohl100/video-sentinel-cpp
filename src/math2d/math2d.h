@@ -148,6 +148,8 @@ public:
 
   std::vector<Line> lines() const;
   number_type area() const;
+  math2d::Point center() const;
+  math2d::Point get_top_left() const;
   std::string toString() const;
 
   std::vector<Line> _lines;

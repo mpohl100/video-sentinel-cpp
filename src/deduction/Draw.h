@@ -12,7 +12,7 @@ namespace deduct {
 std::vector<math2d::Point> draw_line(const math2d::Line &line) {
   std::vector<math2d::Point> pixels;
   const auto draw_pixel = [&pixels](int x, int y, [[maybe_unused]] int color) {
-    pixels.push_back(math2d::Point{x, y});
+    pixels.push_back(math2d::Point{static_cast<math2d::number_type>(x), static_cast<math2d::number_type>(y)});
   };
   auto start = line.start();
   auto end = line.end();
@@ -40,7 +40,7 @@ std::vector<math2d::Point> draw_line(const math2d::Line &line) {
         current_point.y--;
       }
     }
-    return;
+    return pixels;
   }
   if (dY == 0) {
     if (dX >= 0) {
@@ -56,7 +56,7 @@ std::vector<math2d::Point> draw_line(const math2d::Line &line) {
         current_point.x--;
       }
     }
-    return;
+    return pixels;
   }
 
   const auto gradient = double(dY) / double(dX);

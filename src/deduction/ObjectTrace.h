@@ -16,7 +16,7 @@ struct ObjectTrace {
   ObjectTrace(ObjectTrace &&) = default;
   ObjectTrace &operator=(const ObjectTrace &) = default;
   ObjectTrace &operator=(ObjectTrace &&) = default;
-  ObjectTrace(std::shared_ptr<Object> obj) : _obj{obj} { deduce(); }
+  ObjectTrace(std::shared_ptr<od::Object> obj) : _obj{obj} { deduce(); }
 
   Trace get_trace() const { return _trace; }
 
@@ -38,12 +38,13 @@ private:
   }
 
   void deduce() {
-    const auto center_of_mass = _obj->get_center_of_mass();
-    const auto radius = _obj->get_radius();
+    const auto rect = _obj->get_bounding_box().to_math2d_rectangle();
+    const auto center_of_mass = rect.center();
+    const auto radius = math2d::Vector{rect.get_top_left(), rect.center()}.magnitude();
     const auto skeleton = get_skeleton(center_of_mass, radius, 30);
     _trace = Trace{_obj, skeleton};
   }
-  std::shared_ptr<Object> _obj;
+  std::shared_ptr<od::Object> _obj;
   Trace _trace;
 };
 
