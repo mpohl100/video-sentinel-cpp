@@ -43,7 +43,9 @@ struct Trace {
   Trace &operator=(const Trace &) = default;
   Trace &operator=(Trace &&) = default;
   Trace(std::shared_ptr<od::Object> obj, std::vector<math2d::Line> skeleton)
-      : _obj{obj}, _skeleton{skeleton} {}
+      : _obj{obj}, _skeleton{skeleton} {
+    calculate();
+  }
 
   std::vector<RatioLine> get_ratios() const { return _ratio_lines; }
 
@@ -58,7 +60,9 @@ private:
       std::vector<Ratio> ratios;
       std::optional<Ratio> current_ratio = std::nullopt;
       int count = 0;
-      const auto interpret_pixel = [this, &current_ratio, &count, num_pixels_on_line, &ratios](const math2d::Point &point) {
+      const auto interpret_pixel = [this, &current_ratio, &count,
+                                    num_pixels_on_line,
+                                    &ratios](const math2d::Point &point) {
         double progress = static_cast<double>(count) / num_pixels_on_line;
         bool does_contain = _obj->contains_point(point);
         if (current_ratio.has_value()) {

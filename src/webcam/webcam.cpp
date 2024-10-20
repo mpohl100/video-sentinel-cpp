@@ -105,9 +105,15 @@ par::Task process_frame(FrameData &frame_data, const cv::Mat &imgOriginal,
 par::Task process_frame_single_loop(FrameData &frame_data,
                                     const cv::Mat &imgOriginal) {
   const auto lambda = [&]() {
-    od::establishing_shot_single_loop(
+
+    const auto objects = od::establishing_shot_single_loop(
         frame_data.all_rectangles, imgOriginal,
         od::Rectangle{0, 0, imgOriginal.cols, imgOriginal.rows});
+    auto objects_per_rectangle = od::ObjectsPerRectangle{};
+    for(const auto &object : objects) {
+      objects_per_rectangle.insert_object(object);
+    }
+    frame_data.result_objects = objects_per_rectangle;
   };
   return par::Calculation{lambda}.make_task();
 }
@@ -158,8 +164,7 @@ par::TaskGraph process_frame_quadview(FrameData &frame_data,
       const auto rect = rectangles.get(row, col);
       const auto lambda = [&, rect, row, col]() {
         auto objects_per_rectangle = od::establishing_shot_rectangles(
-            imgOriginal,
-            expand_if_necessary(rect, imgOriginal));
+            imgOriginal, expand_if_necessary(rect, imgOriginal));
         frame_data.all_objects.get(row, col) = objects_per_rectangle;
       };
       deduce_tasks.emplace_back(par::Calculation{lambda}.make_task());
@@ -183,7 +188,8 @@ par::TaskGraph process_frame_quadview(FrameData &frame_data,
     frame_data.result_objects = first_row;
   };
   const auto calc_rectangles = [&]() {
-    frame_data.all_rectangles = od::deduce_rectangles(frame_data.result_objects);
+    frame_data.all_rectangles =
+        od::deduce_rectangles(frame_data.result_objects);
   };
   auto merge_first_row_task = par::Calculation{merge_first_row}.make_task();
   auto merge_second_row_task = par::Calculation{merge_second_row}.make_task();
