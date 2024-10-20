@@ -700,9 +700,9 @@ void establishing_shot_objects(ObjectsPerRectangle &ret,
                                const cv::Mat &contours,
                                const Rectangle &rectangle);
 
-std::vector<std::shared_ptr<Object>> deduce_objects(Slices &slices);
+std::vector<Object> deduce_objects(Slices &slices);
 
-std::vector<std::shared_ptr<Object>>
+std::vector<Object>
 establishing_shot_single_loop(AllRectangles &ret, const cv::Mat &rgbImage,
                               const Rectangle &rectangle);
 
