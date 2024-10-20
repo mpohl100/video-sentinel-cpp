@@ -77,18 +77,18 @@ public:
   ObjectMerger &operator=(ObjectMerger &&) = default;
 
   ObjectMerger(
-      std::vector<std::shared_ptr<Object>> primary_objects,
-      std::vector<std::shared_ptr<Object>> secondary_objects,
-      std::function<std::shared_ptr<Object>(std::shared_ptr<Object>, std::shared_ptr<Object>)>
+      std::vector<Object> primary_objects,
+      std::vector<Object> secondary_objects,
+      std::function<Object(Object, Object)>
           connect,
-      std::function<bool(std::shared_ptr<Object>, std::shared_ptr<Object>)>
+      std::function<bool(Object, Object)>
           is_connected)
       : _primary_objects(primary_objects),
         _secondary_objects(secondary_objects), _connect(connect),
         _is_connected(is_connected) {}
 
-  std::vector<std::shared_ptr<Object>> connect_all_objects() {
-    std::vector<std::shared_ptr<Object>> result;
+  std::vector<Object> connect_all_objects() {
+    std::vector<Object> result;
     build_graph();
     const auto subgraphs = _graph.find_subgraphs();
     for (const auto subgraph : subgraphs) {
@@ -98,11 +98,11 @@ public:
   }
 
 private:
-  std::vector<std::shared_ptr<Object>> _primary_objects;
-  std::vector<std::shared_ptr<Object>> _secondary_objects;
-  std::function<std::shared_ptr<Object>(std::shared_ptr<Object>, std::shared_ptr<Object>)>
+  std::vector<Object> _primary_objects;
+  std::vector<Object> _secondary_objects;
+  std::function<Object(Object, Object)>
       _connect;
-  std::function<bool(std::shared_ptr<Object>, std::shared_ptr<Object>)>
+  std::function<bool(Object, Object)>
       _is_connected;
   Graph _graph;
 
@@ -117,18 +117,18 @@ private:
     }
   }
 
-  std::shared_ptr<Object> connect_objects(std::vector<int> subgraph) {
+  Object connect_objects(std::vector<int> subgraph) {
     if (subgraph.size() == 1) {
       return get_object_by_index(subgraph[0]);
     }
     std::sort(subgraph.begin(), subgraph.end());
-    std::shared_ptr<Object> merged_object = get_object_by_index(subgraph[0]);
+    Object merged_object = get_object_by_index(subgraph[0]);
     std::vector<int> visited(_graph.width(), 0);
     merge_connections(merged_object, subgraph, subgraph[0], visited);
     return merged_object;
   }
 
-  void merge_connections(std::shared_ptr<Object> object_to_connect_to,
+  void merge_connections(Object object_to_connect_to,
                          std::vector<int> subgraph, int index,
                          std::vector<int> &visited) {
     if (visited[index] == 1) {
@@ -149,7 +149,7 @@ private:
     }
   }
 
-  std::shared_ptr<Object> get_object_by_index(int index) {
+  Object get_object_by_index(int index) {
     if (index < _primary_objects.size()) {
       return _primary_objects[index];
     }

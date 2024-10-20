@@ -10,22 +10,22 @@
 namespace od {
 
 struct ObjectsPerRectangle {
-  const std::vector<std::shared_ptr<Object>> &get_objects() const {
+  const std::vector<Object> &get_objects() const {
     return objects;
   }
-  const std::vector<std::shared_ptr<Object>> &
+  const std::vector<Object> &
   get_objects_touching_right() const {
     return objects_touching_right;
   }
-  const std::vector<std::shared_ptr<Object>> &
+  const std::vector<Object> &
   get_objects_touching_left() const {
     return objects_touching_left;
   }
-  const std::vector<std::shared_ptr<Object>> &
+  const std::vector<Object> &
   get_objects_touching_down() const {
     return objects_touching_down;
   }
-  const std::vector<std::shared_ptr<Object>> &get_objects_touching_up() const {
+  const std::vector<Object> &get_objects_touching_up() const {
     return objects_touching_up;
   }
 
@@ -36,7 +36,7 @@ struct ObjectsPerRectangle {
   const Rectangle &get_rectangle() const { return rectangle; }
 
   void append_right(const ObjectsPerRectangle &other) {
-    std::vector<std::shared_ptr<Object>> new_objects;
+    std::vector<Object> new_objects;
     // first add all objects that are not touching the right side
     for (const auto &object : objects) {
       if (std::find(objects_touching_right.begin(),
@@ -57,12 +57,12 @@ struct ObjectsPerRectangle {
 
     auto object_merger = od::ObjectMerger{
         objects_touching_right, other.objects_touching_left,
-        [](std::shared_ptr<Object> object1, std::shared_ptr<Object> object2) {
+        [](Object object1, Object object2) {
           object1->try_merge_right(*object2);
           return object1;
         },
-        [](const std::shared_ptr<Object> &object1,
-           const std::shared_ptr<Object> &object2) {
+        [](const Object &object1,
+           const Object &object2) {
           return object1->touching_right(*object2);
         }};
     auto merged_objects = object_merger.connect_all_objects();
@@ -83,7 +83,7 @@ struct ObjectsPerRectangle {
   }
 
   void append_down(const ObjectsPerRectangle &other) {
-    std::vector<std::shared_ptr<Object>> new_objects;
+    std::vector<Object> new_objects;
     // first add all objects that are not touching the down side
     for (const auto &object : objects) {
       if (std::find(objects_touching_down.begin(), objects_touching_down.end(),
@@ -103,12 +103,12 @@ struct ObjectsPerRectangle {
     
     auto object_merger = od::ObjectMerger{
         objects_touching_down, other.objects_touching_up,
-        [](std::shared_ptr<Object> object1, std::shared_ptr<Object> object2) {
+        [](Object object1, Object object2) {
           object1->try_merge_down(*object2);
           return object1;
         },
-        [](const std::shared_ptr<Object> &object1,
-           const std::shared_ptr<Object> &object2) {
+        [](const Object &object1,
+           const Object &object2) {
           return object1->touching_down(*object2);
         }};
     auto merged_objects = object_merger.connect_all_objects();
@@ -128,7 +128,7 @@ struct ObjectsPerRectangle {
     }
   }
 
-  void insert_object(std::shared_ptr<Object> object) {
+  void insert_object(Object object) {
     objects.push_back(object);
     if (object->slices.touching_right(rectangle)) {
       objects_touching_right.push_back(object);
@@ -146,18 +146,18 @@ struct ObjectsPerRectangle {
 
 private:
   void
-  append(std::function<const std::vector<std::shared_ptr<Object>> &(
+  append(std::function<const std::vector<Object> &(
              const ObjectsPerRectangle &)>
              get_objects,
-         std::function<const std::vector<std::shared_ptr<Object>> &(
+         std::function<const std::vector<Object> &(
              const ObjectsPerRectangle &)>
              get_touching_objects_this,
-         std::function<const std::vector<std::shared_ptr<Object>> &(
+         std::function<const std::vector<Object> &(
              const ObjectsPerRectangle &)>
              get_touching_objects_other,
          std::function<void(Rectangle &, const Rectangle &)> merge_rectangles,
          const ObjectsPerRectangle &other) {
-    std::vector<std::shared_ptr<Object>> new_objects;
+    std::vector<Object> new_objects;
     // first add all objects that are not touching the right side
     const auto touching_objects_this = get_touching_objects_this(*this);
     for (auto object : get_objects(*this)) {
@@ -205,12 +205,12 @@ private:
     }
   }
 
-  std::vector<std::shared_ptr<Object>> objects;
+  std::vector<Object> objects;
   Rectangle rectangle;
-  std::vector<std::shared_ptr<Object>> objects_touching_right;
-  std::vector<std::shared_ptr<Object>> objects_touching_left;
-  std::vector<std::shared_ptr<Object>> objects_touching_down;
-  std::vector<std::shared_ptr<Object>> objects_touching_up;
+  std::vector<Object> objects_touching_right;
+  std::vector<Object> objects_touching_left;
+  std::vector<Object> objects_touching_down;
+  std::vector<Object> objects_touching_up;
 };
 
 } // namespace od

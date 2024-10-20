@@ -149,7 +149,7 @@ Slices deduce_slices(const cv::Mat &contours, const Rectangle &rectangle) {
   return slices;
 }
 
-std::shared_ptr<Object> deduce_object(const AnnotatedSlice &first_slice,
+Object deduce_object(const AnnotatedSlice &first_slice,
                                       Slices &image_slices) {
   auto object_slices = Slices{first_slice.slice.start};
   // insert the next slice
@@ -169,8 +169,8 @@ std::shared_ptr<Object> deduce_object(const AnnotatedSlice &first_slice,
   return std::make_shared<Object>(object_slices);
 }
 
-std::vector<std::shared_ptr<Object>> deduce_objects(Slices &slices) {
-  std::vector<std::shared_ptr<Object>> objects;
+std::vector<Object> deduce_objects(Slices &slices) {
+  std::vector<Object> objects;
   while (slices.contains_slices()) {
     const auto first_slice = slices.get_first_slice();
     if (!first_slice.has_value()) {
@@ -258,7 +258,7 @@ void establishing_shot_objects(ObjectsPerRectangle &ret,
   }
 }
 
-std::vector<std::shared_ptr<Object>>
+std::vector<Object>
 establishing_shot_single_loop(AllRectangles &ret, const cv::Mat &rgbImage,
                               const Rectangle &rectangle) {
   constexpr auto debug = false;
