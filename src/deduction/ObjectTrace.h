@@ -16,7 +16,7 @@ struct ObjectTrace {
   ObjectTrace(ObjectTrace &&) = default;
   ObjectTrace &operator=(const ObjectTrace &) = default;
   ObjectTrace &operator=(ObjectTrace &&) = default;
-  ObjectTrace(std::shared_ptr<od::Object> obj) : _obj{obj} { deduce(); }
+  ObjectTrace(od::Object obj) : _obj{obj} { deduce(); }
 
   Trace get_trace() const { return _trace; }
 
@@ -44,7 +44,7 @@ private:
     const auto skeleton = get_skeleton(center_of_mass, radius, 30);
     _trace = Trace{_obj, skeleton};
   }
-  std::shared_ptr<od::Object> _obj;
+  od::Object _obj;
   Trace _trace;
 };
 
