@@ -447,7 +447,7 @@ FrameData process_frame_merge_objects(const cv::Mat &imgOriginal,
             << std::endl;
         for (const auto &object :
              frame_data.all_objects.get(row, col).get_objects()) {
-          std::cout << "object: " << object->get_bounding_box().to_string()
+          std::cout << "object: " << object.get_bounding_box().to_string()
                     << std::endl;
         }
       }
