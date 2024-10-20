@@ -68,22 +68,29 @@ struct ObjectImpl {
   Slices slices;
 };
 
-struct Object{
-    std::string to_string() const { return object->to_string(); }
+struct Object {
+  Object() = default;
+  Object(const Object &) = default;
+  Object(Object &&) = default;
+  Object &operator=(const Object &) = default;
+  Object &operator=(Object &&) = default;
+  Object(const Slices &slices) : object{std::make_shared<ObjectImpl>(slices)} {}
+
+  std::string to_string() const { return object->to_string(); }
 
   bool try_merge_right(Object other) {
-    object->try_merge_right(*other.object);
+    return object->try_merge_right(*other.object);
   }
 
   bool try_merge_down(Object other, bool debug = false) {
-    object->try_merge_down(*other.object, debug);
+    return object->try_merge_down(*other.object, debug);
   }
 
-  bool touching_right(Object other) {
+  bool touching_right(Object other) const {
     return object->touching_right(*other.object);
   }
 
-  bool touching_down(Object other) {
+  bool touching_down(Object other) const {
     return object->touching_down(*other.object);
   }
 
@@ -92,8 +99,15 @@ struct Object{
   bool contains_point(const math2d::Point &point) const {
     return object->contains_point(point);
   }
+
+  const Slices &get_slices() const { return object->slices; }
+
 private:
   std::shared_ptr<od::ObjectImpl> object;
+  friend bool operator==(const Object &l, const Object &r);
 };
+
+bool operator==(const Object &l, const Object &r) {
+  return l.object == r.object;
 
 } // namespace od
