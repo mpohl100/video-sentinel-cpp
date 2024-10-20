@@ -42,7 +42,7 @@ struct Trace {
   Trace(Trace &&) = default;
   Trace &operator=(const Trace &) = default;
   Trace &operator=(Trace &&) = default;
-  Trace(std::shared_ptr<od::Object> obj, std::vector<math2d::Line> skeleton)
+  Trace(od::Object obj, std::vector<math2d::Line> skeleton)
       : _obj{obj}, _skeleton{skeleton} {
     calculate();
   }
@@ -86,7 +86,7 @@ private:
     }
   }
 
-  std::shared_ptr<od::Object> _obj;
+  od::Object _obj;
   std::vector<math2d::Line> _skeleton;
   std::vector<RatioLine> _ratio_lines;
 };
