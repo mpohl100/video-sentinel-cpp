@@ -6,7 +6,7 @@
 
 #include "Rectangle.h"
 
-#include "opencv2/imgproc.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
 
 #include <algorithm>
 #include <iostream>
