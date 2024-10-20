@@ -258,8 +258,9 @@ void establishing_shot_objects(ObjectsPerRectangle &ret,
   }
 }
 
-void establishing_shot_single_loop(AllRectangles &ret, const cv::Mat &rgbImage,
-                                   const Rectangle &rectangle) {
+std::vector<std::shared_ptr<Object>>
+establishing_shot_single_loop(AllRectangles &ret, const cv::Mat &rgbImage,
+                              const Rectangle &rectangle) {
   constexpr auto debug = false;
   if constexpr (debug) {
     std::cout << "establishing_shot_slices" << std::endl;
@@ -286,11 +287,13 @@ void establishing_shot_single_loop(AllRectangles &ret, const cv::Mat &rgbImage,
   for (const auto &object : objects) {
     objects_per_rectangle.insert_object(object);
   }
+
   const auto all_rectangles = deduce_rectangles(objects_per_rectangle);
   static std::mutex single_loop_mutex;
   std::lock_guard<std::mutex> lock(single_loop_mutex);
   ret.rectangles.insert(ret.rectangles.end(), all_rectangles.rectangles.begin(),
                         all_rectangles.rectangles.end());
+  return objects;
 }
 
 ObjectsPerRectangle establishing_shot_rectangles(const cv::Mat &rgbImage,
@@ -313,7 +316,7 @@ ObjectsPerRectangle establishing_shot_rectangles(const cv::Mat &rgbImage,
     std::cout << "deducing objects ..." << std::endl;
   }
   const auto objects = deduce_objects(slices);
-  
+
   auto objects_per_rectangle = ObjectsPerRectangle{};
   objects_per_rectangle.set_rectangle(
       Rectangle{rectangle.x + 2, rectangle.y + 2, rectangle.width - 4,

@@ -12,7 +12,7 @@ namespace {
 cv::Mat create_image_with_square(int degrees) {
   // generate an all white image with a black square in the middle
   cv::Mat img(30, 30, CV_8UC3, cv::Scalar(0, 0, 0));
-  cv::rectangle(img, cv::Point(10, 10), cv::Point(20, 20),
+  cv::rectangle(img, cv::Point(8, 8), cv::Point(22, 22),
                 cv::Scalar(255, 255, 255), -1);
   // rotate the rectangle by degrees
   cv::Mat M = cv::getRotationMatrix2D(cv::Point(15, 15), degrees, 1);
@@ -29,7 +29,7 @@ TEST_CASE("Trace", "[trace]") {
       auto flow = webcam::process_frame_single_loop(frame_data, img);
       executor.run(flow);
       executor.wait_for(flow);
-      auto objects = frame_data.all_objects.get(0, 0).get_objects();
+      auto objects = frame_data.result_objects.get_objects();
       CHECK(objects.size() == 2);
       std::sort(objects.begin(), objects.end(),
                 [](const auto &lhs, const auto &rhs) {
@@ -40,7 +40,7 @@ TEST_CASE("Trace", "[trace]") {
     };
     auto img0 = create_image_with_square(0);
     auto obj0 = deduce_object(img0);
-    CHECK(obj0->get_bounding_box().to_math2d_rectangle().area() == 400);
+    CHECK(obj0->get_bounding_box().to_math2d_rectangle().area() == 100);
     auto object0_trace = deduct::ObjectTrace{obj0}.get_trace();
     CHECK(object0_trace.get_ratios().size() == 6);
   }
