@@ -250,6 +250,19 @@ struct Slices {
     return ret;
   }
 
+  bool contains_point(const math2d::Point &point) const {
+    const auto slice_line = get_line_by_number(point.y);
+    if (!slice_line) {
+      return false;
+    }
+    for (const auto &slice : slice_line->line()) {
+      if (slice.slice.start.x <= point.x && slice.slice.end.x >= point.x) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   enum class Direction { UP, DOWN };
 
   bool try_add_image_slices(Slices &image_slices, Direction direction) {

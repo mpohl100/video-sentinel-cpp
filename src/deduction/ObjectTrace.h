@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Trace.h"
+
 #include "detection/Object.h"
 #include "math2d/math2d.h"
 
@@ -15,6 +17,8 @@ struct ObjectTrace {
   ObjectTrace &operator=(const ObjectTrace &) = default;
   ObjectTrace &operator=(ObjectTrace &&) = default;
   ObjectTrace(std::shared_ptr<Object> obj) : _obj{obj} { deduce(); }
+
+  Trace get_trace() const { return _trace; }
 
 private:
   std::vector<math2d::Line> get_skeleton(const math2d::Point &center_of_mass,

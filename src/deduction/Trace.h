@@ -12,7 +12,10 @@ struct Ratio {
   Ratio(Ratio &&) = default;
   Ratio &operator=(const Ratio &) = default;
   Ratio &operator=(Ratio &&) = default;
-  Ratio(double from, double to) : _from{from} _to(to) {}
+  Ratio(double from, double to) : _from{from}, _to(to) {}
+
+  double from() const { return _from; }
+  double to() const { return _to; }
 
 private:
   double _from;
@@ -39,8 +42,10 @@ struct Trace {
   Trace(Trace &&) = default;
   Trace &operator=(const Trace &) = default;
   Trace &operator=(Trace &&) = default;
-  Trace(std::shared_ptr<Object> obj, std::vector<math2d::Line> skeleton)
+  Trace(std::shared_ptr<od::Object> obj, std::vector<math2d::Line> skeleton)
       : _obj{obj}, _skeleton{skeleton} {}
+
+  std::vector<RatioLine> get_ratios() const { return _ratio_lines; }
 
 private:
   void calculate() {
@@ -48,19 +53,19 @@ private:
     _ratio_lines.reserve(_skeleton.size());
     for (const auto &line : _skeleton) {
       const auto pixels = draw_line(line);
-      const auto num_pixlels_on_line = pixels.size();
+      const auto num_pixels_on_line = pixels.size();
 
       std::vector<Ratio> ratios;
       std::optional<Ratio> current_ratio = std::nullopt;
       int count = 0;
-      [this, current_ratio](const math2d::Point &point) {
-        double progress = static_cast<double>(count) / num_pixlels_on_line;
-        bool does_contain = _obj->contains_pixel(point);
+      const auto interpret_pixel = [this, &current_ratio, &count, num_pixels_on_line, &ratios](const math2d::Point &point) {
+        double progress = static_cast<double>(count) / num_pixels_on_line;
+        bool does_contain = _obj->contains_point(point);
         if (current_ratio.has_value()) {
           if (does_contain) {
             current_ratio = Ratio{current_ratio->from(), progress};
           } else {
-            ratios.push_back(current_ratio);
+            ratios.push_back(*current_ratio);
             current_ratio = std::nullopt;
           }
         } else {
@@ -68,7 +73,7 @@ private:
             current_ratio = Ratio{progress, progress};
           }
         }
-        count++:
+        count++;
       };
       for (const auto &pixel : pixels) {
         interpret_pixel(pixel);
@@ -77,7 +82,7 @@ private:
     }
   }
 
-  std::shared_ptr<Object> _obj;
+  std::shared_ptr<od::Object> _obj;
   std::vector<math2d::Line> _skeleton;
   std::vector<RatioLine> _ratio_lines;
 };

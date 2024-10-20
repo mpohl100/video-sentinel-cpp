@@ -3,8 +3,8 @@
 #include "math2d/math2d.h"
 
 #include <algorithm>
-#include <iostream>
 #include <functional>
+#include <iostream>
 #include <limits>
 
 namespace deduct {
@@ -26,8 +26,8 @@ std::vector<math2d::Point> draw_line(const math2d::Line &line) {
   int dY = end.y - start.y;
   math2d::Point current_point = start;
   // draw start and end point
-  //draw_pixel(start.x, start.y, 1);
-  //draw_pixel(end.x, end.y, 1);
+  // draw_pixel(start.x, start.y, 1);
+  // draw_pixel(end.x, end.y, 1);
   if (dX == 0) {
     if (dY >= 0) {
       for (size_t i = 0; i <= static_cast<size_t>(dY); ++i) {
@@ -164,7 +164,7 @@ std::vector<math2d::Point> draw_line(const math2d::Line &line) {
       break;
     }
   }
-  if(inverted){
+  if (inverted) {
     std::reverse(pixels.begin(), pixels.end());
   }
   return pixels;
