@@ -103,7 +103,7 @@ struct Object {
   const Slices &get_slices() const { return object->slices; }
 
 private:
-  std::shared_ptr<od::ObjectImpl> object;
+  std::shared_ptr<ObjectImpl> object;
   friend bool operator==(const Object &l, const Object &r);
 };
 
