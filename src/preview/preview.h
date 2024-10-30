@@ -34,8 +34,12 @@ struct VideoPreview {
   VideoPreview &operator=(const VideoPreview &) = delete;
   VideoPreview &operator=(VideoPreview &&) = delete;
 
-  ~VideoPreview() {
-    if (_frame_calculation_status == FrameCalculationStatus::IN_PROGRESS) {
+  virtual ~VideoPreview() {
+    bool do_wait = true;
+    for(auto task : _current_task_graph.get_tasks()) {
+      do_wait = do_wait && !_executor.does_not_know(task);
+    }
+    if (_frame_calculation_status == FrameCalculationStatus::IN_PROGRESS && do_wait) {
       _executor.wait_for(_current_task_graph);
     }
   }
@@ -84,10 +88,9 @@ struct VideoPreview {
 protected:
   par::Executor _executor;
   webcam::FrameData _current_frame_data;
-
+  par::TaskGraph _current_task_graph;
 private:
   cv::Mat _current_original;
-  par::TaskGraph _current_task_graph;
   webcam::FrameData _processed_frame_data;
   FrameCalculationStatus _frame_calculation_status =
       FrameCalculationStatus::NOT_STARTED;

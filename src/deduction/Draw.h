@@ -9,7 +9,7 @@
 
 namespace deduct {
 
-std::vector<math2d::Point> draw_line(const math2d::Line &line) {
+inline std::vector<math2d::Point> draw_line(const math2d::Line &line) {
   std::vector<math2d::Point> pixels;
   const auto draw_pixel = [&pixels](int x, int y, [[maybe_unused]] int color) {
     pixels.push_back(math2d::Point{static_cast<math2d::number_type>(x), static_cast<math2d::number_type>(y)});
