@@ -102,8 +102,8 @@ par::Task process_frame(FrameData &frame_data, const cv::Mat &imgOriginal,
   return create_flow(rectangle);
 }
 
-par::Task process_frame_single_loop(FrameData &frame_data,
-                                    const cv::Mat &imgOriginal) {
+par::TaskGraph process_frame_single_loop(FrameData &frame_data,
+                                         const cv::Mat &imgOriginal) {
   const auto lambda = [&]() {
 
     const auto objects = od::establishing_shot_single_loop(
@@ -115,7 +115,11 @@ par::Task process_frame_single_loop(FrameData &frame_data,
     }
     frame_data.result_objects = objects_per_rectangle;
   };
-  return par::Calculation{lambda}.make_task();
+
+  auto task = par::Calculation{lambda}.make_task();
+  auto taskgraph = par::TaskGraph{};
+  taskgraph.add_task(task);
+  return taskgraph;
 }
 
 matrix::Matrix<od::Rectangle> split_rectangle(const od::Rectangle &rectangle,
