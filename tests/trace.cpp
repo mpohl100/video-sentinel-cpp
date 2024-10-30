@@ -20,12 +20,8 @@ cv::Mat create_image_with_square(int degrees) {
   return img;
 }
 
-TEST_CASE("Trace", "[trace]") {
-
-  SECTION("TraceDetectsSquareInMultipleDirections") {
-    auto executor = par::Executor(1);
-    const auto deduce_object = [&executor](const cv::Mat &img) {
-      auto frame_data = webcam::FrameData{img};
+od::Object deduce_object(par::Executor& executor, const cv::Mat& img){
+    auto frame_data = webcam::FrameData{img};
       auto flow = webcam::process_frame_single_loop(frame_data, img);
       executor.run(flow);
       executor.wait_for(flow);
@@ -37,13 +33,37 @@ TEST_CASE("Trace", "[trace]") {
                          rhs.get_bounding_box().to_math2d_rectangle().area();
                 });
       return objects[0];
-    };
+}
+
+TEST_CASE("Trace", "[trace]") {
+
+  SECTION("TraceDetectsSquareInMultipleDirections") {
+    auto executor = par::Executor(1);
     auto img0 = create_image_with_square(0);
-    auto obj0 = deduce_object(img0);
+    auto obj0 = deduce_object(executor, img0);
     CHECK(obj0.get_bounding_box().to_math2d_rectangle().area() == 100);
     const auto skeleton_params = deduct::SkeletonParams{30};
     auto object0_trace = deduct::ObjectTrace{obj0, skeleton_params}.get_trace();
     CHECK(object0_trace.get_ratios().size() == 6);
+  }
+
+  SECTION("TwoSameObjectsOfDifferentImagesHaveTheSameForm"){
+    auto executor = par::Executor(1);
+    auto img0 = create_image_with_square(0);
+    auto img1 = create_image_with_square(0);
+    auto obj0 = deduce_object(executor, img0);
+    auto obj1 = deduce_object(executor, img1);
+    CHECK(obj0.get_bounding_box().to_math2d_rectangle().area() == 100);
+    CHECK(obj1.get_bounding_box().to_math2d_rectangle().area() == 100);
+    const auto skeleton_params = deduct::SkeletonParams{30};
+    auto object0_trace = deduct::ObjectTrace{obj0, skeleton_params}.get_trace();
+    auto object1_trace = deduct::ObjectTrace{obj1, skeleton_params}.get_trace();
+    
+    const auto same_outer = object0_trace.compare(object1_trace, deduct::ComparisonParams{0.1, true});
+    CHECK(same_outer);
+
+    const auto same_inner = object0_trace.compare(object1_trace, deduct::ComparisonParams{0.1, false});
+    CHECK(same_inner);
   }
 }
 
