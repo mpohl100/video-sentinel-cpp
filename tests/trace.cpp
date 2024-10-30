@@ -41,7 +41,8 @@ TEST_CASE("Trace", "[trace]") {
     auto img0 = create_image_with_square(0);
     auto obj0 = deduce_object(img0);
     CHECK(obj0.get_bounding_box().to_math2d_rectangle().area() == 100);
-    auto object0_trace = deduct::ObjectTrace{obj0}.get_trace();
+    const auto skeleton_params = deduct::SkeletonParams{30};
+    auto object0_trace = deduct::ObjectTrace{obj0, skeleton_params}.get_trace();
     CHECK(object0_trace.get_ratios().size() == 6);
   }
 }
