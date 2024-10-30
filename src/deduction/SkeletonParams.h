@@ -13,4 +13,14 @@ struct SkeletonParams{
     int angle_step;
 };
 
+inline bool operator==(const SkeletonParams& lhs, const SkeletonParams& rhs)
+{
+    return lhs.angle_step == rhs.angle_step;
+}
+
+inline bool operator!=(const SkeletonParams& lhs, const SkeletonParams& rhs)
+{
+    return !(lhs == rhs);
+}
+
 } // namespace deduct
