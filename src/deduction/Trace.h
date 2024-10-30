@@ -42,8 +42,8 @@ struct Trace {
   Trace(Trace &&) = default;
   Trace &operator=(const Trace &) = default;
   Trace &operator=(Trace &&) = default;
-  Trace(od::Object obj, std::vector<math2d::Line> skeleton)
-      : _obj{obj}, _skeleton{skeleton} {
+  Trace(od::Object obj, std::vector<math2d::Line> skeleton, SkeletonParams skeleton_params)
+      : _obj{obj}, _skeleton{skeleton}, _skeleton_params{skeleton_params} {
     calculate();
   }
 
@@ -89,6 +89,7 @@ private:
   od::Object _obj;
   std::vector<math2d::Line> _skeleton;
   std::vector<RatioLine> _ratio_lines;
+  SkeletonParams _skeleton_params;
 };
 
 } // namespace deduct
