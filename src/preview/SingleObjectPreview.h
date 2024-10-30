@@ -3,10 +3,12 @@
 #include "preview.h"
 
 #include "deduction/ComparisonParams.h"
+#include "deduction/ObjectTrace.h"
 #include "deduction/SkeletonParams.h"
 #include "deduction/Trace.h"
 
 #include <optional>
+#include <sstream>
 #include <string>
 
 namespace preview {
@@ -19,6 +21,16 @@ struct SingleObjectPreview : public VideoPreview {
         _skeleton_params{skeleton_params}, _comparison_params{
                                                comparison_params} {
     calculate_target();
+  }
+
+  virtual ~SingleObjectPreview(){
+    bool do_wait = true;
+    for(auto task : _current_task_graph.get_tasks()) {
+      do_wait = do_wait && !_executor.does_not_know(task);
+    }
+    if (get_frame_calculation_status() == FrameCalculationStatus::IN_PROGRESS) {
+      _executor.wait_for(_current_task_graph);
+    }
   }
 
   void adjust_task_graph(par::TaskGraph &task_graph) override {
@@ -56,7 +68,8 @@ private:
     size_t rows = 0;
     size_t cols = 0;
     std::string line;
-    while (std::getline(ascii_art, line)) {
+    auto sstream = std::istringstream{ascii_art};
+    while (std::getline(sstream, line)) {
       rows++;
       cols = std::max(cols, line.size());
     }
@@ -66,7 +79,8 @@ private:
   void fill_mat(cv::Mat &mat, const std::string &ascii_art) {
     std::string line;
     size_t i = 0;
-    while (std::getline(ascii_art, line)) {
+    auto sstream = std::istringstream{ascii_art};
+    while (std::getline(sstream, line)) {
       for (size_t j = 0; j < line.size(); ++j) {
         if (line[j] == 'X' || line[j] == 'O') {
           mat.at<cv::Vec3b>(i, j) = cv::Vec3b(0, 0, 0);
@@ -79,7 +93,8 @@ private:
   std::pair<size_t, size_t> find_target_pixel(const std::string &ascii_art) {
     size_t j = 0;
     std::string line;
-    while (std::getline(ascii_art, line)) {
+    auto sstream = std::istringstream{ascii_art};
+    while (std::getline(sstream, line)) {
       for (size_t k = 0; k < line.size(); ++k) {
         if (line[k] == 'O') {
           return {k, j};
@@ -98,7 +113,7 @@ private:
   }
 
   void calculate_target() {
-    const auto img = calculate_target_mat();
+    const auto img = calculate_target_mat(_ascii_art);
 
     auto frame_data = webcam::FrameData{img};
     auto flow = webcam::process_frame_single_loop(frame_data, img);
@@ -106,10 +121,11 @@ private:
     _executor.wait_for(flow);
     auto objects = frame_data.result_objects.get_objects();
 
-    const auto target_pixel = find_target_pixel(ascii_art);
+    const auto target_pixel = find_target_pixel(_ascii_art);
     for (const auto object : objects) {
-      if (object.contains_point(
-              math2d::Point{target_pixel.first, target_pixel.second})) {
+      if (object.contains_point(math2d::Point{
+              static_cast<math2d::number_type>(target_pixel.first),
+              static_cast<math2d::number_type>(target_pixel.second)})) {
         _target = {object,
                    deduct::ObjectTrace{object, _skeleton_params}.get_trace()};
         break;
@@ -127,7 +143,7 @@ private:
   };
 
   std::optional<Target> _target;
-  std::vector<Object> _result_objects;
+  std::vector<od::Object> _result_objects;
   std::mutex _result_objects_mutex;
 };
 
