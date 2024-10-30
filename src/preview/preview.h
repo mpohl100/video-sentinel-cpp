@@ -36,7 +36,7 @@ struct VideoPreview {
 
   ~VideoPreview() {
     if (_frame_calculation_status == FrameCalculationStatus::IN_PROGRESS) {
-      _executor.wait_for(_current_task);
+      _executor.wait_for(_current_task_graph);
     }
   }
 
@@ -44,7 +44,7 @@ struct VideoPreview {
 
   void update_calculation_status() {
     bool is_done =
-        _executor.wait_for(_current_task, std::chrono::microseconds(0));
+        _executor.wait_for(_current_task_graph, std::chrono::microseconds(0));
     if (is_done) {
       std::unique_lock<std::mutex> lock(_processed_mutex);
       _processed_frame_data = std::move(_current_frame_data);
@@ -61,7 +61,7 @@ struct VideoPreview {
     return _rectangles_query_status;
   }
 
-  std::vector<od::Rectangle> get_all_rectangles() {
+  virtual std::vector<od::Rectangle> get_all_rectangles() {
     std::unique_lock<std::mutex> lock(_processed_mutex);
     _rectangles_query_status = RectanglesQueryStatus::REQUESTED;
     return _processed_frame_data.all_rectangles.rectangles;
@@ -73,17 +73,22 @@ struct VideoPreview {
     _rectangles_query_status = RectanglesQueryStatus::NOT_REQUESTED;
     _current_original = mat.clone();
     _current_frame_data = webcam::FrameData{_current_original};
-    _current_task = webcam::process_frame_single_loop(
-        _current_frame_data, _current_original);
-    _executor.run(_current_task);
+    _current_task_graph = webcam::process_frame_single_loop(_current_frame_data,
+                                                            _current_original);
+    adjust_task_graph(_current_task_graph);
+    _executor.run(_current_task_graph);
   }
 
-private:
+  virtual void adjust_task_graph([[maybe_unused]] par::TaskGraph &task_graph) {}
+
+protected:
   par::Executor _executor;
-  cv::Mat _current_original;
   webcam::FrameData _current_frame_data;
+
+private:
+  cv::Mat _current_original;
+  par::TaskGraph _current_task_graph;
   webcam::FrameData _processed_frame_data;
-  par::Task _current_task;
   FrameCalculationStatus _frame_calculation_status =
       FrameCalculationStatus::NOT_STARTED;
   RectanglesQueryStatus _rectangles_query_status =

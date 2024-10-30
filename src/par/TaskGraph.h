@@ -21,6 +21,10 @@ struct TaskGraph {
 
   std::vector<Task> get_tasks() const { return _tasks; }
 
+  std::vector<Task> get_added_tasks() const {
+    return std::vector<Task>(_tasks.begin() + 1, _tasks.end());
+  }
+
 private:
   Task create_dummy_finish_task() {
     auto calc = Calculation{[]() -> void {}};
