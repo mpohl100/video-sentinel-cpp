@@ -702,7 +702,7 @@ void establishing_shot_objects(ObjectsPerRectangle &ret,
 
 std::vector<Object> deduce_objects(Slices &slices);
 
-std::vector<Object>
+ObjectsPerRectangle
 establishing_shot_single_loop(AllRectangles &ret, const cv::Mat &rgbImage,
                               const Rectangle &rectangle);
 
