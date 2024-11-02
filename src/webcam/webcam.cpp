@@ -105,14 +105,10 @@ par::Task process_frame(FrameData &frame_data, const cv::Mat &imgOriginal,
 par::TaskGraph process_frame_single_loop(FrameData &frame_data,
                                          const cv::Mat &imgOriginal) {
   const auto lambda = [&]() {
-
-    const auto objects = od::establishing_shot_single_loop(
+    const auto objects_per_rectangle = od::establishing_shot_single_loop(
         frame_data.all_rectangles, imgOriginal,
         od::Rectangle{0, 0, imgOriginal.cols, imgOriginal.rows});
-    auto objects_per_rectangle = od::ObjectsPerRectangle{};
-    for(const auto &object : objects) {
-      objects_per_rectangle.insert_object(object);
-    }
+
     frame_data.result_objects = objects_per_rectangle;
   };
 

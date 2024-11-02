@@ -36,14 +36,19 @@ struct SingleObjectPreview : public VideoPreview {
   void adjust_task_graph(par::TaskGraph &task_graph) override {
     const auto filter_objects = [this]() {
       const auto objects = _current_frame_data.result_objects.get_objects();
-      _result_objects.clear();
-      std::unique_lock<std::mutex> lock(_result_objects_mutex);
+      std::vector<od::Object> objects_to_keep;
       for (const auto object : objects) {
         const auto trace =
             deduct::ObjectTrace{object, _skeleton_params}.get_trace();
         if (trace.compare(_target->trace, _comparison_params)) {
-          _result_objects.push_back(object);
+          objects_to_keep.push_back(object);
         }
+      }
+      
+      std::unique_lock<std::mutex> lock(_result_objects_mutex);
+      _result_objects = od::ObjectsPerRectangle{};
+      for (const auto &object : objects_to_keep) {
+        _result_objects.insert_object(object);
       }
     };
     auto calc = par::Calculation{filter_objects};
@@ -56,11 +61,7 @@ struct SingleObjectPreview : public VideoPreview {
 
   std::vector<od::Rectangle> get_all_rectangles() override {
     std::unique_lock<std::mutex> lock(_result_objects_mutex);
-    std::vector<od::Rectangle> rectangles;
-    for (const auto &object : _result_objects) {
-      rectangles.push_back(object.get_bounding_box());
-    }
-    return rectangles;
+    return od::deduce_rectangles(_result_objects).rectangles;
   }
 
 private:
@@ -143,7 +144,7 @@ private:
   };
 
   std::optional<Target> _target;
-  std::vector<od::Object> _result_objects;
+  od::ObjectsPerRectangle _result_objects;
   std::mutex _result_objects_mutex;
 };
 

@@ -258,7 +258,7 @@ void establishing_shot_objects(ObjectsPerRectangle &ret,
   }
 }
 
-std::vector<Object>
+ObjectsPerRectangle
 establishing_shot_single_loop(AllRectangles &ret, const cv::Mat &rgbImage,
                               const Rectangle &rectangle) {
   constexpr auto debug = false;
@@ -293,7 +293,7 @@ establishing_shot_single_loop(AllRectangles &ret, const cv::Mat &rgbImage,
   std::lock_guard<std::mutex> lock(single_loop_mutex);
   ret.rectangles.insert(ret.rectangles.end(), all_rectangles.rectangles.begin(),
                         all_rectangles.rectangles.end());
-  return objects;
+  return objects_per_rectangle;
 }
 
 ObjectsPerRectangle establishing_shot_rectangles(const cv::Mat &rgbImage,
