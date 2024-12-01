@@ -5,6 +5,8 @@
 #include "detection/Object.h"
 #include "math2d/math2d.h"
 
+#include <algorithm>
+
 namespace deduct {
 
 struct Ratio {
@@ -79,6 +81,29 @@ struct Trace {
     return false;
   }
 
+  bool compare_integral(const Trace &other,
+                        const ComparisonParams &comparison_params) const {
+    // pre conditions
+    if (_obj == other._obj) {
+      return true;
+    }
+
+    if (_skeleton_params != other._skeleton_params) {
+      return false;
+    }
+
+    if (_skeleton.size() != other._skeleton.size()) {
+      return false;
+    }
+
+    const auto this_integral = calculate_integral(_ratio_lines);
+    const auto other_integral = calculate_integral(other._ratio_lines);
+    // overload the meaning of tolerance to be the difference between the
+    // integrals
+    return std::abs(this_integral - other_integral) <
+           comparison_params.tolerance;
+  }
+
 private:
   void calculate() {
     _ratio_lines.clear();
@@ -135,8 +160,8 @@ private:
 
   bool compare_ratio_line(const RatioLine &lhs, const RatioLine &rhs,
                           const ComparisonParams &comparison_params) const {
-    if(lhs.get_ratios().empty() || rhs.get_ratios().empty()) {
-      if(lhs.get_ratios().empty() && rhs.get_ratios().empty()){
+    if (lhs.get_ratios().empty() || rhs.get_ratios().empty()) {
+      if (lhs.get_ratios().empty() && rhs.get_ratios().empty()) {
         return true;
       }
       return false;
@@ -167,6 +192,40 @@ private:
                      double tolerance) const {
     return std::abs(lhs.from() - rhs.from()) < tolerance &&
            std::abs(lhs.to() - rhs.to()) < tolerance;
+  }
+
+  double calculate_integral(const std::vector<RatioLine> &ratio_lines) const {
+    const auto values = deduce_relevant_values(ratio_lines);
+    // the sum of the individual values is the integral
+    return std::accumulate(values.begin(), values.end(), 0.0);
+  }
+
+  std::vector<double>
+  deduce_relevant_values(const std::vector<RatioLine> &ratio_lines) const {
+    double angle_step = 180.0 / _ratio_lines.size();
+    std::vector<double> values;
+    values.reserve(2 * ratio_lines.size());
+    for (size_t i = 0; i < 2 * ratio_lines.size(); ++i) {
+      double current_angle = i * angle_step;
+      if (current_angle < 180) {
+        const auto &ratios = ratio_lines[i % ratio_lines.size()].get_ratios();
+        if (ratios.empty()) {
+          values.push_back(0.0);
+          continue;
+        }
+        double value = ratios.back().to() - 0.5;
+        values.push_back(value);
+      } else {
+        const auto &ratios = ratio_lines[i % ratio_lines.size()].get_ratios();
+        if (ratios.empty()) {
+          values.push_back(0.0);
+          continue;
+        }
+        double value = 0.5 - ratios.front().from();
+        values.push_back(value);
+      }
+    }
+    return values;
   }
 
   od::Object _obj;

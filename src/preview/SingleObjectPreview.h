@@ -23,9 +23,9 @@ struct SingleObjectPreview : public VideoPreview {
     calculate_target();
   }
 
-  virtual ~SingleObjectPreview(){
+  virtual ~SingleObjectPreview() {
     bool do_wait = true;
-    for(auto task : _current_task_graph.get_tasks()) {
+    for (auto task : _current_task_graph.get_tasks()) {
       do_wait = do_wait && !_executor.does_not_know(task);
     }
     if (get_frame_calculation_status() == FrameCalculationStatus::IN_PROGRESS) {
@@ -40,11 +40,11 @@ struct SingleObjectPreview : public VideoPreview {
       for (const auto object : objects) {
         const auto trace =
             deduct::ObjectTrace{object, _skeleton_params}.get_trace();
-        if (trace.compare(_target->trace, _comparison_params)) {
+        if (trace.compare_integral(_target->trace, _comparison_params)) {
           objects_to_keep.push_back(object);
         }
       }
-      
+
       std::unique_lock<std::mutex> lock(_result_objects_mutex);
       _result_objects = od::ObjectsPerRectangle{};
       for (const auto &object : objects_to_keep) {
