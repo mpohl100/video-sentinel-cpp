@@ -138,6 +138,16 @@ math2d::Point Rectangle::center() const {
 
 math2d::Point Rectangle::get_top_left() const { return _lines[0].start(); }
 
+math2d::Point Rectangle::get_bottom_right() const { return _lines[1].end(); }
+
+math2d::number_type Rectangle::width() const {
+  return get_bottom_right().x - get_top_left().x;
+}
+
+math2d::number_type Rectangle::height() const {
+  return get_bottom_right().y - get_top_left().y;
+}
+
 std::string Rectangle::toString() const {
   return "Rectangle{top_left: " + _lines[0].start().toString() +
          "; bottom_right: " + _lines[1].end().toString() + "}";

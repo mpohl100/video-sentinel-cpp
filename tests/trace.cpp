@@ -1,11 +1,14 @@
 #include <catch2/catch_all.hpp>
 
 #include "deduction/ObjectTrace.h"
+#include "math2d/math2d.h"
 #include "webcam/webcam.h"
 
 #include "opencv2/imgproc/imgproc.hpp"
 
 #include <iostream>
+#include <string>
+#include <vector>
 
 namespace {
 
@@ -33,6 +36,73 @@ od::Object deduce_object(par::Executor &executor, const cv::Mat &img) {
                      rhs.get_bounding_box().to_math2d_rectangle().area();
             });
   return objects[0];
+}
+
+template <typename T> struct ColoredObject {
+  T object;
+  std::string color;
+  int rotation_angle_degrees = 0;
+};
+
+struct ObjectsData {
+  std::vector<ColoredObject<math2d::Rectangle>> rectangles;
+  std::vector<ColoredObject<math2d::Circle>> circles;
+};
+
+// Include center point of your rectangle, size of your rectangle and the
+// degrees of rotation
+void draw_rotated_rectangle(cv::Mat &image, const math2d::Rectangle &rectangle,
+                            cv::Scalar color, double rotationDegrees) {
+  const auto center = rectangle.center();
+  cv::Point centerPoint =
+      cv::Point{static_cast<int>(center.x), static_cast<int>(center.y)};
+  cv::Size rectangleSize = cv::Size{static_cast<int>(rectangle.width()),
+                                    static_cast<int>(rectangle.height())};
+  // Create the rotated rectangle
+  cv::RotatedRect rotatedRectangle(centerPoint, rectangleSize, rotationDegrees);
+
+  // We take the edges that OpenCV calculated for us
+  cv::Point2f vertices2f[4];
+  rotatedRectangle.points(vertices2f);
+
+  // Convert them so we can use them in a fillConvexPoly
+  cv::Point vertices[4];
+  for (int i = 0; i < 4; ++i) {
+    vertices[i] = vertices2f[i];
+  }
+
+  // Now we can fill the rotated rectangle with our specified color
+  cv::fillConvexPoly(image, vertices, 4, color);
+}
+
+cv::Scalar to_scalar(std::string color) {
+  if (color == "red") {
+    return cv::Scalar(0, 0, 255);
+  } else if (color == "green") {
+    return cv::Scalar(0, 255, 0);
+  } else if (color == "blue") {
+    return cv::Scalar(255, 0, 0);
+  } else {
+    return cv::Scalar(255, 255, 255);
+  }
+}
+
+cv::Mat create_test_image_with_objects(const ObjectsData &objects_data,
+                                       int dimX, int dimY) {
+  cv::Mat img(dimX, dimY, CV_8UC3, cv::Scalar(0, 0, 0));
+  for (const auto &rectangle : objects_data.rectangles) {
+    draw_rotated_rectangle(img, rectangle.object, to_scalar(rectangle.color),
+                           rectangle.rotation_angle_degrees);
+  }
+  for (const auto &circle : objects_data.circles) {
+    cv::circle(img,
+               cv::Point(static_cast<int>(circle.object.center().x),
+                         static_cast<int>(circle.object.center().y)),
+               circle.object.radius(), to_scalar(circle.color), -1);
+  }
+  return img;
+}
+
 }
 
 TEST_CASE("Trace", "[trace]") {
