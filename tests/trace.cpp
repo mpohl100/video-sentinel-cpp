@@ -103,8 +103,6 @@ cv::Mat create_test_image_with_objects(const ObjectsData &objects_data,
   return img;
 }
 
-}
-
 TEST_CASE("Trace", "[trace]") {
 
   SECTION("TraceDetectsSquareInMultipleDirections") {
