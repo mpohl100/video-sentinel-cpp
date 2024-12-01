@@ -96,12 +96,26 @@ struct Trace {
       return false;
     }
 
-    const auto this_integral = calculate_integral(_ratio_lines);
-    const auto other_integral = calculate_integral(other._ratio_lines);
-    // overload the meaning of tolerance to be the difference between the
-    // integrals
-    return std::abs(this_integral - other_integral) <
-           comparison_params.tolerance;
+    const auto this_max_offset = deduce_max_offset(_ratio_lines);
+    const auto other_max_offset = deduce_max_offset(other._ratio_lines);
+
+    const auto max_offset = std::max(this_max_offset, other_max_offset);
+
+    bool within_tolerance = true;
+    for (size_t offset = 0; offset < max_offset; ++offset) {
+      const auto this_integral = calculate_integral(_ratio_lines, 0);
+      const auto other_integral = calculate_integral(other._ratio_lines, 0);
+      // overload the meaning of tolerance to be the difference between the
+      // integrals
+      within_tolerance =
+          within_tolerance && std::abs(this_integral - other_integral) <
+                                  comparison_params.tolerance;
+
+      if (comparison_params.only_outer_form) {
+        break;
+      }
+    }
+    return within_tolerance;
   }
 
 private:
@@ -194,17 +208,49 @@ private:
            std::abs(lhs.to() - rhs.to()) < tolerance;
   }
 
-  double calculate_integral(const std::vector<RatioLine> &ratio_lines) const {
-    const auto values = deduce_relevant_values(ratio_lines);
+  double calculate_integral(const std::vector<RatioLine> &ratio_lines,
+                            size_t offset) const {
+    const auto values = deduce_relevant_values(ratio_lines, offset);
     // the sum of the individual values is the integral
     return std::accumulate(values.begin(), values.end(), 0.0);
   }
 
   std::vector<double>
-  deduce_relevant_values(const std::vector<RatioLine> &ratio_lines) const {
+  deduce_relevant_values(const std::vector<RatioLine> &ratio_lines,
+                         size_t offset) const {
     double angle_step = 180.0 / _ratio_lines.size();
     std::vector<double> values;
     values.reserve(2 * ratio_lines.size());
+    const auto get_element_from_front =
+        [offset](const std::vector<Ratio> &ratios) {
+          int index = offset / 2;
+          if (ratios.empty()) {
+            return 0.5;
+          }
+          if (ratios.size() <= index) {
+            return 0.5;
+          }
+          if (offset % 2 == 0) {
+            return ratios[index].from();
+          }
+          return ratios[index].to();
+        };
+
+    const auto get_element_from_back =
+        [offset](const std::vector<Ratio> &ratios) {
+          int index = offset / 2;
+          if (ratios.empty()) {
+            return 0.5;
+          }
+          if (ratios.size() <= index) {
+            return 0.5;
+          }
+          if (offset % 2 == 0) {
+            return ratios[ratios.size() - 1 - index].to();
+          }
+          return ratios[ratios.size() - 1 - index].from();
+        };
+
     for (size_t i = 0; i < 2 * ratio_lines.size(); ++i) {
       double current_angle = i * angle_step;
       if (current_angle < 180) {
@@ -213,7 +259,7 @@ private:
           values.push_back(0.0);
           continue;
         }
-        double value = ratios.back().to() - 0.5;
+        double value = get_element_from_back(ratios) - 0.5;
         values.push_back(value);
       } else {
         const auto &ratios = ratio_lines[i % ratio_lines.size()].get_ratios();
@@ -221,11 +267,19 @@ private:
           values.push_back(0.0);
           continue;
         }
-        double value = 0.5 - ratios.front().from();
+        double value = 0.5 - get_element_from_front(ratios);
         values.push_back(value);
       }
     }
     return values;
+  }
+
+  size_t deduce_max_offset(const std::vector<RatioLine> &ratios) const {
+    size_t max_offset = 0;
+    for (const auto &ratio_line : ratios) {
+      max_offset = std::max(max_offset, 2 * ratio_line.get_ratios().size());
+    }
+    return max_offset;
   }
 
   od::Object _obj;
