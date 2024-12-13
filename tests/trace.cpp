@@ -7,6 +7,7 @@
 #include "opencv2/imgproc/imgproc.hpp"
 
 #include <iostream>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -38,7 +39,47 @@ od::Object deduce_object(par::Executor &executor, const cv::Mat &img) {
   return objects[0];
 }
 
+std::optional<od::Object>
+deduce_object_at_position(par::Executor &executor, const cv::Mat &img,
+                          const math2d::Point &position) {
+  auto frame_data = webcam::FrameData{img};
+  auto flow = webcam::process_frame_single_loop(frame_data, img);
+  executor.run(flow);
+  executor.wait_for(flow);
+  auto objects = frame_data.result_objects.get_objects();
+  for (const auto object : objects) {
+    if (object.contains_point(position)) {
+      return object;
+    }
+  }
+  return std::nullopt;
+}
+
+std::vector<od::Object> deduce_all_objects(par::Executor &executor,
+                                           const cv::Mat &img) {
+  auto frame_data = webcam::FrameData{img};
+  auto flow = webcam::process_frame_single_loop(frame_data, img);
+  executor.run(flow);
+  executor.wait_for(flow);
+  auto objects = frame_data.result_objects.get_objects();
+  std::sort(objects.begin(), objects.end(),
+            [](const auto &lhs, const auto &rhs) {
+              return lhs.get_bounding_box().to_math2d_rectangle().area() <
+                     rhs.get_bounding_box().to_math2d_rectangle().area();
+            });
+  return objects;
+}
+
 template <typename T> struct ColoredObject {
+  ColoredObject(T object, std::string color, int rotation_angle_degrees)
+      : object{object}, color{color}, rotation_angle_degrees{
+                                          rotation_angle_degrees} {}
+  ColoredObject() = default;
+  ColoredObject(const ColoredObject &) = default;
+  ColoredObject(ColoredObject &&) = default;
+  ColoredObject &operator=(const ColoredObject &) = default;
+  ColoredObject &operator=(ColoredObject &&) = default;
+
   T object;
   std::string color;
   int rotation_angle_degrees = 0;
@@ -103,6 +144,63 @@ cv::Mat create_test_image_with_objects(const ObjectsData &objects_data,
   return img;
 }
 
+ObjectsData generate_object_data() {
+  // generate a four squares
+  const auto target_square_1 =
+      math2d::Rectangle{math2d::Point{5, 5}, math2d::Point{15, 15}};
+  const auto target_square_2 =
+      math2d::Rectangle{math2d::Point{25, 5}, math2d::Point{35, 15}};
+  const auto target_square_3 =
+      math2d::Rectangle{math2d::Point{45, 5}, math2d::Point{65, 25}};
+  const auto target_square_4 =
+      math2d::Rectangle{math2d::Point{85, 5}, math2d::Point{115, 35}};
+
+  // generate five circles
+  const auto target_circle_1 = math2d::Circle{math2d::Point{5, 55}, 5};
+  const auto target_circle_2 = math2d::Circle{math2d::Point{25, 55}, 5};
+  const auto target_circle_3 = math2d::Circle{math2d::Point{45, 55}, 10};
+  const auto target_circle_4 = math2d::Circle{math2d::Point{85, 55}, 15};
+  const auto target_circle_5 = math2d::Circle{math2d::Point{115, 55}, 20};
+
+  // generate three rectangles of the same form
+  const auto target_rect_1 =
+      math2d::Rectangle{math2d::Point{5, 85}, math2d::Point{15, 105}};
+  const auto target_rect_2 =
+      math2d::Rectangle{math2d::Point{25, 85}, math2d::Point{35, 105}};
+  const auto target_rect_3 =
+      math2d::Rectangle{math2d::Point{55, 85}, math2d::Point{75, 125}};
+
+  auto objects_data = ObjectsData{};
+  objects_data.rectangles.push_back(
+      ColoredObject{target_square_1, std::string("red"), 0});
+  objects_data.rectangles.push_back(
+      ColoredObject{target_square_2, std::string("green"), 30});
+  objects_data.rectangles.push_back(
+      ColoredObject{target_square_3, std::string("blue"), 60});
+  objects_data.rectangles.push_back(
+      ColoredObject{target_square_4, std::string("white"), 90});
+
+  objects_data.circles.push_back(
+      ColoredObject{target_circle_1, std::string("red"), 0});
+  objects_data.circles.push_back(
+      ColoredObject{target_circle_2, std::string("green"), 30});
+  objects_data.circles.push_back(
+      ColoredObject{target_circle_3, std::string("blue"), 60});
+  objects_data.circles.push_back(
+      ColoredObject{target_circle_4, std::string("white"), 90});
+  objects_data.circles.push_back(
+      ColoredObject{target_circle_5, std::string("black"), 120});
+
+  objects_data.rectangles.push_back(
+      ColoredObject{target_rect_1, std::string("red"), 0});
+  objects_data.rectangles.push_back(
+      ColoredObject{target_rect_2, std::string("green"), 30});
+  objects_data.rectangles.push_back(
+      ColoredObject{target_rect_3, std::string("blue"), 60});
+
+  return objects_data;
+}
+
 TEST_CASE("Trace", "[trace]") {
 
   SECTION("TraceDetectsSquareInMultipleDirections") {
@@ -142,6 +240,131 @@ TEST_CASE("Trace", "[trace]") {
     const auto same_inner_integral = object0_trace.compare_integral(
         object1_trace, deduct::ComparisonParams{0.1, false});
     CHECK(same_inner);
+  }
+
+  SECTION("TraceDetectsTheCorrectNumberOfSimilarSquares") {
+    // Arrange
+    auto executor = par::Executor(1);
+    const auto reference_square =
+        math2d::Rectangle{math2d::Point{15, 15}, math2d::Point{25, 25}};
+    auto reference_objects = ObjectsData{};
+    reference_objects.rectangles.push_back(
+        ColoredObject{reference_square, std::string("red"), 0});
+    const auto reference_image =
+        create_test_image_with_objects(reference_objects, 50, 50);
+    const auto reference_object = deduce_object_at_position(
+        executor, reference_image, math2d::Point{20, 20});
+    CHECK(reference_object.has_value());
+    const auto skeleton_angle_step = 10;
+    const auto reference_object_trace = deduct::ObjectTrace{
+        *reference_object,
+        deduct::SkeletonParams{
+            skeleton_angle_step}}.get_trace();
+
+    // Arrange image to scan
+    const auto objects_data = generate_object_data();
+    const auto test_image =
+        create_test_image_with_objects(objects_data, 250, 250);
+
+    // Act
+    const auto objects = deduce_all_objects(executor, test_image);
+    size_t count_similar_objects = 0;
+    for (const auto object : objects) {
+      const auto object_trace = deduct::ObjectTrace{
+          object,
+          deduct::SkeletonParams{
+              skeleton_angle_step}}.get_trace();
+      const auto same_outer = reference_object_trace.compare(
+          object_trace, deduct::ComparisonParams{0.05, true});
+      if (same_outer) {
+        count_similar_objects++;
+      }
+    }
+
+    CHECK(count_similar_objects == 4);
+  }
+
+  SECTION("TraceDetectsTheCorrectNumberOfSimilarCircles") {
+    // Arrange
+    auto executor = par::Executor(1);
+    const auto reference_circle = math2d::Circle{math2d::Point{15, 15}, 5};
+    auto reference_objects = ObjectsData{};
+    reference_objects.circles.push_back(
+        ColoredObject{reference_circle, std::string("red"), 0});
+    const auto reference_image =
+        create_test_image_with_objects(reference_objects, 50, 50);
+    const auto reference_object = deduce_object_at_position(
+        executor, reference_image, math2d::Point{15, 15});
+    CHECK(reference_object.has_value());
+    const auto skeleton_angle_step = 10;
+    const auto reference_object_trace = deduct::ObjectTrace{
+        *reference_object,
+        deduct::SkeletonParams{
+            skeleton_angle_step}}.get_trace();
+
+    // Arrange image to scan
+    const auto objects_data = generate_object_data();
+    const auto test_image =
+        create_test_image_with_objects(objects_data, 250, 250);
+
+    // Act
+    const auto objects = deduce_all_objects(executor, test_image);
+    size_t count_similar_objects = 0;
+    for (const auto object : objects) {
+      const auto object_trace = deduct::ObjectTrace{
+          object,
+          deduct::SkeletonParams{
+              skeleton_angle_step}}.get_trace();
+      const auto same_outer = reference_object_trace.compare(
+          object_trace, deduct::ComparisonParams{0.05, true});
+      if (same_outer) {
+        count_similar_objects++;
+      }
+    }
+
+    CHECK(count_similar_objects == 5);
+  }
+
+  SECTION("TraceDetectsTheCorrectNumberOfSimilarRectangles") {
+    // Arrange
+    auto executor = par::Executor(1);
+    const auto reference_rectangle =
+        math2d::Rectangle{math2d::Point{15, 15}, math2d::Point{25, 35}};
+    auto reference_objects = ObjectsData{};
+    reference_objects.rectangles.push_back(
+        ColoredObject{reference_rectangle, std::string("red"), 0});
+    const auto reference_image =
+        create_test_image_with_objects(reference_objects, 50, 50);
+    const auto reference_object = deduce_object_at_position(
+        executor, reference_image, math2d::Point{20, 20});
+    CHECK(reference_object.has_value());
+    const auto skeleton_angle_step = 10;
+    const auto reference_object_trace = deduct::ObjectTrace{
+        *reference_object,
+        deduct::SkeletonParams{
+            skeleton_angle_step}}.get_trace();
+
+    // Arrange image to scan
+    const auto objects_data = generate_object_data();
+    const auto test_image =
+        create_test_image_with_objects(objects_data, 250, 250);
+
+    // Act
+    const auto objects = deduce_all_objects(executor, test_image);
+    size_t count_similar_objects = 0;
+    for (const auto object : objects) {
+      const auto object_trace = deduct::ObjectTrace{
+          object,
+          deduct::SkeletonParams{
+              skeleton_angle_step}}.get_trace();
+      const auto same_outer = reference_object_trace.compare(
+          object_trace, deduct::ComparisonParams{0.05, true});
+      if (same_outer) {
+        count_similar_objects++;
+      }
+    }
+
+    CHECK(count_similar_objects == 3);
   }
 }
 
