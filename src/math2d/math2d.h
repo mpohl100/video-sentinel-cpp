@@ -72,6 +72,8 @@ struct Vector {
   Vector scale(double factor) const;
   number_type magnitude() const;
 
+  std::string toString() const;
+
   number_type x = 0.0;
   number_type y = 0.0;
 };

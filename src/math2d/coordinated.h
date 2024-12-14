@@ -2,6 +2,8 @@
 
 #include "math2d.h"
 
+#include <string>
+
 namespace math2d {
 
 struct CoordinatedPoint;
@@ -19,6 +21,8 @@ struct CoordinateSystem {
   CoordinatedPoint from_euclidian(const Point &point) const;
 
   void rotate(const Angle &angle);
+
+  std::string to_string() const;
 
   Point origin;  // origin of the coordinate system in standard euclidean
                  // coordinates

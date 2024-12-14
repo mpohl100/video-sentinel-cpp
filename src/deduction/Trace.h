@@ -56,6 +56,18 @@ struct Trace {
 
   std::vector<RatioLine> get_ratios() const { return _ratio_lines; }
 
+  std::string to_string() const {
+    std::string ret;
+    for (const auto &ratio_line : _ratio_lines) {
+      ret += "Area: " + ratio_line.get_area().to_string() + "\n";
+      for (const auto &ratio : ratio_line.get_ratios()) {
+        ret += "Ratio: " + std::to_string(ratio.from()) + " -> " +
+               std::to_string(ratio.to()) + "\n";
+      }
+    }
+    return ret;
+  }
+
   bool compare(const Trace &other,
                const ComparisonParams &comparison_params) const {
     // pre conditions

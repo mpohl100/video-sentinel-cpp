@@ -30,6 +30,10 @@ double Vector::magnitude() const {
   return std::sqrt(std::pow(x, 2) + std::pow(y, 2));
 }
 
+std::string Vector::toString() const {
+  return "Vector{x: " + std::to_string(x) + "; y: " + std::to_string(y) + "}";
+}
+
 Point Point::rotate(const Point &around, const Angle &angle) const {
   const auto vector = Vector(around, *this);
   const auto rotated_vector = vector.rotate(angle);

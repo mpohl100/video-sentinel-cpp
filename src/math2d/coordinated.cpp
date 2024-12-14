@@ -26,6 +26,12 @@ void CoordinateSystem::rotate(const Angle &angle) {
   y_axis = y_axis_rotated;
 }
 
+std::string CoordinateSystem::to_string() const {
+  return std::string("CoordinateSystem(origin: ") + origin.toString() +
+         "; x_axis: " + x_axis.toString() + "; y_axis: " + y_axis.toString() +
+         ")";
+}
+
 CoordinatedPoint CoordinatedPoint::convert_to(
     const CoordinateSystem &new_coordinate_system) const {
   const auto euclidian_coords = coordinate_system.to_euclidian(*this);

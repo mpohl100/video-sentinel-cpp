@@ -225,6 +225,8 @@ TEST_CASE("Trace", "[trace]") {
     auto object0_trace = deduct::ObjectTrace{obj0, skeleton_params}.get_trace();
     auto object1_trace = deduct::ObjectTrace{obj1, skeleton_params}.get_trace();
 
+    std::cout << "Object trace 0: " << object0_trace.to_string() << std::endl;
+
     const auto same_outer = object0_trace.compare(
         object1_trace, deduct::ComparisonParams{0.1, true, true});
     CHECK(same_outer);
@@ -258,7 +260,7 @@ TEST_CASE("Trace", "[trace]") {
         executor, reference_image, math2d::CoordinatedPoint{20, 20, coordinate_system});
     CHECK(reference_object.has_value());
     const auto skeleton_angle_step = 10;
-    const auto nb_parts_of_object = 30;
+    const auto nb_parts_of_object = 200;
     const auto reference_object_trace = deduct::ObjectTrace{
         *reference_object,
         deduct::SkeletonParams{
@@ -302,7 +304,7 @@ TEST_CASE("Trace", "[trace]") {
         executor, reference_image, math2d::CoordinatedPoint{15, 15, coordinate_system});
     CHECK(reference_object.has_value());
     const auto skeleton_angle_step = 10;
-    const auto nb_parts_of_object = 30;
+    const auto nb_parts_of_object = 200;
     const auto reference_object_trace = deduct::ObjectTrace{
         *reference_object,
         deduct::SkeletonParams{
@@ -347,7 +349,7 @@ TEST_CASE("Trace", "[trace]") {
         executor, reference_image, math2d::CoordinatedPoint{20, 20, coordinate_system});
     CHECK(reference_object.has_value());
     const auto skeleton_angle_step = 10;
-    const auto nb_parts_of_object = 30;
+    const auto nb_parts_of_object = 200;
     const auto reference_object_trace = deduct::ObjectTrace{
         *reference_object,
         deduct::SkeletonParams{
