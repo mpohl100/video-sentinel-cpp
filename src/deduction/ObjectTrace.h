@@ -21,8 +21,7 @@ struct ObjectTrace {
   ObjectTrace(od::Object obj, SkeletonParams skeleton_params) 
   : _obj{obj}, _skeleton_params{skeleton_params} { deduce(); } 
 
-  std::vector<Trace> get_traces() const { return _traces; }
-
+  Trace get_trace() const { return _trace; }
 
 
 private:
@@ -43,15 +42,14 @@ private:
   }
 
   void deduce() {
-    const auto rect = _obj.get_bounding_box().to_math2d_rectangle();
-    const auto center_of_mass = rect.center();
+    const auto center_of_mass = _obj.get_center_of_mass();
     const auto radius = math2d::Vector{rect.get_top_left(), rect.center()}.magnitude();
     const auto skeleton = get_skeleton(center_of_mass, radius, _skeleton_params);
-    _traces = {Trace{_obj, skeleton, _skeleton_params}};
+    _trace = {Trace{_obj, skeleton, _skeleton_params}};
   }
 
   od::Object _obj;
-  std::vector<Trace> _traces;
+  Trace _trace;
   SkeletonParams _skeleton_params;
 };
 
