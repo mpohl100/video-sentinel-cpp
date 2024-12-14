@@ -274,11 +274,15 @@ TEST_CASE("Trace", "[trace]") {
     // Act
     const auto objects = deduce_all_objects(executor, test_image);
     size_t count_similar_objects = 0;
+    size_t i = 0;
+    std::cout << "Squares" << std::endl;
     for (const auto object : objects) {
       const auto object_trace = deduct::ObjectTrace{
           object,
           deduct::SkeletonParams{
               skeleton_angle_step, nb_parts_of_object}}.get_trace();
+      std::cout << "Object trace" << i++ << ": "  << object_trace.to_string() << std::endl;
+      std::cout << "Reference trace: " << reference_object_trace.to_string() << std::endl;
       const auto same_outer = reference_object_trace.compare(
           object_trace, deduct::ComparisonParams{0.1, true, true, 0.8});
       if (same_outer) {
@@ -318,11 +322,15 @@ TEST_CASE("Trace", "[trace]") {
     // Act
     const auto objects = deduce_all_objects(executor, test_image);
     size_t count_similar_objects = 0;
+    size_t i = 0;
+    std::cout << "Circles" << std::endl;
     for (const auto object : objects) {
       const auto object_trace = deduct::ObjectTrace{
           object,
           deduct::SkeletonParams{
               skeleton_angle_step, nb_parts_of_object}}.get_trace();
+      std::cout << "Object trace" << i++ << ": "  << object_trace.to_string() << std::endl;
+      std::cout << "Reference trace: " << reference_object_trace.to_string() << std::endl;
       const auto same_outer = reference_object_trace.compare(
           object_trace, deduct::ComparisonParams{0.1, true, true, 0.8});
       if (same_outer) {
@@ -363,11 +371,15 @@ TEST_CASE("Trace", "[trace]") {
     // Act
     const auto objects = deduce_all_objects(executor, test_image);
     size_t count_similar_objects = 0;
+    size_t i = 0;
+    std::cout << "Rectangles" << std::endl;
     for (const auto object : objects) {
       const auto object_trace = deduct::ObjectTrace{
           object,
           deduct::SkeletonParams{
               skeleton_angle_step, nb_parts_of_object}}.get_trace();
+      std::cout << "Object trace" << i++ << ": "  << object_trace.to_string() << std::endl;
+      std::cout << "Reference trace: " << reference_object_trace.to_string() << std::endl;
       const auto same_outer = reference_object_trace.compare(
           object_trace, deduct::ComparisonParams{0.1, true, true, 0.8});
       if (same_outer) {

@@ -155,9 +155,9 @@ private:
       };
       const auto start =
           math2d::CoordinatedPoint{0, 0, area.coordinate_system}.plus(
-              math2d::Vector{-area.radius * 1.25, 0});
+              math2d::Vector{-area.radius, 0});
       const auto delta = math2d::Vector{
-          2.5 * area.radius / _skeleton_params.nb_parts_of_object, 0};
+          2.0 * area.radius / _skeleton_params.nb_parts_of_object, 0};
       for (size_t i = 0; i < _skeleton_params.nb_parts_of_object; ++i) {
         const auto point = start.plus(delta.scale(i));
         interpret_pixel(point);
