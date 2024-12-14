@@ -162,6 +162,9 @@ private:
         const auto point = start.plus(delta.scale(i));
         interpret_pixel(point);
       }
+      if (current_ratio.has_value()) {
+        ratios.push_back(*current_ratio);
+      }
       _ratio_lines.push_back(RatioLine{area, ratios});
     }
   }

@@ -282,7 +282,7 @@ TEST_CASE("Trace", "[trace]") {
           object,
           deduct::SkeletonParams{
               skeleton_angle_step, nb_parts_of_object}}.get_trace();
-      std::cout << "Object trace" << i++ << ": "  << object_trace.to_string() << std::endl;
+      std::cout << "Object trace " << i++ << ": "  << object_trace.to_string() << std::endl;
       const auto same_outer = reference_object_trace.compare(
           object_trace, deduct::ComparisonParams{0.1, true, true, 0.9});
       if (same_outer) {
@@ -330,7 +330,7 @@ TEST_CASE("Trace", "[trace]") {
           object,
           deduct::SkeletonParams{
               skeleton_angle_step, nb_parts_of_object}}.get_trace();
-      std::cout << "Object trace" << i++ << ": "  << object_trace.to_string() << std::endl;
+      std::cout << "Object trace " << i++ << ": "  << object_trace.to_string() << std::endl;
       const auto same_outer = reference_object_trace.compare(
           object_trace, deduct::ComparisonParams{0.1, true, true, 0.9});
       if (same_outer) {
@@ -379,7 +379,7 @@ TEST_CASE("Trace", "[trace]") {
           object,
           deduct::SkeletonParams{
               skeleton_angle_step, nb_parts_of_object}}.get_trace();
-      std::cout << "Object trace" << i++ << ": "  << object_trace.to_string() << std::endl;
+      std::cout << "Object trace " << i++ << ": "  << object_trace.to_string() << std::endl;
       const auto same_outer = reference_object_trace.compare(
           object_trace, deduct::ComparisonParams{0.1, true, true, 0.9});
       if (same_outer) {
