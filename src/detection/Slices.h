@@ -48,9 +48,16 @@ struct Slice {
     return math2d::Point{(start.x + end.x) / 2, (start.y + end.y) / 2};
   }
 
-  math2d::number_type get_mass() const {
-    return (end.x - start.x);
+  std::vector<math2d::Point> get_points() const {
+    std::vector<math2d::Point> ret;
+    ret.reserve(end.x - start.x + 1);
+    for (auto p = start; p.x <= end.x; ++p.x) {
+      ret.push_back(p);
+    }
+    return ret;
   }
+
+  math2d::number_type get_mass() const { return (end.x - start.x); }
 };
 
 struct AnnotatedSlice {
@@ -508,7 +515,30 @@ struct Slices {
         math2d::Vector{1, 0},
         math2d::Vector{0, 1},
     };
-    return math2d::CoordinatedPoint{sum_x / sum_mass, sum_y / sum_mass, coordinate_system};
+    return math2d::CoordinatedPoint{sum_x / sum_mass, sum_y / sum_mass,
+                                    coordinate_system};
+  }
+
+  math2d::CoordinatedPoint
+  get_point_of_max_distance_to(const math2d::CoordinatedPoint &point) const {
+    math2d::number_type max_distance = 0;
+    math2d::CoordinatedPoint max_distance_point;
+    const auto img_coord_sys = math2d::CoordinateSystem{
+        math2d::Point{0, 0}, math2d::Vector{1, 0}, math2d::Vector{0, 1}};
+    for (const auto &slice_line : slices) {
+      for (const auto &slice : slice_line.line()) {
+        for (const auto p : slice.slice.get_points()) {
+          const auto coordinated_point =
+              math2d::CoordinatedPoint{p.x, p.y, img_coord_sys};
+          const auto distance = coordinated_point.distance_to(point);
+          if (distance > max_distance) {
+            max_distance = distance;
+            max_distance_point = coordinated_point;
+          }
+        }
+      }
+    }
+    return max_distance_point;
   }
 
 private:
@@ -751,9 +781,9 @@ void establishing_shot_objects(ObjectsPerRectangle &ret,
 
 std::vector<Object> deduce_objects(Slices &slices);
 
-ObjectsPerRectangle
-establishing_shot_single_loop(AllRectangles &ret, const cv::Mat &rgbImage,
-                              const Rectangle &rectangle);
+ObjectsPerRectangle establishing_shot_single_loop(AllRectangles &ret,
+                                                  const cv::Mat &rgbImage,
+                                                  const Rectangle &rectangle);
 
 ObjectsPerRectangle establishing_shot_rectangles(const cv::Mat &rgbImage,
                                                  const Rectangle &rectangle);

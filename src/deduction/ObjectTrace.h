@@ -25,7 +25,7 @@ struct ObjectTrace {
 
 
 private:
-  std::vector<math2d::Line> get_skeleton(const math2d::Point &center_of_mass,
+  std::vector<math2d::Line> get_skeleton(const math2d::CoordinatedPoint &center_of_mass,
                                          double radius,
                                          SkeletonParams skeleton_params) {
     // angle step should be a divisor of 180
@@ -43,7 +43,8 @@ private:
 
   void deduce() {
     const auto center_of_mass = _obj.get_center_of_mass();
-    const auto radius = math2d::Vector{rect.get_top_left(), rect.center()}.magnitude();
+    const auto point_of_max_distance = _obj.get_point_of_max_distance_to(center_of_mass);
+    const auto radius = center_of_mass.distance_to(point_of_max_distance);
     const auto skeleton = get_skeleton(center_of_mass, radius, _skeleton_params);
     _trace = {Trace{_obj, skeleton, _skeleton_params}};
   }
