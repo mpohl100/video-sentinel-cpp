@@ -19,6 +19,14 @@ CoordinatedPoint CoordinateSystem::from_euclidian(const Point &point) const
   return CoordinatedPoint{x, y, *this};
 }
 
+void CoordinateSystem::rotate(const Angle &angle)
+{
+  const auto x_axis_rotated = x_axis.rotate(angle);
+  const auto y_axis_rotated = y_axis.rotate(angle);
+  x_axis = x_axis_rotated;
+  y_axis = y_axis_rotated;
+}
+
 /// @brief This function adds a vector to a point. It assumes that the vector is
 /// in the same coordinate system as the point.
 /// @param vec the vector to add to the point

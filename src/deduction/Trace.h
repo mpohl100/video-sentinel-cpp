@@ -71,14 +71,8 @@ struct Trace {
       return false;
     }
 
-    for (size_t i = 0; i < _ratio_lines.size(); ++i) {
-      bool matches = compare_ratio_lines(_ratio_lines, other._ratio_lines, i,
-                                         comparison_params);
-      if (matches) {
-        return true;
-      }
-    }
-    return false;
+    return compare_ratio_lines(_ratio_lines, other._ratio_lines, 0,
+                               comparison_params);
   }
 
   bool compare_integral(const Trace &other,

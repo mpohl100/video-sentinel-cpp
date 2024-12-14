@@ -5,6 +5,7 @@
 
 #include "detection/Object.h"
 #include "math2d/math2d.h"
+#include "math2d/coordinated.h"
 
 #include <memory>
 #include <vector>
@@ -20,7 +21,9 @@ struct ObjectTrace {
   ObjectTrace(od::Object obj, SkeletonParams skeleton_params) 
   : _obj{obj}, _skeleton_params{skeleton_params} { deduce(); } 
 
-  Trace get_trace() const { return _trace; }
+  std::vector<Trace> get_traces() const { return _traces; }
+
+
 
 private:
   std::vector<math2d::Line> get_skeleton(const math2d::Point &center_of_mass,
@@ -44,11 +47,11 @@ private:
     const auto center_of_mass = rect.center();
     const auto radius = math2d::Vector{rect.get_top_left(), rect.center()}.magnitude();
     const auto skeleton = get_skeleton(center_of_mass, radius, _skeleton_params);
-    _trace = Trace{_obj, skeleton, _skeleton_params};
+    _traces = {Trace{_obj, skeleton, _skeleton_params}};
   }
 
   od::Object _obj;
-  Trace _trace;
+  std::vector<Trace> _traces;
   SkeletonParams _skeleton_params;
 };
 

@@ -2,6 +2,7 @@
 
 #include "Slices.h"
 
+#include "math2d/coordinated.h"
 #include "matrix/Matrix.h"
 
 #include "Rectangle.h"
@@ -61,6 +62,10 @@ struct ObjectImpl {
 
   od::Rectangle get_bounding_box() const { return slices.to_rectangle(); }
 
+  math2d::CoordinatedPoint get_center_of_mass() const {
+    return slices.get_center_of_mass();
+  }
+
   bool contains_point(const math2d::Point &point) const {
     return slices.contains_point(point);
   }
@@ -95,6 +100,10 @@ struct Object {
   }
 
   od::Rectangle get_bounding_box() const { return object->get_bounding_box(); }
+
+  math2d::CoordinatedPoint get_center_of_mass() const {
+    return object->get_center_of_mass();
+  }
 
   bool contains_point(const math2d::Point &point) const {
     return object->contains_point(point);

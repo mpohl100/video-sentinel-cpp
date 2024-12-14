@@ -2,6 +2,8 @@
 
 #include "Rectangle.h"
 
+#include "math2d/coordinated.h"
+
 #include "opencv2/core/mat.hpp"
 
 #include <iostream>
@@ -40,6 +42,14 @@ struct Slice {
            (end.x >= other.start.x && end.x <= other.end.x) ||
            (other.start.x >= start.x && other.start.x <= end.x) ||
            (other.end.x >= start.x && other.end.x <= end.x);
+  }
+
+  math2d::Point get_center_of_mass() const {
+    return math2d::Point{(start.x + end.x) / 2, (start.y + end.y) / 2};
+  }
+
+  math2d::number_type get_mass() const {
+    return (end.x - start.x);
   }
 };
 
@@ -220,6 +230,27 @@ struct SliceLine {
   }
 
   void pop_back() { _line.pop_back(); }
+
+  math2d::Point get_center_of_mass() const {
+    if (_line.empty()) {
+      return math2d::Point{0, 0};
+    }
+    math2d::number_type sum = 0;
+    math2d::number_type mass = 0;
+    for (const auto &slice : _line) {
+      sum += slice.slice.get_center_of_mass().x * slice.slice.get_mass();
+      mass += slice.slice.get_mass();
+    }
+    return math2d::Point{sum / mass, _line.front().slice.start.y};
+  }
+
+  math2d::number_type get_mass() const {
+    math2d::number_type mass = 0;
+    for (const auto &slice : _line) {
+      mass += slice.slice.get_mass();
+    }
+    return mass;
+  }
 
 private:
   std::vector<AnnotatedSlice> _line;
@@ -460,6 +491,24 @@ struct Slices {
       std::cout << "touching down" << std::endl;
     }
     merge_anywhere(other, debug);
+  }
+
+  math2d::CoordinatedPoint get_center_of_mass() const {
+    math2d::number_type sum_x = 0;
+    math2d::number_type sum_y = 0;
+    math2d::number_type sum_mass = 0;
+    for (const auto &slice_line : slices) {
+      const auto mass = slice_line.get_mass();
+      sum_x += slice_line.get_center_of_mass().x * mass;
+      sum_y += slice_line.get_center_of_mass().y * mass;
+      sum_mass += mass;
+    }
+    const auto coordinate_system = math2d::CoordinateSystem{
+        math2d::Point{0, 0},
+        math2d::Vector{1, 0},
+        math2d::Vector{0, 1},
+    };
+    return math2d::CoordinatedPoint{sum_x / sum_mass, sum_y / sum_mass, coordinate_system};
   }
 
 private:
