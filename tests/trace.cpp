@@ -275,6 +275,7 @@ TEST_CASE("Trace", "[trace]") {
     const auto objects = deduce_all_objects(executor, test_image);
     size_t count_similar_objects = 0;
     size_t i = 0;
+    auto matching_objects = std::vector<od::Object>{};
     std::cout << "Squares" << std::endl;
     std::cout << "Reference trace: " << reference_object_trace.to_string() << std::endl;
     for (const auto object : objects) {
@@ -284,12 +285,17 @@ TEST_CASE("Trace", "[trace]") {
               skeleton_angle_step, nb_parts_of_object}}.get_trace();
       std::cout << "Object trace " << i++ << ": "  << object_trace.to_string() << std::endl;
       const auto same_outer = reference_object_trace.compare(
-          object_trace, deduct::ComparisonParams{0.1, true, true, 0.9});
+          object_trace, deduct::ComparisonParams{0.05, true, true, 0.9});
       if (same_outer) {
         count_similar_objects++;
+        matching_objects.push_back(object);
       }
     }
-
+    for(const auto matching_object : matching_objects) {
+      const auto y = matching_object.get_bounding_box().to_math2d_rectangle().center().y;
+      const auto is_square = y >= 5 && y <= 35;
+      CHECK(is_square);
+    }
     CHECK(count_similar_objects == 4);
   }
 
@@ -321,6 +327,7 @@ TEST_CASE("Trace", "[trace]") {
 
     // Act
     const auto objects = deduce_all_objects(executor, test_image);
+    auto matching_objects = std::vector<od::Object>{};
     size_t count_similar_objects = 0;
     size_t i = 0;
     std::cout << "Circles" << std::endl;
@@ -332,10 +339,17 @@ TEST_CASE("Trace", "[trace]") {
               skeleton_angle_step, nb_parts_of_object}}.get_trace();
       std::cout << "Object trace " << i++ << ": "  << object_trace.to_string() << std::endl;
       const auto same_outer = reference_object_trace.compare(
-          object_trace, deduct::ComparisonParams{0.1, true, true, 0.9});
+          object_trace, deduct::ComparisonParams{0.05, true, true, 0.9});
       if (same_outer) {
         count_similar_objects++;
+        matching_objects.push_back(object);
       }
+    }
+
+    for(const auto matching_object : matching_objects) {
+      const auto y = matching_object.get_bounding_box().to_math2d_rectangle().center().y;
+      const auto is_circle = y >= 45 && y <= 85;
+      CHECK(is_circle);
     }
 
     CHECK(count_similar_objects == 5);
@@ -370,6 +384,7 @@ TEST_CASE("Trace", "[trace]") {
 
     // Act
     const auto objects = deduce_all_objects(executor, test_image);
+    auto matching_objects = std::vector<od::Object>{};
     size_t count_similar_objects = 0;
     size_t i = 0;
     std::cout << "Rectangles" << std::endl;
@@ -381,10 +396,17 @@ TEST_CASE("Trace", "[trace]") {
               skeleton_angle_step, nb_parts_of_object}}.get_trace();
       std::cout << "Object trace " << i++ << ": "  << object_trace.to_string() << std::endl;
       const auto same_outer = reference_object_trace.compare(
-          object_trace, deduct::ComparisonParams{0.1, true, true, 0.9});
+          object_trace, deduct::ComparisonParams{0.05, true, true, 0.9});
       if (same_outer) {
         count_similar_objects++;
+        matching_objects.push_back(object);
       }
+    }
+
+    for(const auto matching_object : matching_objects) {
+      const auto y = matching_object.get_bounding_box().to_math2d_rectangle().center().y;
+      const auto is_rectangle = y >= 85 && y <= 115;
+      CHECK(is_rectangle);
     }
 
     CHECK(count_similar_objects == 3);
