@@ -49,8 +49,7 @@ struct Trace {
   Trace(Trace &&) = default;
   Trace &operator=(const Trace &) = default;
   Trace &operator=(Trace &&) = default;
-  Trace(od::Object obj, Skeleton skeleton,
-        SkeletonParams skeleton_params)
+  Trace(od::Object obj, Skeleton skeleton, SkeletonParams skeleton_params)
       : _obj{obj}, _skeleton{skeleton}, _skeleton_params{skeleton_params} {
     calculate();
   }
@@ -72,6 +71,16 @@ struct Trace {
       return false;
     }
 
+    if (comparison_params.use_forms) {
+      return compare_form(other, comparison_params);
+    } else {
+      return compare_integral(other, comparison_params);
+    }
+  }
+
+private:
+  bool compare_form(const Trace &other,
+                    const ComparisonParams &comparison_params) const {
     for (size_t i = 0; i < _ratio_lines.size(); ++i) {
       bool matches = compare_ratio_lines(_ratio_lines, other._ratio_lines, i,
                                          comparison_params);
@@ -84,19 +93,6 @@ struct Trace {
 
   bool compare_integral(const Trace &other,
                         const ComparisonParams &comparison_params) const {
-    // pre conditions
-    if (_obj == other._obj) {
-      return true;
-    }
-
-    if (_skeleton_params != other._skeleton_params) {
-      return false;
-    }
-
-    if (_skeleton.areas.size() != other._skeleton.areas.size()) {
-      return false;
-    }
-
     const auto this_max_offset = deduce_max_offset(_ratio_lines);
     const auto other_max_offset = deduce_max_offset(other._ratio_lines);
 
@@ -119,7 +115,6 @@ struct Trace {
     return within_tolerance;
   }
 
-private:
   void calculate() {
     _ratio_lines.clear();
     _ratio_lines.reserve(_skeleton.areas.size());
@@ -127,9 +122,10 @@ private:
       std::vector<Ratio> ratios;
       std::optional<Ratio> current_ratio = std::nullopt;
       int count = 0;
-      const auto interpret_pixel = [this, &current_ratio, &count,
-                                    &ratios](const math2d::CoordinatedPoint &point) {
-        double progress = static_cast<double>(count) / _skeleton_params.nb_parts_of_object;
+      const auto interpret_pixel = [this, &current_ratio, &count, &ratios](
+                                       const math2d::CoordinatedPoint &point) {
+        double progress =
+            static_cast<double>(count) / _skeleton_params.nb_parts_of_object;
         bool does_contain = _obj.contains_point(point);
         if (current_ratio.has_value()) {
           if (does_contain) {
@@ -145,9 +141,12 @@ private:
         }
         count++;
       };
-      const auto start = math2d::CoordinatedPoint{0, 0, area.coordinate_system}.plus(math2d::Vector{-area.radius * 1.25, 0});
-      const auto delta = math2d::Vector{2.5 * area.radius / _skeleton_params.nb_parts_of_object, 0};
-      for(size_t i = 0; i < _skeleton_params.nb_parts_of_object; ++i) {
+      const auto start =
+          math2d::CoordinatedPoint{0, 0, area.coordinate_system}.plus(
+              math2d::Vector{-area.radius * 1.25, 0});
+      const auto delta = math2d::Vector{
+          2.5 * area.radius / _skeleton_params.nb_parts_of_object, 0};
+      for (size_t i = 0; i < _skeleton_params.nb_parts_of_object; ++i) {
         const auto point = start.plus(delta.scale(i));
         interpret_pixel(point);
       }
