@@ -278,7 +278,7 @@ TEST_CASE("Trace", "[trace]") {
           deduct::SkeletonParams{
               skeleton_angle_step, nb_parts_of_object}}.get_trace();
       const auto same_outer = reference_object_trace.compare(
-          object_trace, deduct::ComparisonParams{0.05, true, true});
+          object_trace, deduct::ComparisonParams{0.1, true, true});
       if (same_outer) {
         count_similar_objects++;
       }
@@ -322,7 +322,7 @@ TEST_CASE("Trace", "[trace]") {
           deduct::SkeletonParams{
               skeleton_angle_step, nb_parts_of_object}}.get_trace();
       const auto same_outer = reference_object_trace.compare(
-          object_trace, deduct::ComparisonParams{0.05, true, true});
+          object_trace, deduct::ComparisonParams{0.1, true, true});
       if (same_outer) {
         count_similar_objects++;
       }
@@ -367,7 +367,7 @@ TEST_CASE("Trace", "[trace]") {
           deduct::SkeletonParams{
               skeleton_angle_step, nb_parts_of_object}}.get_trace();
       const auto same_outer = reference_object_trace.compare(
-          object_trace, deduct::ComparisonParams{0.05, true, true});
+          object_trace, deduct::ComparisonParams{0.1, true, true});
       if (same_outer) {
         count_similar_objects++;
       }

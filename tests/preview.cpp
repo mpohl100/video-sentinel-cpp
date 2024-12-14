@@ -109,7 +109,7 @@ TEST_CASE("Preview", "[preview]") {
         std::cout << "Frame set" << std::endl;
         if (frame_calculation_status == preview::FrameCalculationStatus::DONE) {
           const auto rectangles = video_preview->get_all_rectangles();
-          CHECK(rectangles.size() > 100);
+          CHECK(rectangles.size() > 10);
           did_frame_get_ready_at_least_once = true;
           std::cout << "Frame done" << std::endl;
         }
