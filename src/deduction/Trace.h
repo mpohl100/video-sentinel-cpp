@@ -173,14 +173,16 @@ private:
       return (i + index) % rhs.size();
     };
 
+    size_t count_matches = 0;
     for (size_t i = 0; i < lhs.size(); ++i) {
       bool matches = compare_ratio_line(lhs[i], rhs[get_secondary_index(i)],
                                         comparison_params);
-      if (!matches) {
-        return false;
+      if (matches) {
+        ++count_matches;
       }
     }
-    return true;
+    const auto ratio = static_cast<double>(count_matches) / lhs.size();
+    return ratio > comparison_params.threshold;
   }
 
   bool compare_ratio_line(const RatioLine &lhs, const RatioLine &rhs,

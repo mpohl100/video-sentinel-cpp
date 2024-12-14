@@ -80,8 +80,8 @@ TEST_CASE("Preview", "[preview]") {
                                               "   XXX   \n");
 
     auto video_preview = std::make_unique<preview::SingleObjectPreview>(
-        4, circle_ascii_art, deduct::SkeletonParams{5, 30},
-        deduct::ComparisonParams{1, true, true});
+        4, circle_ascii_art, deduct::SkeletonParams{5, 200},
+        deduct::ComparisonParams{1, true, true, 0.9});
     bool did_frame_get_ready_at_least_once = false;
     for (size_t i = 0; i < 100; i++) {
       std::cout << "Frame nr " << i << std::endl;

@@ -228,19 +228,19 @@ TEST_CASE("Trace", "[trace]") {
     std::cout << "Object trace 0: " << object0_trace.to_string() << std::endl;
 
     const auto same_outer = object0_trace.compare(
-        object1_trace, deduct::ComparisonParams{0.1, true, true});
+        object1_trace, deduct::ComparisonParams{0.1, true, true, 0.9});
     CHECK(same_outer);
 
     const auto same_inner = object0_trace.compare(
-        object1_trace, deduct::ComparisonParams{0.1, false, true});
+        object1_trace, deduct::ComparisonParams{0.1, false, true, 0.9});
     CHECK(same_inner);
 
     const auto same_outer_integral = object0_trace.compare(
-        object1_trace, deduct::ComparisonParams{0.1, true, false});
+        object1_trace, deduct::ComparisonParams{0.1, true, false, 0.9});
     CHECK(same_outer);
 
     const auto same_inner_integral = object0_trace.compare(
-        object1_trace, deduct::ComparisonParams{0.1, false, false});
+        object1_trace, deduct::ComparisonParams{0.1, false, false, 0.9});
     CHECK(same_inner);
   }
 
@@ -280,7 +280,7 @@ TEST_CASE("Trace", "[trace]") {
           deduct::SkeletonParams{
               skeleton_angle_step, nb_parts_of_object}}.get_trace();
       const auto same_outer = reference_object_trace.compare(
-          object_trace, deduct::ComparisonParams{0.1, true, true});
+          object_trace, deduct::ComparisonParams{0.1, true, true, 0.8});
       if (same_outer) {
         count_similar_objects++;
       }
@@ -324,7 +324,7 @@ TEST_CASE("Trace", "[trace]") {
           deduct::SkeletonParams{
               skeleton_angle_step, nb_parts_of_object}}.get_trace();
       const auto same_outer = reference_object_trace.compare(
-          object_trace, deduct::ComparisonParams{0.1, true, true});
+          object_trace, deduct::ComparisonParams{0.1, true, true, 0.8});
       if (same_outer) {
         count_similar_objects++;
       }
@@ -369,7 +369,7 @@ TEST_CASE("Trace", "[trace]") {
           deduct::SkeletonParams{
               skeleton_angle_step, nb_parts_of_object}}.get_trace();
       const auto same_outer = reference_object_trace.compare(
-          object_trace, deduct::ComparisonParams{0.1, true, true});
+          object_trace, deduct::ComparisonParams{0.1, true, true, 0.8});
       if (same_outer) {
         count_similar_objects++;
       }
