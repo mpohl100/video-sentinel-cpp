@@ -40,7 +40,7 @@ struct SingleObjectPreview : public VideoPreview {
       for (const auto object : objects) {
         const auto trace =
             deduct::ObjectTrace{object, _skeleton_params}.get_trace();
-        if (trace.compare_integral(_target->trace, _comparison_params)) {
+        if (trace.compare(_target->trace, _comparison_params)) {
           objects_to_keep.push_back(object);
         }
       }

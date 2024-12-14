@@ -6,6 +6,7 @@
 
 #include "opencv2/core/mat.hpp"
 
+#include <cmath>
 #include <iostream>
 #include <optional>
 #include <string>
@@ -293,7 +294,7 @@ struct Slices {
                                                             math2d::Vector{1, 0},
                                                             math2d::Vector{0, 1}};
     const auto point = coordinated_point.convert_to(coordinate_system);
-    const auto slice_line = get_line_by_number(point.y);
+    const auto slice_line = get_line_by_number(std::floor(point.y));
     if (!slice_line) {
       return false;
     }

@@ -208,7 +208,7 @@ TEST_CASE("Trace", "[trace]") {
     auto img0 = create_image_with_square(0);
     auto obj0 = deduce_object(executor, img0);
     CHECK(obj0.get_bounding_box().to_math2d_rectangle().area() == 100);
-    const auto skeleton_params = deduct::SkeletonParams{30};
+    const auto skeleton_params = deduct::SkeletonParams{30, 30};
     auto object0_trace = deduct::ObjectTrace{obj0, skeleton_params}.get_trace();
     CHECK(object0_trace.get_ratios().size() == 6);
   }
@@ -221,24 +221,24 @@ TEST_CASE("Trace", "[trace]") {
     auto obj1 = deduce_object(executor, img1);
     CHECK(obj0.get_bounding_box().to_math2d_rectangle().area() == 100);
     CHECK(obj1.get_bounding_box().to_math2d_rectangle().area() == 100);
-    const auto skeleton_params = deduct::SkeletonParams{30};
+    const auto skeleton_params = deduct::SkeletonParams{30, 30};
     auto object0_trace = deduct::ObjectTrace{obj0, skeleton_params}.get_trace();
     auto object1_trace = deduct::ObjectTrace{obj1, skeleton_params}.get_trace();
 
     const auto same_outer = object0_trace.compare(
-        object1_trace, deduct::ComparisonParams{0.1, true});
+        object1_trace, deduct::ComparisonParams{0.1, true, true});
     CHECK(same_outer);
 
     const auto same_inner = object0_trace.compare(
-        object1_trace, deduct::ComparisonParams{0.1, false});
+        object1_trace, deduct::ComparisonParams{0.1, false, true});
     CHECK(same_inner);
 
-    const auto same_outer_integral = object0_trace.compare_integral(
-        object1_trace, deduct::ComparisonParams{0.1, true});
+    const auto same_outer_integral = object0_trace.compare(
+        object1_trace, deduct::ComparisonParams{0.1, true, false});
     CHECK(same_outer);
 
-    const auto same_inner_integral = object0_trace.compare_integral(
-        object1_trace, deduct::ComparisonParams{0.1, false});
+    const auto same_inner_integral = object0_trace.compare(
+        object1_trace, deduct::ComparisonParams{0.1, false, false});
     CHECK(same_inner);
   }
 
@@ -258,10 +258,11 @@ TEST_CASE("Trace", "[trace]") {
         executor, reference_image, math2d::CoordinatedPoint{20, 20, coordinate_system});
     CHECK(reference_object.has_value());
     const auto skeleton_angle_step = 10;
+    const auto nb_parts_of_object = 30;
     const auto reference_object_trace = deduct::ObjectTrace{
         *reference_object,
         deduct::SkeletonParams{
-            skeleton_angle_step}}.get_trace();
+            skeleton_angle_step, nb_parts_of_object}}.get_trace();
 
     // Arrange image to scan
     const auto objects_data = generate_object_data();
@@ -275,9 +276,9 @@ TEST_CASE("Trace", "[trace]") {
       const auto object_trace = deduct::ObjectTrace{
           object,
           deduct::SkeletonParams{
-              skeleton_angle_step}}.get_trace();
+              skeleton_angle_step, nb_parts_of_object}}.get_trace();
       const auto same_outer = reference_object_trace.compare(
-          object_trace, deduct::ComparisonParams{0.05, true});
+          object_trace, deduct::ComparisonParams{0.05, true, true});
       if (same_outer) {
         count_similar_objects++;
       }
@@ -301,10 +302,11 @@ TEST_CASE("Trace", "[trace]") {
         executor, reference_image, math2d::CoordinatedPoint{15, 15, coordinate_system});
     CHECK(reference_object.has_value());
     const auto skeleton_angle_step = 10;
+    const auto nb_parts_of_object = 30;
     const auto reference_object_trace = deduct::ObjectTrace{
         *reference_object,
         deduct::SkeletonParams{
-            skeleton_angle_step}}.get_trace();
+            skeleton_angle_step, nb_parts_of_object}}.get_trace();
 
     // Arrange image to scan
     const auto objects_data = generate_object_data();
@@ -318,9 +320,9 @@ TEST_CASE("Trace", "[trace]") {
       const auto object_trace = deduct::ObjectTrace{
           object,
           deduct::SkeletonParams{
-              skeleton_angle_step}}.get_trace();
+              skeleton_angle_step, nb_parts_of_object}}.get_trace();
       const auto same_outer = reference_object_trace.compare(
-          object_trace, deduct::ComparisonParams{0.05, true});
+          object_trace, deduct::ComparisonParams{0.05, true, true});
       if (same_outer) {
         count_similar_objects++;
       }
@@ -345,10 +347,11 @@ TEST_CASE("Trace", "[trace]") {
         executor, reference_image, math2d::CoordinatedPoint{20, 20, coordinate_system});
     CHECK(reference_object.has_value());
     const auto skeleton_angle_step = 10;
+    const auto nb_parts_of_object = 30;
     const auto reference_object_trace = deduct::ObjectTrace{
         *reference_object,
         deduct::SkeletonParams{
-            skeleton_angle_step}}.get_trace();
+            skeleton_angle_step, nb_parts_of_object}}.get_trace();
 
     // Arrange image to scan
     const auto objects_data = generate_object_data();
@@ -362,9 +365,9 @@ TEST_CASE("Trace", "[trace]") {
       const auto object_trace = deduct::ObjectTrace{
           object,
           deduct::SkeletonParams{
-              skeleton_angle_step}}.get_trace();
+              skeleton_angle_step, nb_parts_of_object}}.get_trace();
       const auto same_outer = reference_object_trace.compare(
-          object_trace, deduct::ComparisonParams{0.05, true});
+          object_trace, deduct::ComparisonParams{0.05, true, true});
       if (same_outer) {
         count_similar_objects++;
       }
