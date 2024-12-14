@@ -26,6 +26,12 @@ void CoordinateSystem::rotate(const Angle &angle) {
   y_axis = y_axis_rotated;
 }
 
+CoordinatedPoint CoordinatedPoint::convert_to(
+    const CoordinateSystem &new_coordinate_system) const {
+  const auto euclidian_coords = coordinate_system.to_euclidian(*this);
+  return new_coordinate_system.from_euclidian(euclidian_coords);
+}
+
 /// @brief This function adds a vector to a point. It assumes that the vector is
 /// in the same coordinate system as the point.
 /// @param vec the vector to add to the point
@@ -57,6 +63,10 @@ number_type CoordinatedPoint::distance_to(const CoordinatedPoint &point) const {
   const auto other_point_euclidian =
       point.coordinate_system.to_euclidian(point);
   return Vector{this_point_euclidian, other_point_euclidian}.magnitude();
+}
+
+Point CoordinatedPoint::get_point() const {
+  return coordinate_system.to_euclidian(*this);
 }
 
 bool operator<(const CoordinatedPoint &l, const CoordinatedPoint &r);

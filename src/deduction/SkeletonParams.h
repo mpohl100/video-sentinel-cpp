@@ -11,11 +11,12 @@ struct SkeletonParams{
     SkeletonParams(int angle_step)
         : angle_step{angle_step} {}
     int angle_step;
+    int nb_parts_of_object = 30;
 };
 
 inline bool operator==(const SkeletonParams& lhs, const SkeletonParams& rhs)
 {
-    return lhs.angle_step == rhs.angle_step;
+    return lhs.angle_step == rhs.angle_step && lhs.nb_parts_of_object == rhs.nb_parts_of_object;
 }
 
 inline bool operator!=(const SkeletonParams& lhs, const SkeletonParams& rhs)

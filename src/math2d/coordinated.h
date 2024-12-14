@@ -39,10 +39,15 @@ struct CoordinatedPoint {
                              CoordinateSystem coordinate_system) noexcept
       : x(xx), y(yy), coordinate_system(coordinate_system){};
 
+  CoordinatedPoint convert_to(const CoordinateSystem &new_coordinate_system) const;
   CoordinatedPoint plus(const Vector &vec) const;
   std::string toString() const;
   CoordinatedPoint rotate(const CoordinatedPoint &around,
                           const Angle &angle) const;
+
+  number_type distance_to(const CoordinatedPoint & point) const;
+
+  Point get_point() const;
   // friend constexpr auto operator<=>(const CoordinatedPoint &, const
   // CoordinatedPoint &) = default;
   friend bool operator<(const CoordinatedPoint &l, const CoordinatedPoint &r);

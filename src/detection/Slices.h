@@ -288,7 +288,11 @@ struct Slices {
     return ret;
   }
 
-  bool contains_point(const math2d::Point &point) const {
+  bool contains_point(const math2d::CoordinatedPoint &coordinated_point) const {
+    const auto coordinate_system = math2d::CoordinateSystem{math2d::Point{0, 0},
+                                                            math2d::Vector{1, 0},
+                                                            math2d::Vector{0, 1}};
+    const auto point = coordinated_point.convert_to(coordinate_system);
     const auto slice_line = get_line_by_number(point.y);
     if (!slice_line) {
       return false;

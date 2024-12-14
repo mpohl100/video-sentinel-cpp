@@ -71,7 +71,7 @@ struct ObjectImpl {
     return slices.get_point_of_max_distance_to(point);
   }
 
-  bool contains_point(const math2d::Point &point) const {
+  bool contains_point(const math2d::CoordinatedPoint &point) const {
     return slices.contains_point(point);
   }
 
@@ -115,7 +115,7 @@ struct Object {
     return object->get_point_of_max_distance_to(point);
   }
 
-  bool contains_point(const math2d::Point &point) const {
+  bool contains_point(const math2d::CoordinatedPoint &point) const {
     return object->contains_point(point);
   }
 

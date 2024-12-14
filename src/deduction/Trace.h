@@ -32,14 +32,14 @@ struct RatioLine {
   RatioLine(RatioLine &&) = default;
   RatioLine &operator=(const RatioLine &) = default;
   RatioLine &operator=(RatioLine &&) = default;
-  RatioLine(math2d::Line line, std::vector<Ratio> ratios)
-      : _line{line}, _ratios{ratios} {}
+  RatioLine(Skeleton::Area area, std::vector<Ratio> ratios)
+      : _area{area}, _ratios{ratios} {}
 
-  math2d::Line get_line() const { return _line; }
+  Skeleton::Area get_area() const { return _area; }
   const std::vector<Ratio> &get_ratios() const { return _ratios; }
 
 private:
-  math2d::Line _line;
+  Skeleton::Area _area;
   std::vector<Ratio> _ratios;
 };
 
@@ -68,7 +68,7 @@ struct Trace {
       return false;
     }
 
-    if (_skeleton.skeleton.size() != other._skeleton.skeleton.size()) {
+    if (_skeleton.areas.size() != other._skeleton.areas.size()) {
       return false;
     }
 
@@ -93,7 +93,7 @@ struct Trace {
       return false;
     }
 
-    if (_skeleton.skeleton.size() != other._skeleton.skeleton.size()) {
+    if (_skeleton.areas.size() != other._skeleton.areas.size()) {
       return false;
     }
 
@@ -122,18 +122,14 @@ struct Trace {
 private:
   void calculate() {
     _ratio_lines.clear();
-    _ratio_lines.reserve(_skeleton.skeleton.size());
-    for (const auto &line : _skeleton.skeleton) {
-      const auto pixels = draw_line(line);
-      const auto num_pixels_on_line = pixels.size();
-
+    _ratio_lines.reserve(_skeleton.areas.size());
+    for (const auto &area : _skeleton.areas) {
       std::vector<Ratio> ratios;
       std::optional<Ratio> current_ratio = std::nullopt;
       int count = 0;
       const auto interpret_pixel = [this, &current_ratio, &count,
-                                    num_pixels_on_line,
-                                    &ratios](const math2d::Point &point) {
-        double progress = static_cast<double>(count) / num_pixels_on_line;
+                                    &ratios](const math2d::CoordinatedPoint &point) {
+        double progress = static_cast<double>(count) / _skeleton_params.nb_parts_of_object;
         bool does_contain = _obj.contains_point(point);
         if (current_ratio.has_value()) {
           if (does_contain) {
@@ -149,10 +145,13 @@ private:
         }
         count++;
       };
-      for (const auto &pixel : pixels) {
-        interpret_pixel(pixel);
+      const auto start = math2d::CoordinatedPoint{0, 0, area.coordinate_system}.plus(math2d::Vector{-area.radius, 0});
+      const auto delta = math2d::Vector{2.0 * area.radius / _skeleton_params.nb_parts_of_object, 0};
+      for(size_t i = 0; i < _skeleton_params.nb_parts_of_object; ++i) {
+        const auto point = start.plus(delta.scale(i));
+        interpret_pixel(point);
       }
-      _ratio_lines.push_back(RatioLine{line, ratios});
+      _ratio_lines.push_back(RatioLine{area, ratios});
     }
   }
 
