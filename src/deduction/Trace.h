@@ -2,6 +2,7 @@
 
 #include "ComparisonParams.h"
 #include "Draw.h"
+#include "Skeleton.h"
 #include "detection/Object.h"
 #include "math2d/math2d.h"
 
@@ -48,7 +49,7 @@ struct Trace {
   Trace(Trace &&) = default;
   Trace &operator=(const Trace &) = default;
   Trace &operator=(Trace &&) = default;
-  Trace(od::Object obj, std::vector<math2d::Line> skeleton,
+  Trace(od::Object obj, Skeleton skeleton,
         SkeletonParams skeleton_params)
       : _obj{obj}, _skeleton{skeleton}, _skeleton_params{skeleton_params} {
     calculate();
@@ -67,7 +68,7 @@ struct Trace {
       return false;
     }
 
-    if (_skeleton.size() != other._skeleton.size()) {
+    if (_skeleton.skeleton.size() != other._skeleton.skeleton.size()) {
       return false;
     }
 
@@ -92,7 +93,7 @@ struct Trace {
       return false;
     }
 
-    if (_skeleton.size() != other._skeleton.size()) {
+    if (_skeleton.skeleton.size() != other._skeleton.skeleton.size()) {
       return false;
     }
 
@@ -121,8 +122,8 @@ struct Trace {
 private:
   void calculate() {
     _ratio_lines.clear();
-    _ratio_lines.reserve(_skeleton.size());
-    for (const auto &line : _skeleton) {
+    _ratio_lines.reserve(_skeleton.skeleton.size());
+    for (const auto &line : _skeleton.skeleton) {
       const auto pixels = draw_line(line);
       const auto num_pixels_on_line = pixels.size();
 
@@ -283,7 +284,7 @@ private:
   }
 
   od::Object _obj;
-  std::vector<math2d::Line> _skeleton;
+  Skeleton _skeleton;
   std::vector<RatioLine> _ratio_lines;
   SkeletonParams _skeleton_params;
 };
