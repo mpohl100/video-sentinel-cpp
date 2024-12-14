@@ -72,6 +72,8 @@ struct Vector {
   Vector scale(double factor) const;
   number_type magnitude() const;
 
+  std::string toString() const;
+
   number_type x = 0.0;
   number_type y = 0.0;
 };
@@ -150,6 +152,9 @@ public:
   number_type area() const;
   math2d::Point center() const;
   math2d::Point get_top_left() const;
+  math2d::Point get_bottom_right() const;
+  math2d::number_type width() const;
+  math2d::number_type height() const;
   std::string toString() const;
 
   std::vector<Line> _lines;

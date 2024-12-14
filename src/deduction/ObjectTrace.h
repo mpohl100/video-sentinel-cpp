@@ -1,10 +1,12 @@
 #pragma once
 
 #include "SkeletonParams.h"
+#include "Skeleton.h"
 #include "Trace.h"
 
 #include "detection/Object.h"
 #include "math2d/math2d.h"
+#include "math2d/coordinated.h"
 
 #include <memory>
 #include <vector>
@@ -22,29 +24,28 @@ struct ObjectTrace {
 
   Trace get_trace() const { return _trace; }
 
+
 private:
-  std::vector<math2d::Line> get_skeleton(const math2d::Point &center_of_mass,
+  Skeleton get_skeleton(const math2d::CoordinatedPoint &center_of_mass,
                                          double radius,
                                          SkeletonParams skeleton_params) {
     // angle step should be a divisor of 180
-    std::vector<math2d::Line> skeleton;
+    Skeleton skeleton;
     for (size_t i = 0; i < 180 / skeleton_params.angle_step; ++i) {
       const auto angle = math2d::Angle{static_cast<double>(i * skeleton_params.angle_step)};
-      const auto start = center_of_mass.plus(math2d::Vector{-radius, 0});
-      const auto end = center_of_mass.plus(math2d::Vector{radius, 0});
-      start.rotate(center_of_mass, angle);
-      end.rotate(center_of_mass, angle);
-      skeleton.push_back(math2d::Line{start, end});
+      auto coordinate_system = math2d::CoordinateSystem{center_of_mass.get_point(), {1, 0}, {0, 1}};
+      coordinate_system.rotate(angle);
+      skeleton.areas.push_back(Skeleton::Area{coordinate_system, radius});
     }
     return skeleton;
   }
 
   void deduce() {
-    const auto rect = _obj.get_bounding_box().to_math2d_rectangle();
-    const auto center_of_mass = rect.center();
-    const auto radius = math2d::Vector{rect.get_top_left(), rect.center()}.magnitude();
+    const auto center_of_mass = _obj.get_center_of_mass();
+    const auto point_of_max_distance = _obj.get_point_of_max_distance_to(center_of_mass);
+    const auto radius = center_of_mass.distance_to(point_of_max_distance);
     const auto skeleton = get_skeleton(center_of_mass, radius, _skeleton_params);
-    _trace = Trace{_obj, skeleton, _skeleton_params};
+    _trace = {Trace{_obj, skeleton, _skeleton_params}};
   }
 
   od::Object _obj;

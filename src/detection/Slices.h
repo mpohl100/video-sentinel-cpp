@@ -2,8 +2,11 @@
 
 #include "Rectangle.h"
 
+#include "math2d/coordinated.h"
+
 #include "opencv2/core/mat.hpp"
 
+#include <cmath>
 #include <iostream>
 #include <optional>
 #include <string>
@@ -41,6 +44,21 @@ struct Slice {
            (other.start.x >= start.x && other.start.x <= end.x) ||
            (other.end.x >= start.x && other.end.x <= end.x);
   }
+
+  math2d::Point get_center_of_mass() const {
+    return math2d::Point{(start.x + end.x) / 2, (start.y + end.y) / 2};
+  }
+
+  std::vector<math2d::Point> get_points() const {
+    std::vector<math2d::Point> ret;
+    ret.reserve(end.x - start.x + 1);
+    for (auto p = start; p.x <= end.x; ++p.x) {
+      ret.push_back(p);
+    }
+    return ret;
+  }
+
+  math2d::number_type get_mass() const { return (end.x - start.x); }
 };
 
 struct AnnotatedSlice {
@@ -221,6 +239,27 @@ struct SliceLine {
 
   void pop_back() { _line.pop_back(); }
 
+  math2d::Point get_center_of_mass() const {
+    if (_line.empty()) {
+      return math2d::Point{0, 0};
+    }
+    math2d::number_type sum = 0;
+    math2d::number_type mass = 0;
+    for (const auto &slice : _line) {
+      sum += slice.slice.get_center_of_mass().x * slice.slice.get_mass();
+      mass += slice.slice.get_mass();
+    }
+    return math2d::Point{sum / mass, _line.front().slice.start.y};
+  }
+
+  math2d::number_type get_mass() const {
+    math2d::number_type mass = 0;
+    for (const auto &slice : _line) {
+      mass += slice.slice.get_mass();
+    }
+    return mass;
+  }
+
 private:
   std::vector<AnnotatedSlice> _line;
   size_t _line_number = 0;
@@ -250,8 +289,12 @@ struct Slices {
     return ret;
   }
 
-  bool contains_point(const math2d::Point &point) const {
-    const auto slice_line = get_line_by_number(point.y);
+  bool contains_point(const math2d::CoordinatedPoint &coordinated_point) const {
+    const auto coordinate_system = math2d::CoordinateSystem{math2d::Point{0, 0},
+                                                            math2d::Vector{1, 0},
+                                                            math2d::Vector{0, 1}};
+    const auto point = coordinated_point.convert_to(coordinate_system);
+    const auto slice_line = get_line_by_number(std::floor(point.y));
     if (!slice_line) {
       return false;
     }
@@ -460,6 +503,47 @@ struct Slices {
       std::cout << "touching down" << std::endl;
     }
     merge_anywhere(other, debug);
+  }
+
+  math2d::CoordinatedPoint get_center_of_mass() const {
+    math2d::number_type sum_x = 0;
+    math2d::number_type sum_y = 0;
+    math2d::number_type sum_mass = 0;
+    for (const auto &slice_line : slices) {
+      const auto mass = slice_line.get_mass();
+      sum_x += slice_line.get_center_of_mass().x * mass;
+      sum_y += slice_line.get_center_of_mass().y * mass;
+      sum_mass += mass;
+    }
+    const auto coordinate_system = math2d::CoordinateSystem{
+        math2d::Point{0, 0},
+        math2d::Vector{1, 0},
+        math2d::Vector{0, 1},
+    };
+    return math2d::CoordinatedPoint{sum_x / sum_mass, sum_y / sum_mass,
+                                    coordinate_system};
+  }
+
+  math2d::CoordinatedPoint
+  get_point_of_max_distance_to(const math2d::CoordinatedPoint &point) const {
+    math2d::number_type max_distance = 0;
+    math2d::CoordinatedPoint max_distance_point;
+    const auto img_coord_sys = math2d::CoordinateSystem{
+        math2d::Point{0, 0}, math2d::Vector{1, 0}, math2d::Vector{0, 1}};
+    for (const auto &slice_line : slices) {
+      for (const auto &slice : slice_line.line()) {
+        for (const auto p : slice.slice.get_points()) {
+          const auto coordinated_point =
+              math2d::CoordinatedPoint{p.x, p.y, img_coord_sys};
+          const auto distance = coordinated_point.distance_to(point);
+          if (distance > max_distance) {
+            max_distance = distance;
+            max_distance_point = coordinated_point;
+          }
+        }
+      }
+    }
+    return max_distance_point;
   }
 
 private:
@@ -702,9 +786,9 @@ void establishing_shot_objects(ObjectsPerRectangle &ret,
 
 std::vector<Object> deduce_objects(Slices &slices);
 
-ObjectsPerRectangle
-establishing_shot_single_loop(AllRectangles &ret, const cv::Mat &rgbImage,
-                              const Rectangle &rectangle);
+ObjectsPerRectangle establishing_shot_single_loop(AllRectangles &ret,
+                                                  const cv::Mat &rgbImage,
+                                                  const Rectangle &rectangle);
 
 ObjectsPerRectangle establishing_shot_rectangles(const cv::Mat &rgbImage,
                                                  const Rectangle &rectangle);

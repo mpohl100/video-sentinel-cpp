@@ -2,6 +2,7 @@
 
 #include "ComparisonParams.h"
 #include "Draw.h"
+#include "Skeleton.h"
 #include "detection/Object.h"
 #include "math2d/math2d.h"
 
@@ -31,14 +32,14 @@ struct RatioLine {
   RatioLine(RatioLine &&) = default;
   RatioLine &operator=(const RatioLine &) = default;
   RatioLine &operator=(RatioLine &&) = default;
-  RatioLine(math2d::Line line, std::vector<Ratio> ratios)
-      : _line{line}, _ratios{ratios} {}
+  RatioLine(Skeleton::Area area, std::vector<Ratio> ratios)
+      : _area{area}, _ratios{ratios} {}
 
-  math2d::Line get_line() const { return _line; }
+  Skeleton::Area get_area() const { return _area; }
   const std::vector<Ratio> &get_ratios() const { return _ratios; }
 
 private:
-  math2d::Line _line;
+  Skeleton::Area _area;
   std::vector<Ratio> _ratios;
 };
 
@@ -48,13 +49,24 @@ struct Trace {
   Trace(Trace &&) = default;
   Trace &operator=(const Trace &) = default;
   Trace &operator=(Trace &&) = default;
-  Trace(od::Object obj, std::vector<math2d::Line> skeleton,
-        SkeletonParams skeleton_params)
+  Trace(od::Object obj, Skeleton skeleton, SkeletonParams skeleton_params)
       : _obj{obj}, _skeleton{skeleton}, _skeleton_params{skeleton_params} {
     calculate();
   }
 
   std::vector<RatioLine> get_ratios() const { return _ratio_lines; }
+
+  std::string to_string() const {
+    std::string ret;
+    for (const auto &ratio_line : _ratio_lines) {
+      ret += "Area: " + ratio_line.get_area().to_string() + "\n";
+      for (const auto &ratio : ratio_line.get_ratios()) {
+        ret += "Ratio: " + std::to_string(ratio.from()) + " -> " +
+               std::to_string(ratio.to()) + "\n";
+      }
+    }
+    return ret;
+  }
 
   bool compare(const Trace &other,
                const ComparisonParams &comparison_params) const {
@@ -67,10 +79,20 @@ struct Trace {
       return false;
     }
 
-    if (_skeleton.size() != other._skeleton.size()) {
+    if (_skeleton.areas.size() != other._skeleton.areas.size()) {
       return false;
     }
 
+    if (comparison_params.use_forms) {
+      return compare_form(other, comparison_params);
+    } else {
+      return compare_integral(other, comparison_params);
+    }
+  }
+
+private:
+  bool compare_form(const Trace &other,
+                    const ComparisonParams &comparison_params) const {
     for (size_t i = 0; i < _ratio_lines.size(); ++i) {
       bool matches = compare_ratio_lines(_ratio_lines, other._ratio_lines, i,
                                          comparison_params);
@@ -83,19 +105,6 @@ struct Trace {
 
   bool compare_integral(const Trace &other,
                         const ComparisonParams &comparison_params) const {
-    // pre conditions
-    if (_obj == other._obj) {
-      return true;
-    }
-
-    if (_skeleton_params != other._skeleton_params) {
-      return false;
-    }
-
-    if (_skeleton.size() != other._skeleton.size()) {
-      return false;
-    }
-
     const auto this_max_offset = deduce_max_offset(_ratio_lines);
     const auto other_max_offset = deduce_max_offset(other._ratio_lines);
 
@@ -118,21 +127,17 @@ struct Trace {
     return within_tolerance;
   }
 
-private:
   void calculate() {
     _ratio_lines.clear();
-    _ratio_lines.reserve(_skeleton.size());
-    for (const auto &line : _skeleton) {
-      const auto pixels = draw_line(line);
-      const auto num_pixels_on_line = pixels.size();
-
+    _ratio_lines.reserve(_skeleton.areas.size());
+    for (const auto &area : _skeleton.areas) {
       std::vector<Ratio> ratios;
       std::optional<Ratio> current_ratio = std::nullopt;
       int count = 0;
-      const auto interpret_pixel = [this, &current_ratio, &count,
-                                    num_pixels_on_line,
-                                    &ratios](const math2d::Point &point) {
-        double progress = static_cast<double>(count) / num_pixels_on_line;
+      const auto interpret_pixel = [this, &current_ratio, &count, &ratios](
+                                       const math2d::CoordinatedPoint &point) {
+        double progress =
+            static_cast<double>(count) / _skeleton_params.nb_parts_of_object;
         bool does_contain = _obj.contains_point(point);
         if (current_ratio.has_value()) {
           if (does_contain) {
@@ -148,10 +153,19 @@ private:
         }
         count++;
       };
-      for (const auto &pixel : pixels) {
-        interpret_pixel(pixel);
+      const auto start =
+          math2d::CoordinatedPoint{0, 0, area.coordinate_system}.plus(
+              math2d::Vector{-area.radius, 0});
+      const auto delta = math2d::Vector{
+          2.0 * area.radius / _skeleton_params.nb_parts_of_object, 0};
+      for (size_t i = 0; i < _skeleton_params.nb_parts_of_object; ++i) {
+        const auto point = start.plus(delta.scale(i));
+        interpret_pixel(point);
       }
-      _ratio_lines.push_back(RatioLine{line, ratios});
+      if (current_ratio.has_value()) {
+        ratios.push_back(*current_ratio);
+      }
+      _ratio_lines.push_back(RatioLine{area, ratios});
     }
   }
 
@@ -162,14 +176,16 @@ private:
       return (i + index) % rhs.size();
     };
 
+    size_t count_matches = 0;
     for (size_t i = 0; i < lhs.size(); ++i) {
       bool matches = compare_ratio_line(lhs[i], rhs[get_secondary_index(i)],
                                         comparison_params);
-      if (!matches) {
-        return false;
+      if (matches) {
+        ++count_matches;
       }
     }
-    return true;
+    const auto ratio = static_cast<double>(count_matches) / lhs.size();
+    return ratio > comparison_params.threshold;
   }
 
   bool compare_ratio_line(const RatioLine &lhs, const RatioLine &rhs,
@@ -283,7 +299,7 @@ private:
   }
 
   od::Object _obj;
-  std::vector<math2d::Line> _skeleton;
+  Skeleton _skeleton;
   std::vector<RatioLine> _ratio_lines;
   SkeletonParams _skeleton_params;
 };

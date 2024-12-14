@@ -2,6 +2,7 @@
 
 #include "Slices.h"
 
+#include "math2d/coordinated.h"
 #include "matrix/Matrix.h"
 
 #include "Rectangle.h"
@@ -61,7 +62,16 @@ struct ObjectImpl {
 
   od::Rectangle get_bounding_box() const { return slices.to_rectangle(); }
 
-  bool contains_point(const math2d::Point &point) const {
+  math2d::CoordinatedPoint get_center_of_mass() const {
+    return slices.get_center_of_mass();
+  }
+
+  math2d::CoordinatedPoint
+  get_point_of_max_distance_to(const math2d::CoordinatedPoint &point) const {
+    return slices.get_point_of_max_distance_to(point);
+  }
+
+  bool contains_point(const math2d::CoordinatedPoint &point) const {
     return slices.contains_point(point);
   }
 
@@ -96,7 +106,16 @@ struct Object {
 
   od::Rectangle get_bounding_box() const { return object->get_bounding_box(); }
 
-  bool contains_point(const math2d::Point &point) const {
+  math2d::CoordinatedPoint get_center_of_mass() const {
+    return object->get_center_of_mass();
+  }
+
+  math2d::CoordinatedPoint
+  get_point_of_max_distance_to(const math2d::CoordinatedPoint &point) const {
+    return object->get_point_of_max_distance_to(point);
+  }
+
+  bool contains_point(const math2d::CoordinatedPoint &point) const {
     return object->contains_point(point);
   }
 

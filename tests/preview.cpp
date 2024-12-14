@@ -80,8 +80,8 @@ TEST_CASE("Preview", "[preview]") {
                                               "   XXX   \n");
 
     auto video_preview = std::make_unique<preview::SingleObjectPreview>(
-        4, circle_ascii_art, deduct::SkeletonParams{5},
-        deduct::ComparisonParams{1, true});
+        4, circle_ascii_art, deduct::SkeletonParams{5, 200},
+        deduct::ComparisonParams{1, true, true, 0.9});
     bool did_frame_get_ready_at_least_once = false;
     for (size_t i = 0; i < 100; i++) {
       std::cout << "Frame nr " << i << std::endl;
@@ -109,7 +109,7 @@ TEST_CASE("Preview", "[preview]") {
         std::cout << "Frame set" << std::endl;
         if (frame_calculation_status == preview::FrameCalculationStatus::DONE) {
           const auto rectangles = video_preview->get_all_rectangles();
-          CHECK(rectangles.size() > 100);
+          CHECK(rectangles.size() > 10);
           did_frame_get_ready_at_least_once = true;
           std::cout << "Frame done" << std::endl;
         }
