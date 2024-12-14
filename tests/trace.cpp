@@ -41,7 +41,7 @@ od::Object deduce_object(par::Executor &executor, const cv::Mat &img) {
 
 std::optional<od::Object>
 deduce_object_at_position(par::Executor &executor, const cv::Mat &img,
-                          const math2d::Point &position) {
+                          const math2d::CoordinatedPoint &position) {
   auto frame_data = webcam::FrameData{img};
   auto flow = webcam::process_frame_single_loop(frame_data, img);
   executor.run(flow);
@@ -252,8 +252,10 @@ TEST_CASE("Trace", "[trace]") {
         ColoredObject{reference_square, std::string("red"), 0});
     const auto reference_image =
         create_test_image_with_objects(reference_objects, 50, 50);
+    const auto coordinate_system = math2d::CoordinateSystem{
+        math2d::Point{0, 0}, math2d::Vector{1, 0}, math2d::Vector{0, 1}};
     const auto reference_object = deduce_object_at_position(
-        executor, reference_image, math2d::Point{20, 20});
+        executor, reference_image, math2d::CoordinatedPoint{20, 20, coordinate_system});
     CHECK(reference_object.has_value());
     const auto skeleton_angle_step = 10;
     const auto reference_object_trace = deduct::ObjectTrace{
@@ -293,8 +295,10 @@ TEST_CASE("Trace", "[trace]") {
         ColoredObject{reference_circle, std::string("red"), 0});
     const auto reference_image =
         create_test_image_with_objects(reference_objects, 50, 50);
+    const auto coordinate_system = math2d::CoordinateSystem{
+        math2d::Point{0, 0}, math2d::Vector{1, 0}, math2d::Vector{0, 1}};
     const auto reference_object = deduce_object_at_position(
-        executor, reference_image, math2d::Point{15, 15});
+        executor, reference_image, math2d::CoordinatedPoint{15, 15, coordinate_system});
     CHECK(reference_object.has_value());
     const auto skeleton_angle_step = 10;
     const auto reference_object_trace = deduct::ObjectTrace{
@@ -335,8 +339,10 @@ TEST_CASE("Trace", "[trace]") {
         ColoredObject{reference_rectangle, std::string("red"), 0});
     const auto reference_image =
         create_test_image_with_objects(reference_objects, 50, 50);
+    const auto coordinate_system = math2d::CoordinateSystem{
+        math2d::Point{0, 0}, math2d::Vector{1, 0}, math2d::Vector{0, 1}};
     const auto reference_object = deduce_object_at_position(
-        executor, reference_image, math2d::Point{20, 20});
+        executor, reference_image, math2d::CoordinatedPoint{20, 20, coordinate_system});
     CHECK(reference_object.has_value());
     const auto skeleton_angle_step = 10;
     const auto reference_object_trace = deduct::ObjectTrace{

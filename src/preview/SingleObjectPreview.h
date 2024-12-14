@@ -123,10 +123,13 @@ private:
     auto objects = frame_data.result_objects.get_objects();
 
     const auto target_pixel = find_target_pixel(_ascii_art);
+    const auto coordinate_system = math2d::CoordinateSystem{
+        math2d::Point{0, 0}, math2d::Vector{1, 0}, math2d::Vector{0, 1}};
     for (const auto object : objects) {
-      if (object.contains_point(math2d::Point{
+      if (object.contains_point(math2d::CoordinatedPoint{
               static_cast<math2d::number_type>(target_pixel.first),
-              static_cast<math2d::number_type>(target_pixel.second)})) {
+              static_cast<math2d::number_type>(target_pixel.second),
+              coordinate_system})) {
         _target = {object,
                    deduct::ObjectTrace{object, _skeleton_params}.get_trace()};
         break;
